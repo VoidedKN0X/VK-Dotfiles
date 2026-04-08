@@ -26,9 +26,13 @@ Needed from Pacman:
 - nwg-look
 - orchis-theme
 - papirus-icon-theme
+- qt5ct
+- breeze-icons
+- breeze
 
 Also install OhMyZSH
 
 Needed from yay:
 - bibata-cursor-theme
 - waybar-module-music-git
+- qt6ct-kde
