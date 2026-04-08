@@ -14,17 +14,12 @@ Needed from Pacman:
 - btop
 - fastfetch
 - awww
-- thunar
 - foot
-- nano
-- git
-- base-devel
 - zsh
 - rofi
 - waybar
 - swaync
 - noto-fonts
-- ristretto
 - exa
 - ttf-jetbrains-mono-nerd
 - pavucontrol
@@ -32,8 +27,8 @@ Needed from Pacman:
 - orchis-theme
 - papirus-icon-theme
 
+Also install OhMyZSH
+
 Needed from yay:
-- vscodium-bin
-- vscodium-bin-marketplace
 - bibata-cursor-theme
 - waybar-module-music-git
