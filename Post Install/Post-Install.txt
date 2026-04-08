@@ -1,0 +1,26 @@
+# Install OhMyZSH
+- sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Configure Greetd
+- sudo nano /etc/greetd/config.toml (tuigreet --cmd start-hyprland)
+
+# Edit Bootloader
+- sudo nano /boot/loader/loader.conf
+- sudo nano /boot/loader/entries/...
+
+# Edit pam.d greetd
+- sudo nano /etc/pam.d/greetd
+- Add "auth       optional     pam_gnome_keyring.so" and "session    optional     pam_gnome_keyring.so auto_start"
+
+# Add TrueNAS to fstab
+# TrueNAS
+192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0
+
+# Secure Boot
+- sudo -i
+- sbctl create-keys
+- sbctl enroll-keys -m
+- sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+- sbctl sign -s /boot/vmlinuz-linux-zen
+- bootctl install
+- sbctl verify
