@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install Apps from pacman
-sudo pacman -S bcachefs-tools btrfs-progs dosfstools exfatprogs f2fs-tools e2fsprogs jfsutils mtd-utils nilfs-utils ntfs-3g udftools xfsprogs plymouth fwupd adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts adobe-source-sans-fonts adobe-source-serif-fonts android-tools android-udev darktable flameshot qbittorrent gamemode gimp krita wget partitionmanager kdenlive libreoffice-fresh mangohud noto-fonts-emoji obs-studio prismlauncher steam ttf-dejavu ttf-liberation mpv nfs-utils pcsclite ccid opensc ttf-firacode-nerd cups freecad audacity rhythmbox solaar greetd greetd-tuigreet gnome-keyring unzip papers element-desktop syncthing ark unrar qt6-multimedia-ffmpeg jre-openjdk lib32-vulkan-intel sbctl ollama ollama-rocm intel-compute-runtime chromium hyprland hyprlock hypridle hyprpolkitagent btop fastfetch awww thunar foot nano git base-devel zsh rofi waybar swaync noto-fonts ristretto exa ttf-jetbrains-mono-nerd pavucontrol nwg-look orchis-theme papirus-icon-theme --needed
+sudo pacman -S bcachefs-tools btrfs-progs dosfstools exfatprogs f2fs-tools e2fsprogs jfsutils mtd-utils nilfs-utils ntfs-3g udftools xfsprogs plymouth fwupd adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts adobe-source-sans-fonts adobe-source-serif-fonts android-tools android-udev darktable flameshot qbittorrent gamemode gimp krita wget partitionmanager kdenlive libreoffice-fresh mangohud noto-fonts-emoji obs-studio prismlauncher steam ttf-dejavu ttf-liberation mpv nfs-utils pcsclite ccid opensc ttf-firacode-nerd cups freecad audacity rhythmbox solaar greetd greetd-tuigreet gnome-keyring unzip papers element-desktop syncthing ark unrar qt6-multimedia-ffmpeg jre-openjdk lib32-vulkan-intel sbctl ollama ollama-rocm intel-compute-runtime chromium xdg-usr-dirs hyprland hyprlock hypridle hyprpolkitagent btop fastfetch awww thunar foot nano git base-devel zsh rofi waybar swaync noto-fonts ristretto exa ttf-jetbrains-mono-nerd pavucontrol nwg-look orchis-theme papirus-icon-theme --needed
 
 # Install yay
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && rm -rf /home/$USER/yay
@@ -17,3 +17,6 @@ sudo systemctl enable --now pcscd.service && sudo systemctl enable --now cups &&
 
 # Create directories for mounting disks
 sudo mkdir /media && sudo mkdir /media/TrueNAS
+
+# Add home directories
+xdg-user-dirs-update
