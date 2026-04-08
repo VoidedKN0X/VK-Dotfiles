@@ -5,6 +5,10 @@ I have built these dotfiles for my personal Arch Linux, BTW :)
 If you come by these dotfiles and have some suggestions or improvements please let me know, thank you!
 
 Needed from Pacman:
+- hyprland
+- hyprlock
+- hypridle
+- btop
 - awww
 - thunar
 - foot
@@ -28,3 +32,4 @@ Needed from yay:
 - vscodium-bin
 - vscodium-bin-marketplace
 - bibata-cursor-theme
+- waybar-module-music-git
