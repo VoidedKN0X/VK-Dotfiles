@@ -37,3 +37,7 @@ Needed from yay:
 - bibata-cursor-theme
 - waybar-module-music-git
 - qt6ct-kde
+
+CREDITS TO:
+- Elifouts https://github.com/elifouts/Dotfiles
+(This is the base of my config with small tweaks to make it more minimal and personal)
