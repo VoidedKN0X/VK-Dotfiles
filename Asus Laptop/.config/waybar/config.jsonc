@@ -60,7 +60,7 @@
         "interface": "wlp2s0",
         "format": "{ifname}",
         "format-wifi": "{essid} ",
-        "format-ethernet": "{ipaddr}/{cidr} 󰊗",
+        "format-ethernet": "",
         "format-disconnected": "", //An empty format will hide the module.
         "tooltip-format": "{ifname} via {gwaddr} 󰊗",
         "tooltip-format-wifi": "{essid} ({signalStrength}%) ",

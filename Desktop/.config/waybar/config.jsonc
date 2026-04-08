@@ -59,7 +59,7 @@
         "interface": "enp10s0",
         "format": "{ifname}",
         "format-wifi": "{essid} ",
-        "format-ethernet": "󰊗",
+        "format-ethernet": "",
         "format-disconnected": "", //An empty format will hide the module.
         "tooltip-format": "{ifname} via {gwaddr} 󰊗",
         "tooltip-format-wifi": "{essid} ({signalStrength}%) ",
