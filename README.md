@@ -2,6 +2,8 @@
 
 I have built these dotfiles for my personal Arch Linux, BTW :)
 
+PLEASE DON'T USE MY INSTALL SCRIPTS FOR INSTALLING YOU OWN UNLESS YOU NEED THE SAME SOFTWARE AS I DO, JUST INSTALL THE PROGRAMS AMNUALLY AS THIS IS NOT A MAINSTREAM GITHUB!
+
 If you come by these dotfiles and have some suggestions or improvements please let me know, thank you!
 
 Needed from Pacman:
