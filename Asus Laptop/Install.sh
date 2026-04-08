@@ -23,3 +23,6 @@ xdg-user-dirs-update
 
 # Copy .config folder
 cp "VK-Dotfiles/Asus Laptop/.config" -r /home/$USER/
+
+# Copy .zshrc
+cp "VK-Dotfiles/Asus Laptop/.zshrc" -r /home/$USER/

@@ -23,3 +23,6 @@ xdg-user-dirs-update
 
 # Copy .config folder
 cp "VK-Dotfiles/Desktop/.config" -r /home/$USER/
+
+# Copy .zshrc
+cp "VK-Dotfiles/Desktop/.zshrc" -r /home/$USER/
