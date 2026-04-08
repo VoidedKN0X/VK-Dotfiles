@@ -8,6 +8,7 @@ Needed from Pacman:
 - hyprland
 - hyprlock
 - hypridle
+- hyprpolkitagent
 - btop
 - fastfetch
 - awww
