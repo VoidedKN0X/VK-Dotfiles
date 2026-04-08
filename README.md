@@ -22,6 +22,7 @@ Needed from Pacman:
 - noto-fonts
 - exa
 - ttf-jetbrains-mono-nerd
+- otf-codenewroman-nerd
 - pavucontrol
 - nwg-look
 - orchis-theme
