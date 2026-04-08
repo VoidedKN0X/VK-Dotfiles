@@ -9,6 +9,7 @@ Needed from Pacman:
 - hyprlock
 - hypridle
 - btop
+- fastfetch
 - awww
 - thunar
 - foot
