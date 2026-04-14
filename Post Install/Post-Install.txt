@@ -24,3 +24,9 @@
 - sbctl sign -s /boot/vmlinuz-linux-zen
 - bootctl install
 - sbctl verify
+
+# Fix Logitech mouse
+- sudo nano /etc/modprobe.d/hid-logitech.conf
+- blacklist hid_logitech_hidpp
+- blacklist hid_logitech_dj
+- sudo mkinitcpio -P
