@@ -103,5 +103,6 @@ source $ZSH/oh-my-zsh.sh
 alias ls="exa -la"
 alias clean="sudo pacman -Rnscu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm"
 alias higpt="ollama run gpt-oss"
+alias byegpt="ollama stop gpt-oss"
 
 fastfetch
