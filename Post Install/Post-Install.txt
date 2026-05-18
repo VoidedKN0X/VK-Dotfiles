@@ -17,12 +17,15 @@
 192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0
 
 # Generate yubikey keys
-- pamu2fcfg > ~/.config/Yubico/u2f_keys
+- mkdir .config/Yubico
+- pamu2fcfg > /home/axel/.config/Yubico/u2f_keys
+# Add 2nd yubukey
+- pamu2fcfg >> /home/axel/.config/Yubico/u2f_keys
 
 # Enroll yubikey for LUKS
 - sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
 
-# Add "auth sufficient pam_u2f.so authfile=~/.config/Yubico/u2f_keys cue" to
+# Add "auth sufficient pam_u2f.so authfile=/home/axel/.config/Yubico/u2f_keys cue" to
 - sudo nano /etc/pam.d/system-login
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/greetd
