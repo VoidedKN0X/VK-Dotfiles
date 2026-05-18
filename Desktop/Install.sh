@@ -21,6 +21,9 @@ sudo mkdir /media && sudo mkdir /media/TrueNAS && sudo mkdir /media/Games && sud
 # Add home directories
 xdg-user-dirs-update
 
+# Make all folder in /media writable
+sudo chmod 777 /media /media/Games /media/Recordings /media/Data
+
 # Copy .config folder
 cp "VK-Dotfiles/Desktop/.config" -r /home/$USER/
 
