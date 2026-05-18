@@ -16,6 +16,24 @@
 # TrueNAS
 192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0
 
+# Generate yubikey keys
+- pamu2fcfg > ~/.config/Yubico/u2f_keys
+
+# Enroll yubikey for LUKS
+- sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
+
+# Add "auth sufficient pam_u2f.so authfile=~/.config/Yubico/u2f_keys cue" to
+- sudo nano /etc/pam.d/system-login
+- sudo nano /etc/pam.d/system-auth
+- sudo nano /etc/pam.d/greetd
+- sudo nano /etc/pam.d/sudo
+
+#Edit "/etc/kernel/cmdline" and add plymouth to HOOKS before encrypt and after systemd
+
+# Edit "/etc/mkinitcpio.d/..." to remove splash
+
+- sudo mkinitcpio -P
+
 # Secure Boot
 - sudo -i
 - sbctl create-keys
