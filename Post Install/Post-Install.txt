@@ -27,6 +27,7 @@
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/greetd
 - sudo nano /etc/pam.d/sudo
+- sudo nano /etc/pam.d/hyprlock
 
 #Edit "/etc/kernel/cmdline" and add plymouth to HOOKS before encrypt and after systemd
 
