@@ -36,7 +36,12 @@
 
 # Edit "/etc/mkinitcpio.d/..." to remove splash
 
+# Update mkinitcpio
 - sudo mkinitcpio -P
+
+# Add Canon TS5350a printer using CUPS
+- localhost:631
+- add printer using IP "ipp://192.168.1.239/ipp/print"
 
 # Secure Boot
 - sudo -i
