@@ -41,7 +41,7 @@
 
 # Add Canon TS5350a printer using CUPS
 - localhost:631
-- add printer using IP "ipp://192.168.1.239/ipp/print"
+- add printer using IP "ipp://192.168.1.60/ipp/print"
 
 # Secure Boot
 - sudo -i
