@@ -7,7 +7,7 @@ sudo pacman -S bcachefs-tools btrfs-progs dosfstools exfatprogs f2fs-tools e2fsp
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && cd && rm -rf /home/$USER/yay
 
 # Install Apps from yay
-yay -S github-desktop eid-mw feishin-bin heroic-games-launcher-bin jdownloader2 protonplus scangearmp2-sane-git orca-slicer-bin auto-cpufreq mangojuice-bin librewolf-bin localsend-bin imsprog ubports-installer vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator --needed
+yay -S github-desktop eid-mw feishin-bin heroic-games-launcher-bin jdownloader2 protonplus orca-slicer-bin auto-cpufreq mangojuice-bin librewolf-bin localsend-bin imsprog ubports-installer vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator --needed
 
 # Remove leftover install files
 sudo pacman -Rscnu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
