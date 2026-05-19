@@ -13,7 +13,7 @@ yay -S github-desktop eid-mw feishin-bin heroic-games-launcher-bin jdownloader2 
 sudo pacman -Rscnu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
 
 # Enable Services
-sudo systemctl enable --now pcscd.service && sudo systemctl enable --now cups && sudo systemctl enable --now auto-cpufreq && sudo systemctl enable --now syncthing@$USER.service && sudo systemctl enable --now fwupd-refresh.timer && sudo systemctl enable greetd
+sudo systemctl enable --now pcscd.service && sudo systemctl enable --now cups && sudo systemctl enable --now auto-cpufreq && sudo systemctl enable --now syncthing@$USER.service && sudo systemctl enable --now fwupd-refresh.timer && sudo systemctl enable greetd && sudo systemctl enable --now avahi-daemon
 
 # Create directories for mounting disks
 sudo mkdir /media && sudo mkdir /media/TrueNAS
