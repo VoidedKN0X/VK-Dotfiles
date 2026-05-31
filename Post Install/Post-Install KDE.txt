@@ -1,0 +1,51 @@
+# Install OhMyZSH
+- sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+
+# Edit Bootloader
+- sudo nano /boot/loader/loader.conf
+- sudo nano /boot/loader/entries/...
+
+# Add TrueNAS to fstab
+# TrueNAS
+192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0
+
+# Generate yubikey keys
+- mkdir .config/Yubico
+- pamu2fcfg > /home/axel/.config/Yubico/u2f_keys
+# Add 2nd yubukey
+- pamu2fcfg >> /home/axel/.config/Yubico/u2f_keys
+
+# Enroll yubikey for LUKS
+- sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
+
+# Add "auth sufficient pam_u2f.so authfile=/home/axel/.config/Yubico/u2f_keys cue" to
+- sudo nano /etc/pam.d/system-login
+- sudo nano /etc/pam.d/system-auth
+- sudo nano /etc/pam.d/sudo
+- sudo nano /etc/pam.d/hyprlock
+
+#Edit "/etc/kernel/cmdline" and add plymouth to HOOKS before encrypt and after systemd
+
+# Edit "/etc/mkinitcpio.d/..." to remove splash
+
+# Update mkinitcpio
+- sudo mkinitcpio -P
+
+# Add Canon TS5350a printer using CUPS
+- localhost:631
+- add printer using IP "ipp://192.168.1.60/ipp/print"
+
+# Secure Boot
+- sudo -i
+- sbctl create-keys
+- sbctl enroll-keys -m
+- sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
+- sbctl sign -s /boot/vmlinuz-linux-zen
+- bootctl install
+- sbctl verify
+
+# Fix Logitech mouse
+- sudo nano /etc/modprobe.d/hid-logitech.conf
+- blacklist hid_logitech_hidpp
+- blacklist hid_logitech_dj
+- sudo mkinitcpio -P
