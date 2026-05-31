@@ -21,6 +21,9 @@ sudo systemctl enable --now pcscd.service && sudo systemctl enable --now cups &&
 # Create directories for mounting disks
 # sudo mkdir /media && sudo mkdir /media/TrueNAS && sudo mkdir /media/Games && sudo mkdir /media/Recordings && sudo mkdir /media/Data
 
+# Create TrueNAS directory
+sudo mkdir /media/TrueNAS
+
 # Make all folder in /media writable
 sudo chmod 777 /media /media/Games /media/Recordings /media/Data /media/Temp /media/Backup
 
