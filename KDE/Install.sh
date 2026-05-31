@@ -9,9 +9,6 @@ git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && cd && rm
 # Install Apps from yay
 yay -S darkly onthespot-git github-desktop eid-mw heroic-games-launcher-bin jdownloader2 protonup-qt orca-slicer-bin auto-cpufreq mangojuice-bin librewolf-bin localsend-bin opendeck imsprog ubports-installer vscodium-bin vscodium-bin-marketplace yubico-authenticator --needed
 
-# Remove leftovers manually
-sudo pacman -Rnscu vim htop base-devel cmake --noconfirm
-
 # Remove leftover install files
 sudo pacman -Rscnu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
 
@@ -27,14 +24,14 @@ sudo mkdir /media/TrueNAS
 # Make all folder in /media writable
 sudo chmod 777 /media /media/Games /media/Recordings /media/Data /media/Temp /media/Backup
 
-# Download script to install Darkly theme
-git clone --single-branch --depth=1 https://github.com/Bali10050/Darkly.git
-
 # Copy .zshrc
 cp "VK-Dotfiles/KDE/.zshrc" -r /home/$USER/
 
 # Copy fastfetch config folder
-cp "VK-Dotfiles/Desktop/.config/fastfetch" -r /home/$USER/
+cp "VK-Dotfiles/Desktop/.config/fastfetch" -r /home/$USER/.config
 
 # Copy btop config folder
-cp "VK-Dotfiles/Desktop/.config/btop" -r /home/$USER/
+cp "VK-Dotfiles/Desktop/.config/btop" -r /home/$USER/.config
+
+# Remove leftovers manually
+sudo pacman -Rnscu vim htop base-devel cmake --noconfirm

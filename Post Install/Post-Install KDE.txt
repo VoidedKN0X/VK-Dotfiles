@@ -22,11 +22,17 @@
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/sudo
 
-#Edit "/etc/kernel/cmdline" and add "quiet splash plymooth.boot-log=/dev/null plymouth.nolog"
+# Add to cmdline
+- sudo nano /etc/kernel/cmdline
+- quiet splash plymooth.boot-log=/dev/null plymouth.nolog
 
-# Edit "/etc/mkinitcpio.conf" and add plymouth next to systemd
+# Add to mkinitcpio.conf
+- sudo nano /etc/mkinitcpio.conf
+- add "plymouth" next to systemd
 
-# Edit "/etc/mkinitcpio.d/..." to remove splash
+# Edit mkinitcpio.d
+- sudo nano /etc/mkinitcpio.d/...
+- add "#" before the splash option
 
 # Update mkinitcpio
 - sudo mkinitcpio -P
