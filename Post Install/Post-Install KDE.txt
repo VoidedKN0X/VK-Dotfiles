@@ -47,3 +47,6 @@
 - blacklist hid_logitech_hidpp
 - blacklist hid_logitech_dj
 - sudo mkinitcpio -P
+
+# Remove kwalletmanager after removing password
+- sudo pacman -Rnscu kwalletmanager
