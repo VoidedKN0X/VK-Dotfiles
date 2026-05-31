@@ -32,3 +32,9 @@ git clone --single-branch --depth=1 https://github.com/Bali10050/Darkly.git
 
 # Copy .zshrc
 cp "VK-Dotfiles/KDE/.zshrc" -r /home/$USER/
+
+# Copy fastfetch config folder
+cp "VK-Dotfiles/Desktop/.config/fastfetch" -r /home/$USER/
+
+# Copy btop config folder
+cp "VK-Dotfiles/Desktop/.config/btop" -r /home/$USER/
