@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Install Apps from pacman
-sudo pacman -S kwalletmanager feishin base-devel bcachefs-tools btrfs-progs dosfstools exfatprogs f2fs-tools e2fsprogs jfsutils mtd-utils nilfs-utils ntfs-3g udftools xfsprogs plymouth fwupd adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts adobe-source-sans-fonts adobe-source-serif-fonts android-tools android-udev flameshot qbittorrent gamemode krita partitionmanager kdenlive libreoffice-fresh mangohud noto-fonts-emoji obs-studio prismlauncher steam ttf-dejavu ttf-liberation vlc vlc-plugins-all nfs-utils pcsclite ccid opensc ttf-firacode-nerd cups freecad audacity solaar element-desktop syncthing lact wine nodejs qt6-multimedia-ffmpeg jre-openjdk lib32-vulkan-radeon sbctl chromium btop fastfetch zsh noto-fonts exa ttf-jetbrains-mono-nerd otf-codenewroman-nerd grim discord yubikey-manager pam-u2f libfido2 yubikey-full-disk-encryption ghostscript skanlite sane-airscan system-config-printer --needed
+sudo pacman -S kwalletmanager feishin base-devel bcachefs-tools btrfs-progs dosfstools exfatprogs f2fs-tools e2fsprogs jfsutils mtd-utils nilfs-utils ntfs-3g udftools xfsprogs plymouth fwupd adobe-source-han-sans-otc-fonts adobe-source-han-serif-otc-fonts adobe-source-sans-fonts adobe-source-serif-fonts android-tools android-udev flameshot qbittorrent gamemode krita partitionmanager kdenlive libreoffice-fresh mangohud noto-fonts-emoji obs-studio prismlauncher steam ttf-dejavu ttf-liberation vlc vlc-plugins-all nfs-utils pcsclite ccid opensc ttf-firacode-nerd cups freecad audacity solaar element-desktop syncthing lact wine nodejs qt6-multimedia-ffmpeg jre-openjdk lib32-vulkan-radeon sbctl chromium btop fastfetch zsh noto-fonts exa ttf-jetbrains-mono-nerd otf-codenewroman-nerd grim discord yubikey-manager pam-u2f libfido2 yubikey-full-disk-encryption ghostscript skanlite sane-airscan system-config-printer gwenview --needed
 
 # Install yay
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && cd && rm -rf /home/$USER/yay
@@ -34,4 +34,4 @@ cp "VK-Dotfiles/Desktop/.config/fastfetch" -r /home/$USER/.config
 cp "VK-Dotfiles/Desktop/.config/btop" -r /home/$USER/.config
 
 # Remove leftovers manually
-sudo pacman -Rnscu vim htop base-devel cmake --noconfirm
+sudo pacman -Rnscu vim htop base-devel --noconfirm
