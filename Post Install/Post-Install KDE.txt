@@ -3,7 +3,6 @@
 
 # Edit Bootloader
 - sudo nano /boot/loader/loader.conf
-- sudo nano /boot/loader/entries/...
 
 # Add TrueNAS to fstab
 # TrueNAS
@@ -22,9 +21,10 @@
 - sudo nano /etc/pam.d/system-login
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/sudo
-- sudo nano /etc/pam.d/hyprlock
 
-#Edit "/etc/kernel/cmdline" and add plymouth to HOOKS before encrypt and after systemd
+#Edit "/etc/kernel/cmdline" and add "quiet splash plymooth.boot-log=/dev/null plymouth.nolog"
+
+# Edit "/etc/mkinitcpio.conf" and add plymouth next to systemd
 
 # Edit "/etc/mkinitcpio.d/..." to remove splash
 
@@ -39,10 +39,8 @@
 - sudo -i
 - sbctl create-keys
 - sbctl enroll-keys -m
-- sbctl sign -s -o /usr/lib/systemd/boot/efi/systemd-bootx64.efi.signed /usr/lib/systemd/boot/efi/systemd-bootx64.efi
-- sbctl sign -s /boot/vmlinuz-linux-zen
-- bootctl install
 - sbctl verify
+- sbctl sign -s
 
 # Fix Logitech mouse
 - sudo nano /etc/modprobe.d/hid-logitech.conf
