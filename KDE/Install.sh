@@ -34,4 +34,4 @@ cp "VK-Dotfiles/Desktop/.config/fastfetch" -r /home/$USER/.config
 cp "VK-Dotfiles/Desktop/.config/btop" -r /home/$USER/.config
 
 # Remove leftovers manually
-sudo pacman -Rnscu vim htop base-devel --noconfirm
+sudo pacman -Rnscu vim htop --noconfirm
