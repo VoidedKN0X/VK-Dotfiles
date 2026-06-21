@@ -31,8 +31,6 @@ hl.window_rule({ match = { xwayland = true, title = "win[0-9]+" }, rounding = 10
 
 hl.layer_rule({ match = { namespace = "swaync-control-center" }, blur = true })
 hl.layer_rule({ match = { namespace = "swaync-notification-window" }, blur = true })
-hl.layer_rule({ match = { namespace = "swaync-control-center" }, ignore_alpha = 0 })
-hl.layer_rule({ match = { namespace = "swaync-notification-window" }, ignore_alpha = 0 })
 hl.layer_rule({ match = { namespace = "swaync-control-center" }, ignore_alpha = 0.5 })
 hl.layer_rule({ match = { namespace = "swaync-notification-window" }, ignore_alpha = 0.5 })
 hl.layer_rule({ match = { namespace = "swaync-control-center" }, animation = "slide left" })
