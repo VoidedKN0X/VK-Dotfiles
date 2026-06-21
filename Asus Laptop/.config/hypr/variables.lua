@@ -1,0 +1,7 @@
+terminal = "foot"
+fileManager = "thunar"
+menu = "~/.config/rofi/launchers/type-2/launcher.sh || pkill rofi"
+browser = "librewolf"
+cursorTheme = "Bibata-Modern-Ice"
+cursorSize = "24"
+gtktheme = "Orchis-Dark"
