@@ -3,7 +3,7 @@ hl.config({
         rounding = 15,
         blur = {
             enabled = true,
-            xray = false,
+            xray = true,
             special = false,
             ignore_opacity = true,
             new_optimizations = true,
