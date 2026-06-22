@@ -5,6 +5,7 @@ configuration {
     drun-display-format:        "{name}";
     icon-theme:                 "Papirus";
     display-drun:               "";
+    display-wallpaper:          "";
 }
 
 /*****----- Global Properties -----*****/
