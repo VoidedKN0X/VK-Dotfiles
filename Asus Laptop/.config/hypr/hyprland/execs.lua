@@ -17,6 +17,9 @@ hl.on("hyprland.start", function()
 
     hl.exec_cmd("hypridle")
 
+    -- Generate accent colors from current wallpaper
+    hl.exec_cmd("~/.config/hypr/scripts/wallpaper.sh")
+
     -- Autostart apps
     hl.exec_cmd("solaar --window=hide")
     hl.exec_cmd("element-desktop --hidden")

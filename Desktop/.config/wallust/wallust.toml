@@ -1,0 +1,24 @@
+[templates]
+colors-lua.template = 'colors-lua.template'
+colors-lua.target = '~/.config/hypr/colors/colors.lua'
+colors-lua.pywal = true
+
+colors-waybar.template = 'colors-waybar.template'
+colors-waybar.target = '~/.config/waybar/colors/colors.css'
+colors-waybar.pywal = true
+
+colors-swaync.template = 'colors-swaync.template'
+colors-swaync.target = '~/.config/swaync/colors/colors.css'
+colors-swaync.pywal = true
+
+foot.template = 'foot.template'
+foot.target = '~/.config/foot/colors-dark.ini'
+foot.pywal = true
+
+colors-rofi.template = 'colors-rofi.template'
+colors-rofi.target = '~/.config/rofi/colors/colors.rasi'
+colors-rofi.pywal = true
+
+border-colors.template = 'border-colors.template'
+border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
+border-colors.pywal = true

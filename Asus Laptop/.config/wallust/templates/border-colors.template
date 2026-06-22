@@ -1,0 +1,8 @@
+hl.config({{
+    general = {{
+        col = {{
+            active_border = "rgb({color5.rgb})",
+            inactive_border = "rgb({color7.rgb})",
+        }},
+    }},
+}})

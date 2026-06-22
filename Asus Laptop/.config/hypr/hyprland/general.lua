@@ -6,10 +6,6 @@ hl.config({
         gaps_in = 5,
         gaps_out = 10,
         border_size = 3,
-        col = {
-            active_border = "rgb(198, 120, 221)",
-            inactive_border = "rgb(171, 178, 191)",
-        },
     },
     dwindle = {
         preserve_split = true,

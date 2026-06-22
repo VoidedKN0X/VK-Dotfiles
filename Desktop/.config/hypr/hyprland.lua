@@ -1,5 +1,5 @@
 require("variables")
-require("colors/dracula")
+require("colors/colors")
 
 require("hyprland/monitors")
 require("hyprland/execs")
@@ -11,4 +11,5 @@ require("hyprland/decoration")
 require("hyprland/animations")
 require("hyprland/rules")
 require("hyprland/general")
+require("hyprland/border-colors")
 require("hyprland/scrolling")
