@@ -19,4 +19,4 @@
 @define-color text {foreground};
 @define-color grey1 {color8};
 @define-color grey2 {color7};
-@define-color grey3 {color8};
+@define-color grey3 {color15};

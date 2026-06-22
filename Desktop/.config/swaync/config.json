@@ -46,10 +46,6 @@
       "clear-all-button": true,
       "button-text": "󰆴"
     },
-    "label": {
-      "max-lines": 1,
-      "text": "Notification Center!"
-    },
     "volume": {
       "label": "󰕾 "
     },
