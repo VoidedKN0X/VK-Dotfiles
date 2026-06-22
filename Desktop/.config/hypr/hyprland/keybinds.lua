@@ -55,7 +55,7 @@ hl.bind("Print", hl.dsp.exec_cmd('flameshot full --clipboard --path "$HOME/Pictu
 hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd("pavucontrol"))
 hl.bind("SUPER + W", hl.dsp.exec_cmd(browser))
 hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("rofi -show wallpaper -modi \"wallpaper:~/.config/hypr/scripts/wallpaper-picker.sh\" -theme ~/.config/rofi/wallpaper-picker.rasi -show-icons -p \"\""))
-hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("cliphist list | rofi -dmenu -p \"\" -theme ~/.config/rofi/clipboard.rasi | cliphist decode | wl-copy"))
+hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("~/.config/hypr/scripts/clipboard.sh"))
 hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager))
 hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(menu), { release = true })

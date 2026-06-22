@@ -6,7 +6,7 @@ if [ -f "$LAST_WALLPAPER" ]; then
 fi
 
 if [ -z "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ]; then
-    WALLPAPER=$(find ~/Pictures/Wallpapers -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1)
+    WALLPAPER=$(find ~/Pictures/Wallpapers -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f | head -n 1)
 fi
 
 if [ -z "$WALLPAPER" ]; then
@@ -20,7 +20,8 @@ awww img "$WALLPAPER"
 wallust run "$WALLPAPER"
 
 # Update hyprlock wallpaper path
-echo "\$current_wallpaper = $WALLPAPER" > "$HOME/.config/hypr/colors/current-wallpaper.conf"
+mkdir -p "$(dirname "$LAST_WALLPAPER")"
+echo "\$current_wallpaper = $WALLPAPER" > "$LAST_WALLPAPER"
 
 # Reload swaync CSS
 swaync-client --reload-css 2>/dev/null || true
