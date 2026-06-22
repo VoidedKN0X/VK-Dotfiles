@@ -23,7 +23,7 @@
    Both selectors are included below for compatibility.
    ============================================================ */
 
-@import 'colors/dracula.css';
+@import 'colors/colors.css';
 
 /* ── Slide-in for floating notifications ─────────────────── */
 @keyframes slideIn {
@@ -90,7 +90,7 @@ listview row:active {
    ============================================================ */
 
 .floating-notifications .notification-row .notification-background .notification {
-    background: alpha(@bg0, 0.5);
+    background: alpha(@color0, 0.5);
     border-radius: 14px;
     margin: 0px;
     animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -109,7 +109,7 @@ listview row:active {
    ============================================================ */
 
 .control-center .notification-row .notification-background .notification {
-    background: @bg0;
+    background: @color0;
     border-radius: 12px;
     margin-top: 5px;
     margin-bottom: 2px;
@@ -130,12 +130,12 @@ listview row:active {
 
 .notification-default-action:hover,
 .notification-action:hover {
-    background: alpha(@bg0, 0.3);
+    background: alpha(@color0, 0.3);
 }
 
 /* Hover on action widgets */
 .notification widget:hover {
-    background: alpha(@purple, 0.8);
+    background: alpha(@color5, 0.8);
     border-radius: 8px;
     transition: background 0.2s ease;
 }
@@ -215,7 +215,7 @@ listview row:active {
 }
 
 .close-button:hover {
-    background: alpha(@purple, 0.5);
+    background: alpha(@color5, 0.5);
     color: @text;
     border-radius: 50%;
 }
@@ -225,7 +225,7 @@ listview row:active {
    ============================================================ */
 
 .control-center {
-    background: alpha(@bg0, 0.5);
+    background: alpha(@color0, 0.5);
     color: @text;
     border-radius: 14px;
     box-shadow: 0px 0px 10px rgba(0, 0, 0, .4);
@@ -239,7 +239,7 @@ listview row:active {
 
 /* ── Panel title bar ─────────────────────────────────────── */
 .widget-title {
-    color: alpha(@purple, 0.50);
+    color: alpha(@color5, 0.50);
     padding: 14px 20px 6px 20px;
     margin: 0;
     font-size: 0.78rem;
@@ -305,7 +305,7 @@ listview row:active {
 
 .widget-buttons-grid>flowbox>flowboxchild>button {
     all: unset;
-    background: alpha(@midnight_purple, 0.18);
+    background: alpha(@color13, 0.18);
     border-radius: 12px;
     min-width: 88px;
     min-height: 44px;
@@ -324,14 +324,14 @@ listview row:active {
 }
 
 .widget-buttons-grid>flowbox>flowboxchild>button:hover {
-    background: alpha(@purple, 0.18);
+    background: alpha(@color5, 0.18);
     color: @text;
-    box-shadow: inset 0 0 10px alpha(@bg0, 0.18);
+    box-shadow: inset 0 0 10px alpha(@color0, 0.18);
 }
 
 .widget-buttons-grid>flowbox>flowboxchild>button.toggle:checked,
 .widget-buttons-grid>flowbox>flowboxchild>button.toggle.active {
-    background: alpha(@bg0, 0.48);
+    background: alpha(@color0, 0.48);
     color: @grey3;
     box-shadow: inset 0 0 14px alpha(@grey1, 0.35), 0 0 8px alpha(@grey1, 0.20);
 }
@@ -343,7 +343,7 @@ listview row:active {
 
 .widget-buttons-grid>flowbox>flowboxchild>button.toggle:checked:hover,
 .widget-buttons-grid>flowbox>flowboxchild>button.toggle.active:hover {
-    background: alpha(@purple, 0.58);
+    background: alpha(@color5, 0.58);
     box-shadow: inset 0 0 16px alpha(@grey2, 0.40), 0 0 10px alpha(@grey2, 0.28);
 }
 
@@ -355,22 +355,22 @@ listview row:active {
 
 scale trough {
     border-radius: 20px;
-    background: alpha(@midnight_purple, 0.10);
-    border: 1px solid alpha(@midnight_purple, 0.08);
+    background: alpha(@color13, 0.10);
+    border: 1px solid alpha(@color13, 0.08);
     min-height: 4px;
 }
 
 scale trough highlight {
-    background: @purple;
+    background: @color5;
     border-radius: 20px;
     min-height: 4px;
     /* Soft glow on the filled portion */
-    box-shadow: 0 0 5px alpha(@bg0, 0.40);
+    box-shadow: 0 0 5px alpha(@color0, 0.40);
     transition: box-shadow 0.25s ease;
 }
 
 scale trough highlight:hover {
-    box-shadow: 0 0 10px alpha(@purple, 0.65);
+    box-shadow: 0 0 10px alpha(@color5, 0.65);
 }
 
 /* Knob hidden — renders as clean pill */
@@ -405,7 +405,7 @@ scale trough slider {
 
 
 .widget-mpris .widget-mpris-player {
-    background: alpha(@bg0, 0.5);
+    background: alpha(@color0, 0.5);
     box-shadow: none;
     border: none;
 }
@@ -428,7 +428,7 @@ scale trough slider {
 }
 
 .widget-mpris .widget-mpris-player button:hover {
-    background: alpha(@bg0, 0.18);
+    background: alpha(@color0, 0.18);
     color: @text;
 }
 
