@@ -20,6 +20,9 @@ hl.on("hyprland.start", function()
     -- Generate accent colors from current wallpaper
     hl.exec_cmd("~/.config/hypr/scripts/wallpaper.sh")
 
+    -- Clipboard manager (cliphist)
+    hl.exec_cmd("wl-paste --watch cliphist store")
+
     -- Autostart apps
     hl.exec_cmd("solaar --window=hide")
     hl.exec_cmd("steam -silent")

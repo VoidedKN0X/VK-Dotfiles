@@ -5,10 +5,10 @@
  **/
 
 * {
-    background:     #202021FF;
-    background-alt: #5C6370FF;
-    foreground:     #ABB2BFFF;
-    selected:       #C678DDFF;
-    active:         #98C379FF;
-    urgent:         #E45649FF;
+    background:     #202021;
+    background-alt: #5C6370;
+    foreground:     #ABB2BF;
+    selected:       #C678DD;
+    active:         #98C379;
+    urgent:         #E45649;
 }
