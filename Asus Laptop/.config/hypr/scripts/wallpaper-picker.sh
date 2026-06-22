@@ -19,9 +19,11 @@ else
 
     wallust run "$WALLPAPER" >/dev/null 2>&1
 
+    echo "\$current_wallpaper = $WALLPAPER" > "$HOME/.config/hypr/colors/current-wallpaper.conf"
+
     swaync-client --reload-css >/dev/null 2>&1 || true
 
     killall -SIGUSR2 waybar >/dev/null 2>&1 || true
 
-    exit 1
+    exit 0
 fi

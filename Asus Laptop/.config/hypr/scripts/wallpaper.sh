@@ -1,6 +1,13 @@
 #!/bin/bash
 
-WALLPAPER=$(find ~/Pictures/Wallpapers -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1)
+LAST_WALLPAPER="$HOME/.config/hypr/colors/current-wallpaper.conf"
+if [ -f "$LAST_WALLPAPER" ]; then
+    WALLPAPER=$(sed 's/^\$current_wallpaper = //' "$LAST_WALLPAPER")
+fi
+
+if [ -z "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ]; then
+    WALLPAPER=$(find ~/Pictures/Wallpapers -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f | shuf -n 1)
+fi
 
 if [ -z "$WALLPAPER" ]; then
     echo "No wallpapers found"
@@ -11,6 +18,9 @@ awww img "$WALLPAPER"
 
 # Generate and apply accent colors
 wallust run "$WALLPAPER"
+
+# Update hyprlock wallpaper path
+echo "\$current_wallpaper = $WALLPAPER" > "$HOME/.config/hypr/colors/current-wallpaper.conf"
 
 # Reload swaync CSS
 swaync-client --reload-css 2>/dev/null || true

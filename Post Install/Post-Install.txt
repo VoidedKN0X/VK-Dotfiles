@@ -18,14 +18,14 @@
 
 # Generate yubikey keys
 - mkdir .config/Yubico
-- pamu2fcfg > /home/axel/.config/Yubico/u2f_keys
+- pamu2fcfg > $HOME/.config/Yubico/u2f_keys
 # Add 2nd yubukey
-- pamu2fcfg >> /home/axel/.config/Yubico/u2f_keys
+- pamu2fcfg >> $HOME/.config/Yubico/u2f_keys
 
 # Enroll yubikey for LUKS
 - sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
 
-# Add "auth sufficient pam_u2f.so authfile=/home/axel/.config/Yubico/u2f_keys cue" to
+# Add "auth sufficient pam_u2f.so authfile=$HOME/.config/Yubico/u2f_keys cue" to
 - sudo nano /etc/pam.d/system-login
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/greetd

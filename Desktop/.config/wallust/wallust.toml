@@ -22,3 +22,7 @@ colors-rofi.pywal = true
 border-colors.template = 'border-colors.template'
 border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
 border-colors.pywal = true
+
+hyprlock-colors.template = 'hyprlock-colors.template'
+hyprlock-colors.target = '~/.config/hypr/colors/hyprlock-colors.conf'
+hyprlock-colors.pywal = true
