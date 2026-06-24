@@ -3,6 +3,7 @@ hl.monitor({
     mode = "preferred",
     position = "auto",
     scale = 1,
+    vrr = 2,
 })
 
 hl.workspace_rule({ workspace = "1", monitor = "eDP-1", persistent = true })

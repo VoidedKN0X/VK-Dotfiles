@@ -1,7 +1,7 @@
 hl.config({
     general = {
         layout = "dwindle",
-        allow_tearing = false,
+        allow_tearing = true,
         gaps_workspaces = 20,
         gaps_in = 5,
         gaps_out = 10,
