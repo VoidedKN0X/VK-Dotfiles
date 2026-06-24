@@ -59,7 +59,7 @@ hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("~/.config/hypr/scripts/clipboard.s
 hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager))
 hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(menu), { release = true })
-hl.bind("SUPER + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/launch.sh"))
+hl.bind("SUPER + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/restart-waybar-swaync.sh"))
 
 hl.bind("CTRL + SUPER + left", hl.dsp.focus({ workspace = "-1" }))
 hl.bind("CTRL + SUPER + right", hl.dsp.focus({ workspace = "+1" }))
