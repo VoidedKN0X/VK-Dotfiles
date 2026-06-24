@@ -24,8 +24,8 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
 
     -- Autostart apps
-    hl.exec_cmd("solaar --window=hide")
-    hl.exec_cmd("element-desktop --hidden")
-    hl.exec_cmd("discord --start-minimized")
-    hl.exec_cmd("localsend --hidden")
+    -- hl.exec_cmd("solaar --window=hide")
+    -- hl.exec_cmd("element-desktop --hidden")
+    -- hl.exec_cmd("discord --start-minimized")
+    -- hl.exec_cmd("localsend --hidden")
 end)
