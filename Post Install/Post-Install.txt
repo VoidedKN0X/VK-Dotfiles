@@ -31,7 +31,7 @@
 - sudo nano /etc/pam.d/sudo
 - sudo nano /etc/pam.d/hyprlock
 
-#Edit "/etc/kernel/cmdline" and add quiet splash plymouth.voot-log=/dev/null plymouth.nolog
+#Edit "/etc/kernel/cmdline" and add quiet splash plymouth.boot-log=/dev/null plymouth.nolog
 
 # Edit /etc/mkinitcpio.conf and add plymouth to modules next to systemd
 
