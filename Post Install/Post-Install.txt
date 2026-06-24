@@ -6,7 +6,6 @@
 
 # Edit Bootloader
 - sudo nano /boot/loader/loader.conf
-- sudo nano /boot/loader/entries/...
 
 # Edit pam.d greetd
 - sudo nano /etc/pam.d/greetd
@@ -25,7 +24,7 @@
 # Enroll yubikey for LUKS
 - sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
 
-# Add "auth sufficient pam_u2f.so authfile=$HOME/.config/Yubico/u2f_keys cue" to
+# Add "auth sufficient pam_u2f.so authfile=.config/Yubico/u2f_keys cue" to
 - sudo nano /etc/pam.d/system-login
 - sudo nano /etc/pam.d/system-auth
 - sudo nano /etc/pam.d/greetd

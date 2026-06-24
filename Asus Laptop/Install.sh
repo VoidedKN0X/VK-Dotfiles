@@ -26,3 +26,7 @@ cp "VK-Dotfiles/Asus Laptop/.config" -r /home/$USER/
 
 # Copy .zshrc
 cp "VK-Dotfiles/Asus Laptop/.zshrc" -r /home/$USER/
+
+# Make script folder executable
+sudo chmod +x .config/hypr/scripts/wallpaper-picker.sh
+sudo chmod +x .config/hypr/scripts/clipboard.sh

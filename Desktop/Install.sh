@@ -24,11 +24,12 @@ xdg-user-dirs-update
 # Make all folder in /media writable
 sudo chmod 777 /media /media/Games /media/Recordings /media/Data
 
-# Make script folder executable
-sudo chmod +x .config/hypr/scripts/wallpaper-picker.sh
-
 # Copy .config folder
 cp "VK-Dotfiles/Desktop/.config" -r /home/$USER/
 
 # Copy .zshrc
 cp "VK-Dotfiles/Desktop/.zshrc" -r /home/$USER/
+
+# Make script folder executable
+sudo chmod +x .config/hypr/scripts/wallpaper-picker.sh
+sudo chmod +x .config/hypr/scripts/clipboard.sh
