@@ -17,6 +17,12 @@ hl.monitor({
     vrr = 2,
 })
 
+hl.monitor({
+    output = "HDMI-A-1",
+    mode = "1280x720@60",
+    position = "-1000000x-1000000",
+})
+
 hl.workspace_rule({ workspace = "1", monitor = "DP-1", persistent = true })
 hl.workspace_rule({ workspace = "2", monitor = "DP-2", persistent = true })
 hl.workspace_rule({ workspace = "3", monitor = "DP-1", persistent = true })
