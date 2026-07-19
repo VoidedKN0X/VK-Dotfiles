@@ -102,5 +102,6 @@ source $ZSH/oh-my-zsh.sh
 # Example aliases
 alias ls="exa -la"
 alias clean="sudo pacman -Rnscu $(pacman -Qdtq) && sudo pacman -Sc && yay -Sc && yay -Yc"
+alias download="yt-dlp --embed-thumbnail -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0"
 
 fastfetch
