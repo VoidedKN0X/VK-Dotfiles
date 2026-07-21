@@ -101,7 +101,7 @@ source $ZSH/oh-my-zsh.sh
 #
 # Example aliases
 alias ls="exa -la"
-alias clean="sudo pacman -Rnscu $(pacman -Qdtq) && sudo pacman -Sc && yay -Sc && yay -Yc"
+alias clean='pacman -Qdtq | xargs -r sudo pacman -Rns && sudo pacman -Scc && yay -Scc && yay -Yc && sudo journalctl --vacuum-time=2weeks && rm -rf ~/.cache/thumbnails/* ~/.local/share/Trash/* ~/.local/share/recently-used.xbel'
 alias download="yt-dlp --no-part --no-continue --sleep-interval 5 --max-sleep-interval 10 --embed-thumbnail --embed-metadata -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0"
 
 fastfetch
