@@ -87,6 +87,12 @@ tooltip {
     transition: all 1s ease;
 }
 
+#workspaces button.occupied {
+    color: alpha(@color13, .7);
+    border: none;
+    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .35);
+}
+
 #workspaces button.active {
     color: @color5;
     border: none;
