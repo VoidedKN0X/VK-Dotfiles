@@ -50,9 +50,3 @@
 - sbctl enroll-keys -m
 - sbctl verify
 - sbctl sign -s (verify)
-
-# Fix Logitech mouse
-- sudo nano /etc/modprobe.d/hid-logitech.conf
-- blacklist hid_logitech_hidpp
-- blacklist hid_logitech_dj
-- sudo mkinitcpio -P
