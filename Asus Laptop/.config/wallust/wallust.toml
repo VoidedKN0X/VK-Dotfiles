@@ -1,3 +1,5 @@
+check_contrast = true
+
 [templates]
 colors-lua.template = 'colors-lua.template'
 colors-lua.target = '~/.config/hypr/colors/colors.lua'
