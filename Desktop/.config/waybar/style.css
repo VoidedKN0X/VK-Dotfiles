@@ -13,21 +13,24 @@ window#waybar {
     padding: 7px;
     margin: 10 0 5 10;
     border-radius: 10px;
-    background: alpha(@color0, 0.7);
+    background: alpha(@color7, 0.15);
+    border: 1px solid alpha(@color7, 0.15);
 }
 
 .modules-center {
     padding: 7px;
     margin: 10 0 5 0;
     border-radius: 10px;
-    background: alpha(@color0, 0.7);
+    background: alpha(@color7, 0.15);
+    border: 1px solid alpha(@color7, 0.15);
 }
 
 .modules-right {
     padding: 7px;
     margin: 10 10 5 0;
     border-radius: 10px;
-    background: alpha(@color0, 0.7);
+    background: alpha(@color7, 0.15);
+    border: 1px solid alpha(@color7, 0.15);
 }
 
 tooltip {
