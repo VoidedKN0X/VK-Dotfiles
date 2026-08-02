@@ -9,7 +9,7 @@
 #   C. Install: gamemode, lib32-gamemode, ananicy-cpp, irqbalance, lib32-mangohud
 #   D. Enable: gamemoded, irqbalance, ananicy-cpp
 #   E. fstab noatime (REBOOT required)
-#   F. systemd-boot/GRUB kernel cmdline: thp=madvise, split_lock_mitigate=0, cpufreq.default_governor=performance
+#   F. systemd-boot/GRUB kernel cmdline: thp=madvise, split_lock_mitigate=0
 #      (REBOOT required, UKI/grub regenerated)
 #   G. /etc/environment: RADV_PERFTEST=gpl, MESA_NO_ERROR=1 (LOGOUT required)
 #   H. Audio: HDA power-save off + rtkit install/enable (REBOOT required for HDA)
@@ -311,7 +311,7 @@ rm -f "$TMP"
 # =====================================================================
 head "F. Kernel cmdline (REBOOT required)"
 
-NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0 cpufreq.default_governor=performance)
+NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
 KCMDLINE="/etc/kernel/cmdline"
 
 # Detect bootloader type
@@ -556,8 +556,8 @@ if [[ -f /etc/kernel/cmdline ]]; then
 elif [[ -f "$GRUB_FILE" ]]; then
   gline=$(grep ^GRUB_CMDLINE_LINUX_DEFAULT= "$GRUB_FILE" | head -1)
 fi
-for p in transparent_hugepage=madvise split_lock_mitigate=0 cpufreq.default_governor=performance; do
-  if grep -qw -- "$p" <<<"$gline"; then
+for p in transparent_hugepage=madvise split_lock_mitigate=0; do
+    if grep -qw -- "$p" <<<"$gline"; then
     ok "kernel cmdline: $p present"
   else
     fail "kernel cmdline: $p missing"
@@ -567,8 +567,8 @@ done
 # UKI: verify cmdline section contains the new params
 if [[ -n "$UKI" && -f "$UKI" ]] && command -v objcopy >/dev/null; then
   uki_cmd=$(objcopy -O binary --only-section=.cmdline "$UKI" /tmp/uki-cmdline-$$ 2>/dev/null && tr -d '\0' < /tmp/uki-cmdline-$$; rm -f /tmp/uki-cmdline-$$)
-  for p in transparent_hugepage=madvise split_lock_mitigate=0 cpufreq.default_governor=performance; do
-    if grep -qw -- "$p" <<<"$uki_cmd"; then
+for p in transparent_hugepage=madvise split_lock_mitigate=0; do
+      if grep -qw -- "$p" <<<"$uki_cmd"; then
       ok "UKI: $p present"
     else
       fail "UKI: $p missing (rebuild UKI or will be inert until then)"
@@ -636,7 +636,7 @@ Baseline backup:
   $BACKUP_DIR/environment.$TS
 
 ACTION REQUIRED (won't take effect until you do):
-  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq)
+  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock)
                    + HDA power-save (snd_hda_intel module reload)
   2. REBOOT     - same reboot picks up new modules-load and udev rules
   3. LOGOUT     - for RADV_PERFTEST and MESA_NO_ERROR to load
