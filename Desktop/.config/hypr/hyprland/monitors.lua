@@ -19,8 +19,7 @@ hl.monitor({
 
 hl.monitor({
     output = "HDMI-A-1",
-    mode = "1280x720@60",
-    position = "-1000000x-1000000",
+    mirror = "DP-1",
 })
 
 hl.workspace_rule({ workspace = "1", monitor = "DP-1", persistent = true })
