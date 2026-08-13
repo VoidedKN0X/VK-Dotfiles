@@ -7,7 +7,7 @@ sudo pacman -S yt-dlp gst-plugin-gtk gst-libav brightnessctl feishin bcachefs-to
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && cd && rm -rf /home/$USER/yay
 
 # Install Apps from yay
-yay -S amethyst-mod-manager wallust-git github-desktop-bin eid-mw heroic-games-launcher-bin jdownloader2 protonplus orca-slicer-bin auto-cpufreq mangojuice-bin librewolf-bin localsend-bin imsprog vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator-bin bedrock-on-linux-bin --needed
+yay -S bottles amethyst-mod-manager wallust-git github-desktop-bin eid-mw heroic-games-launcher-bin jdownloader2 protonplus orca-slicer-bin auto-cpufreq mangojuice-bin librewolf-bin localsend-bin imsprog vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator-bin bedrock-on-linux-bin --needed
 
 # Remove leftover install files
 sudo pacman -Rscnu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
