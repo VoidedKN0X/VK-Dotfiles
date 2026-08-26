@@ -8,14 +8,15 @@
 #   1. OhMyZSH            (installs if missing)
 #   2. greetd config      (tuigreet --cmd start-hyprland)
 #   3. pam.d greetd       (gnome-keyring optional auth/session lines)
-#   4. TrueNAS fstab      (NFS mount entry, if not present)
-#   5. kernel cmdline     (quiet splash plymouth boot-log params)
-#   6. mkinitcpio.conf    (plymouth in MODULES + HOOKS before systemd)
-#   7. mkinitcpio presets (remove splash from *_options)
-#   8. vmlinuz sync       (copy kernel images to /boot if missing)
-#   9. mkinitcpio -P      (regenerate all images)
-#  10. CUPS printer       (Canon TS5350a via lpadmin, if cups installed)
-#  11. Secure Boot        (sbctl create/enroll/sign, if sbctl installed)
+#   4. systemd-boot       (timeout 0 in /boot/loader/loader.conf)
+#   5. TrueNAS fstab      (NFS mount entry, if not present)
+#   6. kernel cmdline     (quiet splash plymouth boot-log params)
+#   7. mkinitcpio.conf    (plymouth in MODULES + HOOKS before systemd)
+#   8. mkinitcpio presets (remove splash from *_options)
+#   9. vmlinuz sync       (copy kernel images to /boot if missing)
+#  10. mkinitcpio -P      (regenerate all images)
+#  11. CUPS printer       (Canon TS5350a via lpadmin, if cups installed)
+#  12. Secure Boot        (sbctl create/enroll/sign, if sbctl installed)
 #
 # Manual (printed, not run): YubiKey u2f_keys, LUKS enrollment, pam_u2f
 # edits, bootloader default (handled by install-cachyos-kernel.sh).
@@ -81,10 +82,6 @@ vt = 1
 [default_session]
 user = "$REAL_USER"
 command = "tuigreet --cmd start-hyprland"
-
-[initial_session]
-command = "start-hyprland"
-user = "$REAL_USER"
 EOF
   ok "wrote $GREETD_CONF (backup: .bak)"
 fi
@@ -105,7 +102,26 @@ else
 fi
 
 # =====================================================================
-head "4. TrueNAS fstab entry"
+head "4. systemd-boot timeout 0"
+LOADER_CONF="/boot/loader/loader.conf"
+if [[ -f "$LOADER_CONF" ]]; then
+  cp -a "$LOADER_CONF" "$LOADER_CONF.bak" 2>/dev/null || true
+  if grep -qE '^timeout\s+' "$LOADER_CONF"; then
+    sed -i 's/^timeout\s.*/timeout 0/' "$LOADER_CONF"
+    ok "set timeout to 0 in $LOADER_CONF"
+  elif grep -qE '^timeout\s*=' "$LOADER_CONF"; then
+    sed -i 's/^timeout\s*=.*/timeout 0/' "$LOADER_CONF"
+    ok "set timeout to 0 in $LOADER_CONF"
+  else
+    echo -e '\ntimeout 0' >> "$LOADER_CONF"
+    ok "added timeout 0 to $LOADER_CONF"
+  fi
+else
+  warn "$LOADER_CONF not found - is systemd-boot installed?"
+fi
+
+# =====================================================================
+head "5. TrueNAS fstab entry"
 if ! grep -qF " $TRUENAS_MNT " /etc/fstab 2>/dev/null; then
   mkdir -p "$TRUENAS_MNT"
   printf '%-40s %s  nfs  %s  0  0\n' "$TRUENAS_IP" "$TRUENAS_MNT" "$TRUENAS_OPTS" >> /etc/fstab
@@ -115,7 +131,7 @@ else
 fi
 
 # =====================================================================
-head "5. kernel cmdline (plymouth splash params)"
+head "6. kernel cmdline (plymouth splash params)"
 KCMDLINE="/etc/kernel/cmdline"
 if [[ ! -f "$KCMDLINE" ]]; then
   warn "no $KCMDLINE - systemd-boot cmdline file missing"
@@ -136,14 +152,14 @@ else
 fi
 
 # =====================================================================
-head "6. mkinitcpio.conf (plymouth in HOOKS)"
+head "7. mkinitcpio.conf (plymouth in HOOKS)"
 MI_CONF="/etc/mkinitcpio.conf"
 if [[ -f "$MI_CONF" ]]; then
   cp -a "$MI_CONF" "$MI_CONF.bak" 2>/dev/null || true
   if grep -qE '^HOOKS=\(.*plymouth' "$MI_CONF"; then
     ok "plymouth already in $MI_CONF"
   else
-    sed -i -E 's/^(HOOKS=\([^)]*) systemd/\1 plymouth systemd/; t; s/^(HOOKS=\([^)]*)\)/\1 plymouth)/' "$MI_CONF"
+    sed -i -E 's/^(HOOKS=\([^)]*) systemd)/\1 plymouth/; t; s/^(HOOKS=\([^)]*)\)/\1 plymouth)/' "$MI_CONF"
     if grep -qE '^HOOKS=\(.*plymouth' "$MI_CONF"; then
       ok "plymouth added to HOOKS"
     else
@@ -155,7 +171,7 @@ else
 fi
 
 # =====================================================================
-head "7. mkinitcpio presets (remove splash from options)"
+head "8. mkinitcpio presets (remove splash from options)"
 FOUND=0
 for p in /etc/mkinitcpio.d/*.preset; do
   [[ -f "$p" ]] || continue
@@ -170,7 +186,7 @@ done
 [[ $FOUND -eq 1 ]] || warn "no presets found in /etc/mkinitcpio.d"
 
 # =====================================================================
-head "8. Sync kernel images to /boot"
+head "9. Sync kernel images to /boot"
 for _preset in /etc/mkinitcpio.d/*.preset; do
   [[ -f "$_preset" ]] || continue
   _kver_line=$(grep -E '^ALL_kver=' "$_preset" | awk 'NR==1{print;exit}')
@@ -224,7 +240,7 @@ for _preset in /etc/mkinitcpio.d/*.preset; do
   fi
 done
 
-head "9. Regenerate initramfs / UKIs"
+head "10. Regenerate initramfs / UKIs"
 if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
   mkinitcpio -P && ok "mkinitcpio -P done" || fail "mkinitcpio -P failed"
 elif command -v dracut >/dev/null; then
@@ -234,7 +250,7 @@ else
 fi
 
 # =====================================================================
-head "10. CUPS printer ($PRINTER_NAME)"
+head "11. CUPS printer ($PRINTER_NAME)"
 if command -v lpadmin >/dev/null; then
   if lpstat -p "$PRINTER_NAME" >/dev/null 2>&1; then
     ok "printer already configured"
@@ -248,7 +264,7 @@ else
 fi
 
 # =====================================================================
-head "11. Secure Boot (sbctl)"
+head "12. Secure Boot (sbctl)"
 if command -v sbctl >/dev/null; then
   sbctl create-keys || fail "create-keys failed"
   UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
