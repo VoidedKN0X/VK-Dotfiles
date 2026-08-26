@@ -20,6 +20,7 @@ SCRIPTS=(
   "install-cachyos-repo.sh"
   "install-cachyos-kernel.sh"
   "post-install-automate.sh"
+  "fix-uki.sh"
   "Desktop-full-tune-universal.sh"
   "cachyos-compat.sh"
 )
@@ -28,6 +29,7 @@ LABELS=(
   "CachyOS Repository Setup"
   "CachyOS Kernel Install"
   "Post-Install Automation"
+  "Fix UKI Setup"
   "Desktop Performance Tuning"
   "CachyOS Compatibility Fixes"
 )

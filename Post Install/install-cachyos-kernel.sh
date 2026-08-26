@@ -178,6 +178,62 @@ else
   fail "pacman -S failed (see above)"; exit 1
 fi
 
+# ---------- sync vmlinuz to /boot if missing ----------
+head "Sync kernel images to /boot"
+for _preset in /etc/mkinitcpio.d/*.preset; do
+  [[ -f "$_preset" ]] || continue
+  _kver_line=$(grep -E '^ALL_kver=' "$_preset" | awk 'NR==1{print;exit}')
+  [[ -z "$_kver_line" ]] && continue
+  _kver="${_kver_line#ALL_kver=\"}"
+  _kver="${_kver%\"}"
+  _kver="${_kver#ALL_kver=}"
+  if [[ ! -f "$_kver" ]]; then
+    _name="$(basename "$_preset" .preset)"
+    _mod_dir=""
+    for _d in /usr/lib/modules/*/; do
+      [[ -f "${_d}pkgbase" ]] && [[ "$(cat "${_d}pkgbase")" == "$_name" ]] && { _mod_dir="$_d"; break; }
+    done
+    if [[ -z "$_mod_dir" ]]; then
+      _kname="${_name#linux-}"
+      _kname="${_kname#linux}"
+      [[ -z "$_kname" ]] && _kname=""
+      for _d in /usr/lib/modules/*/; do
+        _base="$(basename "$_d")"
+        if [[ -n "$_kname" ]] && [[ "$_base" == *"$_kname"* ]] && [[ -f "${_d}vmlinuz" ]]; then
+          _mod_dir="$_d"; break
+        fi
+      done
+    fi
+    if [[ -n "$_mod_dir" && -f "${_mod_dir}vmlinuz" ]]; then
+      cp "${_mod_dir}vmlinuz" "$_kver"
+      ok "copied $(basename "${_mod_dir}vmlinuz") -> $_kver"
+    else
+      warn "could not find vmlinuz for $_name in /usr/lib/modules/"
+    fi
+  else
+    ok "$_kver already present"
+  fi
+
+  # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
+  _uki_dir="/boot/EFI/Linux"
+  if [[ -d "$_uki_dir" ]]; then
+    for _uki_key in default_uki fallback_uki; do
+      _uki_line=$(grep -E "^${_uki_key}=" "$_preset" | awk 'NR==1{print;exit}')
+      [[ -z "$_uki_line" ]] && continue
+      _uki_val="${_uki_line#${_uki_key}=\"}"
+      _uki_val="${_uki_val%\"}"
+      _uki_val="${_uki_val#${_uki_key}=}"
+      _uki_parent="$(dirname "$_uki_val")"
+      if [[ ! -d "$_uki_parent" ]]; then
+        _uki_fname="$(basename "$_uki_val")"
+        _new_uki="${_uki_dir}/${_uki_fname}"
+        sed -i "s|^${_uki_key}=.*|${_uki_key}=\"${_new_uki}\"|" "$_preset"
+        ok "fixed ${_uki_key} in $(basename "$_preset"): $_uki_val -> $_new_uki"
+      fi
+    done
+  fi
+done
+
 # ---------- regenerate initramfs / UKIs ----------
 head "Regenerate initramfs / UKIs"
 if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
