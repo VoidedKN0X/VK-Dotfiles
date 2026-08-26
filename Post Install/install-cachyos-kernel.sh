@@ -221,11 +221,12 @@ head "Verification"
 NEW_VER="$(pacman -Q "$PKG_BASE" 2>/dev/null | awk '{print $2}')"
 ok "installed: $PKG_BASE ${NEW_VER:-?}"
 
-mapfile -t UKI_FILES < <(ls "$ESP"/EFI/Linux/${DEFAULT_MATCH}*.efi 2>/dev/null)
+mapfile -t UKI_FILES < <(ls "$ESP"/EFI/Linux/${DEFAULT_MATCH}*.efi "$ESP"/EFI/Linux/arch-${DEFAULT_MATCH}*.efi 2>/dev/null)
 if [[ ${#UKI_FILES[@]} -gt 0 ]]; then
   ok "UKI present: $(basename "${UKI_FILES[0]}")"
 else
-  fail "no UKI matching $DEFAULT_MATCH*.efi in $ESP/EFI/Linux"
+  warn "no UKI matching $DEFAULT_MATCH*.efi or arch-$DEFAULT_MATCH*.efi in $ESP/EFI/Linux"
+  warn "check mkinitcpio preset for correct default_uki path"
 fi
 
 if command -v bootctl >/dev/null; then

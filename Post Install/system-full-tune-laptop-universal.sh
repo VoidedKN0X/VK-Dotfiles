@@ -371,7 +371,7 @@ head "E. fstab noatime (REBOOT required)"
 # Auto-detect local filesystems from fstab (unless FILESYSTEM is set)
 if [[ -z "$FILESYSTEM" ]]; then
   _skip_fs='^(proc|sysfs|tmpfs|devtmpfs|devpts|devfs|cgroup[0-9]*|securityfs|debugfs|tracefs|pstore|bpf|autofs|hugetlbfs|mqueue|configfs|fusectl|efivarfs|binfmt_misc|rpc_pipefs|ramfs|overlay)$'
-  _skip_net='^(nfs[0-9]?|cifs|smb[0-9]?|sshfs|afs|9p|fuse\.sshfs|fuse\.portal)$'
+  _skip_net='^(nfs[0-9]?|cifs|smb[0-9]?|sshfs|afs|9p|fuse[.]sshfs|fuse[.]portal)$'
   FILESYSTEM=$(awk -v s="$_skip_fs" -v n="$_skip_net" \
     '!/^[[:space:]]*#/ && NF>=4 && $3 !~ s && $3 !~ n {print $3}' "$FSTAB" | sort -u | tr '\n' ' ')
   FILESYSTEM="${FILESYSTEM% }"
@@ -471,7 +471,16 @@ set_env() {
 }
 set_env MESA_NO_ERROR 1
 # RADV_PERFTEST=gpl is only meaningful on AMD GPUs (harmless elsewhere)
-if command -v lspci >/dev/null && lspci -nn 2>/dev/null | grep -qi '1002:'; then
+AMD_GPU=0
+if command -v lspci >/dev/null && lspci 2>/dev/null | grep -qiE '1002.*VGA|1002.*Display|VGA.*1002|Display.*1002'; then
+  AMD_GPU=1
+fi
+if [[ $AMD_GPU -eq 0 ]] && [[ -d /sys/class/drm ]]; then
+  for v in /sys/class/drm/card*/device/vendor; do
+    [[ -f "$v" ]] && grep -q '0x1002' "$v" 2>/dev/null && AMD_GPU=1 && break
+  done
+fi
+if [[ $AMD_GPU -eq 1 ]]; then
   set_env RADV_PERFTEST gpl
   ok "AMD GPU detected; RADV_PERFTEST=gpl and MESA_NO_ERROR=1 set in $ENV_FILE"
 else

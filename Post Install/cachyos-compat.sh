@@ -156,7 +156,7 @@ CC="$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)"
 check "qdisc = fq (got '$QDISK')" "$([[ "$QDISK" == "fq" ]]; echo $?)"
 check "tcp_congestion_control = bbr (got '$CC')" "$([[ "$CC" == "bbr" ]]; echo $?)"
 
-if grep -q bfq "$UDEV_FILE"; then
+if grep -v '^#' "$UDEV_FILE" | grep -q bfq; then
   check "udev rules contain no bfq" 1
 else
   check "udev rules contain no bfq" 0
@@ -171,12 +171,16 @@ fi
 # UKI carries the param (if a UKI exists)
 mapfile -t _UKIS < <(find /boot/EFI/Linux -maxdepth 1 -name '*.efi' -type f 2>/dev/null | sort)
 if [[ ${#_UKIS[@]} -gt 0 ]] && command -v objcopy >/dev/null; then
-  _UKI="$(ls -1t "${_UKIS[@]}" | head -1)"
-  _cmd="$(objcopy -O binary --only-section=.cmdline "$_UKI" /tmp/cachyos-uki-cmd-$$ 2>/dev/null && tr -d '\0' < /tmp/cachyos-uki-cmd-$$; rm -f /tmp/cachyos-uki-cmd-$$)"
-  if grep -qw -- "transparent_hugepage=madvise" <<<"$_cmd"; then
-    check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 0
+  _UKI="$(ls -1t "${_UKIS[@]}" 2>/dev/null | head -1)"
+  if [[ -n "$_UKI" && -f "$_UKI" ]]; then
+    _cmd="$(objcopy -O binary --only-section=.cmdline "$_UKI" /tmp/cachyos-uki-cmd-$$ 2>/dev/null && tr -d '\0' < /tmp/cachyos-uki-cmd-$$; rm -f /tmp/cachyos-uki-cmd-$$)"
+    if grep -qw -- "transparent_hugepage=madvise" <<<"$_cmd"; then
+      check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 0
+    else
+      check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 1
+    fi
   else
-    check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 1
+    warn "could not locate a valid UKI file"
   fi
 elif [[ ${#_UKIS[@]} -eq 0 ]]; then
   warn "no UKIs found yet - run install-cachyos-kernel.sh first, then re-run this script"

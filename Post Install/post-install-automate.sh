@@ -135,17 +135,16 @@ else
 fi
 
 # =====================================================================
-head "6. mkinitcpio.conf (plymouth in MODULES + HOOKS)"
+head "6. mkinitcpio.conf (plymouth in HOOKS)"
 MI_CONF="/etc/mkinitcpio.conf"
 if [[ -f "$MI_CONF" ]]; then
   cp -a "$MI_CONF" "$MI_CONF.bak" 2>/dev/null || true
-  if grep -q " plymouth" "$MI_CONF"; then
+  if grep -qE '^HOOKS=\(.*plymouth' "$MI_CONF"; then
     ok "plymouth already in $MI_CONF"
   else
-    sed -i -E 's/^(MODULES=\([^)]*)\)/\1 plymouth)/' "$MI_CONF"
     sed -i -E 's/^(HOOKS=\([^)]*) systemd/\1 plymouth systemd/; t; s/^(HOOKS=\([^)]*)\)/\1 plymouth)/' "$MI_CONF"
-    if grep -q " plymouth" "$MI_CONF"; then
-      ok "plymouth added to MODULES/HOOKS"
+    if grep -qE '^HOOKS=\(.*plymouth' "$MI_CONF"; then
+      ok "plymouth added to HOOKS"
     else
       fail "could not add plymouth to $MI_CONF - check manually"
     fi
@@ -160,8 +159,8 @@ FOUND=0
 for p in /etc/mkinitcpio.d/*.preset; do
   [[ -f "$p" ]] || continue
   FOUND=1
-  if grep -qE '(^|[[:space:]])splash([[:space:]]|$)' "$p"; then
-    sed -i -E 's/(^|[[:space:]])splash([[:space:]]|$)/ /g' "$p"
+  if grep -qE '(--)?splash' "$p"; then
+    sed -i -E 's/--?splash(=[^ ]*)?//g' "$p"
     ok "removed splash from $(basename "$p")"
   else
     ok "no splash in $(basename "$p")"
@@ -196,16 +195,20 @@ fi
 # =====================================================================
 head "10. Secure Boot (sbctl)"
 if command -v sbctl >/dev/null; then
-  if ! sbctl status | grep -q "Setup Mode"; then
-    ok "Secure Boot already enrolled"
+  sbctl create-keys || fail "create-keys failed"
+  UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
+  if [[ -n "$UNSIGNED" ]]; then
+    warn "signing unsigned files"
+    while IFS= read -r efi; do
+      [[ -f "$efi" ]] || continue
+      sbctl sign -s "$efi"
+    done <<< "$UNSIGNED"
+    ok "signed unsigned files"
   else
-    warn "enrolling keys and signing files"
-    sbctl create-keys || fail "create-keys failed"
-    sbctl enroll-keys -m || fail "enroll-keys failed"
-    sbctl sign-all || fail "sign-all failed"
-    sbctl verify || true
-    ok "sbctl keys enrolled and files signed"
+    ok "all files already signed"
   fi
+  sbctl enroll-keys -m || fail "enroll-keys failed"
+  sbctl verify || true
 else
   warn "sbctl not installed - install sbctl (sudo pacman -S sbctl)"
 fi
