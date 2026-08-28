@@ -7,6 +7,12 @@
     "host",
     "kernel",
     "uptime",
+        {
+    "type": "disk",
+    "key": "OS Age",
+    "folders": "/",
+    "format": "{create-time:10} ({days} days)"
+},
     "packages",
     "shell",
     "display",
