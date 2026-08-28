@@ -1,6 +1,9 @@
 # Install OhMyZSH
 - sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
 
+# Install OpenCode
+- curl -fsSL https://opencode.ai/install | bash
+
 # Configure Greetd
 - sudo nano /etc/greetd/config.toml (tuigreet --cmd start-hyprland)
 

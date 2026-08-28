@@ -56,7 +56,7 @@
         }
     },
     "network": {
-        "interface": "enp10s0",
+        "interface": "eno1",
         "format": "{ifname}",
         "format-wifi": "{essid} ",
         "format-ethernet": "",
