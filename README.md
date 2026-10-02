@@ -6,7 +6,7 @@ PLEASE DON'T USE MY INSTALL SCRIPTS FOR INSTALLING AS I DON'T KNOW HOW TO FULLY 
 
 If you come by these dotfiles and have some suggestions or improvements please let me know, thank you!
 
-I'll add the needed programs if you just want to copy the .config folder for personal use
+This Is still in progress, i switch between linux and windows a lot.
 
 CREDITS TO:
 - Elifouts https://github.com/elifouts/Dotfiles
