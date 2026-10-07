@@ -57,6 +57,7 @@
 # Set firewall rules
 - sudo ufw allow syncthing
 - sudo ufw allow 2021/udp
+- sudo ufw allow 9757
 
 # Install CachyOS repo
 - curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
