@@ -21,22 +21,24 @@ Everything is duplicated between the two on purpose, so each profile stays self-
 
 Post Install/
 ├── Post-Install.txt       # Manual post-install checklist (greetd, bootloader, yubikey, firewall, ...)
-├── run-all-desktop.sh     # DESKTOP: run every post-install step in order
-├── run-all-laptop.sh      # LAPTOP:  run every post-install step in order
-├── full-tune-desktop.sh   # DESKTOP: performance tune
-├── full-tune-laptop.sh    # LAPTOP:  performance tune
-├── run-all-common.sh      # Shared runner logic (sourced; do not run directly)
-├── full-tune-common.sh    # Shared tune logic (sourced; do not run directly)
-├── fix-uki.sh             # UKI / boot fixes
-├── cachyos-compat.sh      # CachyOS compatibility fixes
-└── install-cachyos-*.sh   # CachyOS kernel / repository helpers
+├── run-all-desktop.sh     # DESKTOP: full post-install pipeline
+├── run-all-laptop.sh      # LAPTOP:  full post-install pipeline
+└── run-all-common.sh      # Shared logic for both (sourced; do not run directly)
 ```
 
-The desktop/laptop split in the Post Install scripts is kept explicit: you run a plain,
-clearly-named script for your machine (`sudo ./run-all-desktop.sh` or `sudo ./run-all-laptop.sh`,
-no flags). The desktop and laptop scripts differ only in a few self-describing values
-(`PROFILE_NAME`, `LAPTOP_MODE`, `TUNE_NAME`); everything else is sourced from the matching
-`*-common.sh`, so fixes only need to be made once.
+The desktop/laptop split is kept explicit: you run a plain, clearly-named script for your
+machine (`sudo ./run-all-desktop.sh` or `sudo ./run-all-laptop.sh`, no flags). Both run the
+same single pipeline, in order:
+
+1. CachyOS repository setup
+2. CachyOS kernel install + systemd-boot default entry
+3. Fix/enable UKI and sign it with sbctl
+4. Performance tune (the desktop/laptop difference is only `vm.laptop_mode`: 0 vs 5)
+5. CachyOS-kernel compatibility overrides
+
+Everything lives in one shared file (`run-all-common.sh`); the two entry points differ only in
+a few self-describing values (`PROFILE_NAME`, `LAPTOP_MODE`, `TUNE_NAME`), so fixes only need
+to be made once.
 
 ## Notes
 
