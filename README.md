@@ -32,6 +32,11 @@ same single pipeline, in order:
 
 1. CachyOS repository setup
 2. CachyOS kernel install + systemd-boot default entry
+   - If an old kernel is still running, its removal is **deferred to the next boot**: the script
+     arms a one-shot systemd unit (`remove-old-kernel.service`) that waits until `linux-cachyos`
+     is actually running, removes the remaining old kernel(s), then deletes the unit, its config
+     (`/etc/remove-old-kernel.conf`, `/usr/local/bin/remove-old-kernel.sh`) — removed, not
+     just disabled. Nothing is removed if CachyOS hasn't booted yet.
 3. Fix/enable UKI and sign it with sbctl
 4. Performance tune (the desktop/laptop difference is only `vm.laptop_mode`: 0 vs 5)
 5. CachyOS-kernel compatibility overrides
