@@ -15,7 +15,7 @@
 # Stages (in order):
 #   1. CachyOS repository setup (official installer)
 #   2. CachyOS kernel install + systemd-boot default entry
-#   3. Fix/enable UKI + sign with sbctl
+#   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs)
 #   4. Performance tune (profile-specific: desktop/laptop)
 #   5. CachyOS-kernel compatibility overrides
 #
@@ -786,25 +786,55 @@ else
   die "mkinitcpio -P failed"
 fi
 
-# ---------- sign UKIs with sbctl ----------
-head "Signing UKIs with sbctl"
-if command -v sbctl >/dev/null; then
-  UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
-  if [[ -n "$UNSIGNED" ]]; then
-    warn "signing unsigned files"
-    while IFS= read -r efi; do
-      [[ -f "$efi" ]] || continue
-      sbctl sign -s "$efi"
-    done <<< "$UNSIGNED"
-    ok "signed unsigned files"
+# ---------- secure boot: install sbctl, create keys, enroll (-m), sign ----------
+head "Secure Boot setup (sbctl)"
+if ! command -v sbctl >/dev/null; then
+  warn "sbctl not installed - installing it now"
+  if pacman -S --needed --noconfirm sbctl; then
+    ok "installed sbctl"
   else
-    ok "all UKIs already signed"
+    die "failed to install sbctl"
   fi
-  sbctl verify || true
-else
-  warn "sbctl not installed - install sbctl (sudo pacman -S sbctl) and sign manually"
-  warn "  sbctl create-keys && sbctl sign -s $UKI_DIR/*.efi && sbctl enroll-keys -m"
 fi
+
+if [[ ! -d /var/lib/sbctl/keys ]]; then
+  head "Creating Secure Boot keys"
+  if sbctl create-keys; then
+    ok "created Secure Boot keys in /var/lib/sbctl/keys"
+  else
+    die "failed to create Secure Boot keys"
+  fi
+else
+  ok "Secure Boot keys already exist in /var/lib/sbctl/keys"
+fi
+
+SB_STATUS="$(sbctl status 2>/dev/null || true)"
+if grep -qi 'secure boot:.*enabled' <<< "$SB_STATUS" \
+   && grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
+  ok "Secure Boot already active with enrolled keys - skipping enrollment"
+else
+  head "Enrolling Secure Boot keys (Microsoft keys included via -m)"
+  if sbctl enroll-keys -m; then
+    ok "enrolled keys with Microsoft keys (-m)"
+    warn "a reboot may be required for the firmware to activate the keys"
+  else
+    die "failed to enroll Secure Boot keys (-m)"
+  fi
+fi
+
+head "Signing UKIs with sbctl"
+UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
+if [[ -n "$UNSIGNED" ]]; then
+  warn "signing unsigned files"
+  while IFS= read -r efi; do
+    [[ -f "$efi" ]] || continue
+    sbctl sign -s "$efi"
+  done <<< "$UNSIGNED"
+  ok "signed unsigned files"
+else
+  ok "all UKIs already signed"
+fi
+sbctl verify || true
 
 # ---------- verify ----------
 head "Verification"
@@ -828,9 +858,9 @@ fi
 
 head "DONE"
 cat <<EOF
-  UKI enabled and signed for all kernel presets.
+  UKI enabled; Secure Boot keys created and enrolled (with Microsoft keys, -m).
   Backup: $BACKUP_DIR/*.preset.$TS
-  REBOOT REQUIRED to boot from the new UKIs.
+  REBOOT REQUIRED to boot from the new UKIs and to finalize key enrollment.
 EOF
 # =====================================================================
 info 4 5 "Performance Tuning"

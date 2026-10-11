@@ -48,11 +48,9 @@
 - add printer using IP "ipp://192.168.1.60/ipp/print"
 
 # Secure Boot
-- sudo -i
-- sbctl create-keys
-- sbctl enroll-keys -m
-- sbctl verify
-- sbctl sign -s (verify)
+# Automated by run-all-common.sh stage 3: installs sbctl, creates keys if missing,
+# enrolls with -m (Microsoft keys), signs the UKIs. Only enrolls if not already locked down.
+- read: sbctl status / sbctl verify
 
 # Set firewall rules
 - sudo ufw allow syncthing
