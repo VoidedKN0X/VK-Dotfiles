@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# system-full-tune.sh
-# Comprehensive, self-verifying, reversible performance tune for:
-#   Arch Linux (kernel-agnostic: auto-detects kernel presets, users, filesystems)
-#   Hardware reference: AMD Ryzen 9 9950X3D, AMD RX 9070 XT
+# full-tune-common.sh
+# Comprehensive, self-verifying, reversible performance tune. This file holds
+# ALL the shared logic; it is sourced by the two clearly separated entry points:
+#
+#   full-tune-desktop.sh   -> vm.laptop_mode = 0
+#   full-tune-laptop.sh    -> vm.laptop_mode = 5
+#
+# Do not run this file directly. The profile scripts set PROFILE_NAME,
+# LAPTOP_MODE, TUNE_NAME (and optionally CPUFREQ_GOVERNOR) before sourcing it.
 #
 # Groups applied (all approved):
 #   A. sysctl + I/O (NVMe scheduler, swappiness, BBR, readahead, dirty pages)
@@ -11,7 +16,8 @@
 #   D. Enable: gamemoded, irqbalance, ananicy-cpp
 #   E. fstab noatime (REBOOT required)
 #   F. systemd-boot kernel cmdline: thp=madvise, split_lock_mitigate=0
-#      (REBOOT required, UKI regenerated)
+#      (REBOOT required, UKI regenerated). A cpufreq governor is only added
+#      when CPUFREQ_GOVERNOR is explicitly set.
 #   G. /etc/environment: RADV_PERFTEST=gpl, MESA_NO_ERROR=1 (LOGOUT required)
 #   H. Audio: HDA power-save off + rtkit install/enable (REBOOT required for HDA)
 #
@@ -24,17 +30,32 @@
 #   /etc/environment             (modified)
 #
 # Backup: /var/lib/perf-tune-backup/baseline.env (chmod 600)
-# Rollback: see final output, or run "system-full-tune.sh --rollback"
+# Rollback: see final output, or run the entry point with --rollback
+
+# === PROFILE (must be set by the sourcing entry point) ===
+if [[ -z "${PROFILE_NAME:-}" ]]; then
+  echo "Error: run full-tune-desktop.sh or full-tune-laptop.sh, not this file." >&2
+  exit 2
+fi
 
 set -uo pipefail
 
 # === USER CONFIG (edit only if auto-detection misbehaves) ===
 # Username to enable the gamemoded user service for.
-# Auto-detected from SUDO_USER/LOGNAME if left empty.
-INSTALL_USER=""
+# Auto-detected from SUDO_USER/logname/USER if left empty.
+INSTALL_USER="${INSTALL_USER:-}"
 # Filesystems to convert relatime->noatime in fstab (space-separated list).
 # Auto-detected from fstab (local, non-pseudo fs) if left empty.
 FILESYSTEM=""
+
+# === PROFILE CONFIG (set by the sourcing entry point) ===
+# LAPTOP_MODE      : vm.laptop_mode value (0 on desktop, 5 on laptop)
+# CPUFREQ_GOVERNOR : optional kernel-cmdline default governor. Empty by default;
+#                    auto-cpufreq manages the governor at runtime.
+# TUNE_NAME        : name stamped into generated config files
+LAPTOP_MODE="${LAPTOP_MODE:-0}"
+CPUFREQ_GOVERNOR="${CPUFREQ_GOVERNOR:-}"
+TUNE_NAME="${TUNE_NAME:-full-tune-${PROFILE_NAME}.sh}"
 
 CONF_DIR="/etc/sysctl.d"
 UDEV_DIR="/etc/udev/rules.d"
@@ -78,6 +99,24 @@ fail() { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; FAIL=$((FAIL+1)); WARNINGS+
 warn() { printf '%s[!]%s %s\n' "$C_W" "$C_0" "$*"; }
 head() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
 
+# === AUTO-DETECT non-root user (for gamemoded user service) ===
+# Priority: explicit INSTALL_USER override > SUDO_USER > logname > $USER
+detect_user() {
+  if [[ -n "$INSTALL_USER" ]]; then
+    echo "$INSTALL_USER"
+    return
+  fi
+  local u
+  u="${SUDO_USER:-}"
+  [[ -z "$u" ]] && u="$(logname 2>/dev/null || true)"
+  [[ -z "$u" ]] && u="${USER:-}"
+  # Fall back to the first human (UID >= 1000) account if we still have nothing
+  if [[ -z "$u" || "$u" == "root" ]]; then
+    u="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1; exit}' /etc/passwd)"
+  fi
+  echo "$u"
+}
+
 # --------------- root -----------------------------------------------------
 require_root() {
   if [[ $EUID -ne 0 ]]; then
@@ -87,12 +126,21 @@ require_root() {
 }
 require_root "$@"
 
+# === ARG PARSING (only --rollback; the profile comes from the entry point) ===
+ROLLBACK=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --rollback) ROLLBACK=1; shift ;;
+    *) echo "Unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+
 # Auto-detect the tuning target user (override with INSTALL_USER=...)
-INSTALL_USER="${INSTALL_USER:-${SUDO_USER:-${LOGNAME:-${USER:-}}}}"
+INSTALL_USER="$(detect_user)"
 [[ -n "$INSTALL_USER" ]] || warn "no non-root user detected for gamemoded (set INSTALL_USER)"
 
 # --------------- rollback mode --------------------------------------------
-if [[ "${1:-}" == "--rollback" ]]; then
+if [[ $ROLLBACK -eq 1 ]]; then
   head "Rollback"
   LATEST="$(ls -1t "$BACKUP_DIR"/baseline-*.env 2>/dev/null | head -1)"
   if [[ -z "$LATEST" ]]; then
@@ -112,7 +160,7 @@ if [[ "${1:-}" == "--rollback" ]]; then
   [[ -n "${SYSCTL_net_ipv4_tcp_fastopen:-}" ]] && sysctl -w net.ipv4.tcp_fastopen="$SYSCTL_net_ipv4_tcp_fastopen" >/dev/null
   # B extras
   for k in net.core.netdev_max_backlog net.ipv4.tcp_max_syn_backlog \
-           net.core.rmem_max net.core.wmem_max; do
+           net.core.rmem_max net.core.wmem_max vm.laptop_mode; do
     v=$(sysctl -n "$k")
     echo "Note: $k was set to $v during this run; manually set it back if needed"
   done
@@ -136,7 +184,7 @@ mkdir -p "$BACKUP_DIR"
 head "0. Baseline snapshot"
 {
   echo "# Baseline captured $(date -Iseconds)"
-  for k in vm.swappiness vm.dirty_ratio vm.dirty_background_ratio \
+  for k in vm.swappiness vm.dirty_ratio vm.dirty_background_ratio vm.laptop_mode \
            net.core.default_qdisc net.ipv4.tcp_congestion_control \
            net.ipv4.tcp_fastopen \
            net.core.netdev_max_backlog net.ipv4.tcp_max_syn_backlog \
@@ -165,14 +213,14 @@ head "A. sysctl + I/O"
 
 # A.1 sysctl config
 SYSCTL_FILE="$CONF_DIR/99-perf-tune.conf"
-cat > "$SYSCTL_FILE" <<'EOF'
-# Generated by system-full-tune.sh
+cat > "$SYSCTL_FILE" <<EOF
+# Generated by ${TUNE_NAME}
 # VM
 vm.swappiness = 10
 vm.dirty_ratio = 10
 vm.dirty_background_ratio = 5
 # I/O
-vm.laptop_mode = 0
+vm.laptop_mode = ${LAPTOP_MODE}
 # Network
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
@@ -214,7 +262,7 @@ fi
 
 UDEV_FILE="$UDEV_DIR/60-ioschedulers.rules"
 {
-  printf '# Generated by system-full-tune.sh\n'
+  printf '# Generated by %s\n' "${TUNE_NAME}"
   printf '# NVMe (multi-queue) -> none scheduler, 256 KiB readahead\n'
   printf 'ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none", ATTR{queue/read_ahead_kb}="256"\n'
   if [[ -n "$HDD_SCHED" ]]; then
@@ -366,6 +414,10 @@ rm -f "$TMP"
 head "F. Kernel cmdline (REBOOT required)"
 
 NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
+# Only add cpufreq.default_governor= to the cmdline if a value is set.
+# On laptops auto-cpufreq manages the governor at runtime, so the kernel-cmdline
+# default is usually omitted.
+[[ -n "$CPUFREQ_GOVERNOR" ]] && NEW_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
 
 # systemd-boot: the kernel cmdline lives in /etc/kernel/cmdline
 if [[ ! -f "$KCMDLINE" ]]; then
@@ -394,7 +446,7 @@ else
       chmod 600 "$BACKUP_DIR/$(basename "$_u").$TS"
     done
 
-    # Regenerate images for ALL detected kernels, not just a hardcoded one.
+    # Regenerate images for ALL detected kernels, not a hardcoded one.
     if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
       if mkinitcpio -P >/dev/null 2>&1; then
         ok "mkinitcpio regenerated images for all presets"
@@ -457,14 +509,15 @@ fi
 head "H. Audio (HDA power-save + rtkit) (REBOOT required for HDA)"
 
 # H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume
+# Kept for laptop use too: relevant when hooked up to an external HDMI/DP output.
 HDA_CONF="/etc/modprobe.d/audio-disable-power-save.conf"
 if [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
   ok "HDA power-save config already present"
 else
   sudo tee "$HDA_CONF" > /dev/null <<'EOF'
 # Disable HDA codec power-saving - prevents HDMI audio crackling/popping
-# Zen kernel defaults power_save=10 which makes the HDA codec enter D3
-# after 10s of silence. On HDMI this produces an audible pop on resume.
+# Default power_save=10 lets the HDA codec enter D3 after 10s of silence,
+# which can produce an audible pop on resume from HDMI/DP outputs.
 options snd_hda_intel power_save=0
 options snd_hda_intel power_save_controller=N
 EOF
@@ -535,6 +588,7 @@ v_check() {
 v_check "vm.swappiness"        "10"          "$(sysctl -n vm.swappiness)"
 v_check "vm.dirty_ratio"       "10"          "$(sysctl -n vm.dirty_ratio)"
 v_check "vm.dirty_background_ratio" "5"      "$(sysctl -n vm.dirty_background_ratio)"
+v_check "vm.laptop_mode"       "$LAPTOP_MODE" "$(sysctl -n vm.laptop_mode)"
 v_check "tcp_congestion_control" "bbr"       "$(sysctl -n net.ipv4.tcp_congestion_control)"
 v_check "default_qdisc"        "fq"          "$(sysctl -n net.core.default_qdisc)"
 v_check "tcp_fastopen"         "3"           "$(sysctl -n net.ipv4.tcp_fastopen)"
@@ -617,8 +671,10 @@ fi
 # Kernel cmdline (systemd-boot)
 gline=""
 [[ -f "$KCMDLINE" ]] && gline=$(cat "$KCMDLINE")
-for p in transparent_hugepage=madvise split_lock_mitigate=0; do
-    if grep -qw -- "$p" <<<"$gline"; then
+VERIFY_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
+[[ -n "$CPUFREQ_GOVERNOR" ]] && VERIFY_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
+for p in "${VERIFY_PARAMS[@]}"; do
+  if grep -qw -- "$p" <<<"$gline"; then
     ok "kernel cmdline: $p present"
   else
     fail "kernel cmdline: $p missing"
@@ -628,8 +684,8 @@ done
 # UKI: verify cmdline section contains the new params
 if [[ -n "$UKI" && -f "$UKI" ]] && command -v objcopy >/dev/null; then
   uki_cmd=$(objcopy -O binary --only-section=.cmdline "$UKI" /tmp/uki-cmdline-$$ 2>/dev/null && tr -d '\0' < /tmp/uki-cmdline-$$; rm -f /tmp/uki-cmdline-$$)
-for p in transparent_hugepage=madvise split_lock_mitigate=0; do
-      if grep -qw -- "$p" <<<"$uki_cmd"; then
+  for p in "${VERIFY_PARAMS[@]}"; do
+    if grep -qw -- "$p" <<<"$uki_cmd"; then
       ok "UKI: $p present"
     else
       fail "UKI: $p missing (rebuild UKI or will be inert until then)"
@@ -701,7 +757,7 @@ Baseline backup:
   $BACKUP_DIR/environment.$TS
 
 ACTION REQUIRED (won't take effect until you do):
-  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock)
+  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq)
                    + HDA power-save (snd_hda_intel module reload)
   2. REBOOT     - same reboot picks up new modules-load and udev rules
   3. LOGOUT     - for RADV_PERFTEST and MESA_NO_ERROR to load

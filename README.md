@@ -21,10 +21,22 @@ Everything is duplicated between the two on purpose, so each profile stays self-
 
 Post Install/
 ├── Post-Install.txt       # Manual post-install checklist (greetd, bootloader, yubikey, firewall, ...)
-├── run-all-*.sh           # Run-orchestrator per profile
-├── *-full-tune-*.sh       # Performance tuning scripts
+├── run-all-desktop.sh     # DESKTOP: run every post-install step in order
+├── run-all-laptop.sh      # LAPTOP:  run every post-install step in order
+├── full-tune-desktop.sh   # DESKTOP: performance tune
+├── full-tune-laptop.sh    # LAPTOP:  performance tune
+├── run-all-common.sh      # Shared runner logic (sourced; do not run directly)
+├── full-tune-common.sh    # Shared tune logic (sourced; do not run directly)
+├── fix-uki.sh             # UKI / boot fixes
+├── cachyos-compat.sh      # CachyOS compatibility fixes
 └── install-cachyos-*.sh   # CachyOS kernel / repository helpers
 ```
+
+The desktop/laptop split in the Post Install scripts is kept explicit: you run a plain,
+clearly-named script for your machine (`sudo ./run-all-desktop.sh` or `sudo ./run-all-laptop.sh`,
+no flags). The desktop and laptop scripts differ only in a few self-describing values
+(`PROFILE_NAME`, `LAPTOP_MODE`, `TUNE_NAME`); everything else is sourced from the matching
+`*-common.sh`, so fixes only need to be made once.
 
 ## Notes
 
@@ -41,6 +53,8 @@ Post Install/
 1. `git clone https://github.com/VoidedKN0X/VK-Dotfiles`
 2. Read the `Install.sh` of the profile you want, then run it from your home directory.
 3. Finish the manual steps in `Post Install/Post-Install.txt`.
+4. (Optional) Apply the kernel + performance tuning with `sudo "Post Install/run-all-desktop.sh"`
+   or `sudo "Post Install/run-all-laptop.sh"`.
 
 ## Credits
 
