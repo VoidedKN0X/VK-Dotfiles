@@ -16,15 +16,16 @@ and YubiKey login.
 > [Things to change for your setup](#things-to-change-for-your-setup)). Don't run them blindly on
 > a machine you care about.
 
-## Two profiles
+## Three profiles
 
-The repo has **two independent profiles**. Everything is duplicated on purpose, so each profile
+The repo has **three independent profiles**. Everything is duplicated on purpose, so each profile
 stays self-contained and works on its own.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects, AMD GPU |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
+| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, touchscreen gestures, on-screen keyboard, automatic brightness from the light sensor, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
 
@@ -56,7 +57,7 @@ Run the one for your profile as your **normal user** (not with `sudo`; it asks f
 when needed). It works from any directory.
 
 ```sh
-"VK-Dotfiles/Desktop/Install.sh"        # or "VK-Dotfiles/Asus Laptop/Install.sh"
+"VK-Dotfiles/Desktop/Install.sh"        # or "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
 ```
 
 It does the following:
@@ -73,7 +74,7 @@ It does the following:
 ### 2. `run-all-<profile>.sh`: kernel, boot and tuning (optional)
 
 ```sh
-sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh
+sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh / run-all-steamdeck.sh
 ```
 
 Then **reboot**. It runs these stages in order:
@@ -94,8 +95,14 @@ Then **reboot**. It runs these stages in order:
    `vm.laptop_mode` (0 vs 5).
 5. **Check:** verifies everything the CachyOS kernels need is in place.
 
-All kernel and boot changes are made before the images are built, so they're only built once. Both
+All kernel and boot changes are made before the images are built, so they're only built once. The
 entry scripts share their logic in `run-all-common.sh`, so a fix only has to be made once.
+
+`run-all-steamdeck.sh` differs in three ways: it installs **`linux-cachyos-deckify`** (the CachyOS
+handheld kernel, the only one with the Steam Deck's fan/sensor, embedded-controller and USB-C dock
+drivers), it **skips Secure Boot** (the Deck's firmware has no Secure Boot switch, so enrolled keys
+can't simply be turned off again), and it adds Valve's **fan control** and **BIOS updates** (see
+[Steam Deck](#steam-deck-tablet)).
 
 ### 3. `yubikey-setup.sh`: YubiKey login and disk unlock (optional)
 
@@ -143,6 +150,49 @@ Your password and LUKS passphrase always keep working as a fallback.
 | Media keys, brightness keys *(laptop)* | Play/pause, next/previous, screen brightness |
 | 3-finger swipe *(laptop)* | Switch workspace |
 
+## Steam Deck (tablet)
+
+The `Steam Deck/` profile turns an LCD Steam Deck without its controllers into a Hyprland tablet.
+It's based on the laptop profile.
+
+**Touchscreen gestures** (via [lisgd](https://git.sr.ht/~mil/lisgd)):
+
+| Gesture | Action |
+| --- | --- |
+| Swipe up from the bottom edge | On-screen keyboard |
+| Swipe down from the top edge | Notification center |
+| Swipe right from the left edge | App launcher |
+| 3 fingers left / right | Next / previous workspace |
+| 3 fingers up | Fullscreen on/off |
+| 3 fingers down | Close the window |
+
+- **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) pops up
+  by itself when you tap a text field in most apps (GTK, Qt, Firefox/LibreWolf, foot). For apps
+  that don't support that (Steam and other X11 apps, some Electron apps), use the swipe-up
+  gesture.
+- **Power button:** a short press puts the Deck to sleep, like SteamOS.
+- **Login and lock:** logs in automatically at boot. The screen is **not locked automatically**
+  (like SteamOS), because the on-screen keyboard can't appear on a lock screen. With a keyboard or
+  a plugged-in YubiKey you can still lock by hand: hyprlock accepts a YubiKey touch without a
+  keyboard.
+- **Disk unlock:** on the Deck, `yubikey-setup.sh` enrolls your YubiKey for LUKS **without a PIN**
+  (plug it in and touch it at boot), since there's no keyboard before the desktop starts. It can
+  also replace older enrollments that needed a PIN. Desktop and laptop keep the PIN.
+- **Brightness:** [wluma](https://github.com/max-baz/wluma) sets it automatically from the light
+  sensor and learns your preference whenever you change it with the slider in the notification
+  center.
+- **Fan:** Valve's own fan curve (`jupiter-fan-control`).
+- **BIOS updates:** checked 2 minutes after boot and every hour. With the charger connected (and
+  at least 20% battery) a new BIOS is **prepared automatically but never installed with a forced
+  reboot**: it installs the next time you restart. Notifications tell you when an update is
+  available, ready, installed, or needs you. Status: `cat /var/lib/steamdeck-bios-update/status`.
+- **Speakers:** work out of the box with the regular Arch audio packages. Valve's speaker tuning
+  for the LCD model is already part of Arch's audio config.
+
+After the first boot, test the gestures once. If a swipe goes the wrong way, change `ROTATION=3`
+to `1` in `~/.config/hypr/scripts/touch-gestures.sh`. `touch-gestures.sh --debug` prints every
+gesture it sees.
+
 ## Wallpaper and colors
 
 Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick one with
@@ -174,12 +224,14 @@ If you're not me, look at these before running anything:
 - **`waybar/config.jsonc`:** the network interface name (`eno1` / `wlp2s0`) and, on the desktop,
   the CPU temperature sensor (also set in `btop/btop.conf`).
 - **`hypr/hypridle.conf` (laptop):** the keyboard backlight device is `asus::kbd_backlight`.
+- **Steam Deck:** `Post Install/run-all-steamdeck.sh` only installs the Valve packages on an LCD
+  Steam Deck (board "Valve Jupiter"); on anything else it skips them.
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.
 
 ## Structure
 
 ```
-<profile>/                 # Desktop/ or Asus Laptop/
+<profile>/                 # Desktop/, Asus Laptop/ or Steam Deck/
 ├── .config/               # Hyprland, waybar, swaync, rofi, wallust, foot, btop, fastfetch, ...
 ├── .zshrc                 # Shell config
 └── Install.sh             # Apps, services, shell, login screen, printer, firewall, copies the configs
@@ -188,6 +240,8 @@ Post Install/
 ├── Post-Install.txt       # Run order + the few steps that are still manual
 ├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
+├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
+├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
 ├── run-all-common.sh      # Shared logic for both (used by the two scripts above; don't run it directly)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```

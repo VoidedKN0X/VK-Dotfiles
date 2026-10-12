@@ -3,9 +3,10 @@
 #    Also sets up: Oh My Zsh (+ zsh as login shell), OpenCode, greetd/tuigreet,
 #    the TrueNAS fstab entry, the Canon printer and the ufw firewall rules
 #    (Syncthing, LocalSend, OrcaSlicer, WiVRn on the desktop).
-# 2. sudo "Post Install/run-all-desktop.sh"  (or run-all-laptop.sh), then reboot
+# 2. sudo "Post Install/run-all-desktop.sh"  (or run-all-laptop.sh / run-all-steamdeck.sh), then reboot
 #    Also sets up: Plymouth (kernel parameters + mkinitcpio hook) and the
 #    systemd-boot menu timeout (0 - hold Space at boot to see the menu).
+#    Steam Deck: deckify kernel, Valve fan control + BIOS updates, no Secure Boot.
 # 3. sudo "Post Install/yubikey-setup.sh"  (with your YubiKey(s) at hand)
 #    Registers your keys, accepts them for sudo/greetd/hyprlock/logins
 #    (pam_u2f in /etc/pam.d/system-auth) and enrolls them for the LUKS disk.
