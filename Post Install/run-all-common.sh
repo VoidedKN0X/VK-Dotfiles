@@ -10,7 +10,12 @@
 #     run-all-desktop.sh   ->  sudo ./run-all-desktop.sh
 #     run-all-laptop.sh    ->  sudo ./run-all-laptop.sh
 # Do not run this file directly. The entry point sets PROFILE_NAME, LAPTOP_MODE,
-# CPUFREQ_GOVERNOR and TUNE_NAME before sourcing it.
+# CPUFREQ_GOVERNOR and TUNE_NAME before sourcing it. Optional, per device:
+#   KERNEL_FLAVOR  CachyOS kernel flavor ("" = linux-cachyos, "deckify" = the
+#                  handheld kernel with the Steam Deck drivers)
+#   SECURE_BOOT    1 (default) = set up Secure Boot in stage 3, 0 = skip it
+#   device_setup() a function; if defined, it runs in stage 2 right after the
+#                  kernel install (used by run-all-steamdeck.sh)
 #
 # Stages (in order):
 #   1. CachyOS repository setup (official installer)
@@ -72,6 +77,8 @@ FILESYSTEM=""
 LAPTOP_MODE="${LAPTOP_MODE:-0}"
 CPUFREQ_GOVERNOR="${CPUFREQ_GOVERNOR:-}"
 TUNE_NAME="${TUNE_NAME:-run-all-${PROFILE_NAME}.sh}"
+KERNEL_FLAVOR="${KERNEL_FLAVOR:-}"
+SECURE_BOOT="${SECURE_BOOT:-1}"
 
 CONF_DIR="/etc/sysctl.d"
 UDEV_DIR="/etc/udev/rules.d"
@@ -352,7 +359,7 @@ fi
 # =====================================================================
 info 2 5 "CachyOS Kernel Install"
 
-FLAVOR=""
+FLAVOR="$KERNEL_FLAVOR"
 INSTALL_HEADERS=1
 YES=0
 PKG_BASE="linux-cachyos"
@@ -453,6 +460,12 @@ if pacman -S "${PACOPTS[@]}" "${INSTALL[@]}"; then
   ok "install transaction completed"
 else
   fail "pacman -S failed (see above)"; exit 1
+fi
+
+# ---------- device-specific setup (e.g. Steam Deck hardware support) ----------
+if declare -F device_setup >/dev/null; then
+  section "Device support ($PROFILE_NAME)"
+  device_setup
 fi
 
 # ---------- sync vmlinuz to /boot if missing ----------
@@ -798,7 +811,9 @@ fi
 
 # ---------- secure boot: create keys, enroll (-m), sign (sbctl installed by Install.sh) ----------
 section "Secure Boot setup (sbctl)"
-if ! command -v sbctl >/dev/null; then
+if [[ "$SECURE_BOOT" != "1" ]]; then
+  warn "Secure Boot skipped for this profile ($PROFILE_NAME)"
+elif ! command -v sbctl >/dev/null; then
   warn "sbctl not installed (Install.sh installs it) - skipping Secure Boot setup"
 else
   if [[ ! -d /var/lib/sbctl/keys ]]; then
@@ -882,10 +897,17 @@ if command -v bootctl >/dev/null; then
 fi
 
 section "DONE"
-cat <<EOF
+if [[ "$SECURE_BOOT" == "1" ]]; then
+  cat <<EOF
   UKI enabled; Secure Boot keys ensured and enrolled with -m (when sbctl is present).
   REBOOT REQUIRED to boot from the new UKIs and to finalize key enrollment.
 EOF
+else
+  cat <<EOF
+  UKI enabled; Secure Boot skipped for this profile.
+  REBOOT REQUIRED to boot from the new UKIs.
+EOF
+fi
 # =====================================================================
 info 4 5 "Performance Tuning"
 

@@ -294,9 +294,24 @@ enable_fido2_at_boot() {
   warn "no rd.luks.name=/rd.luks.uuid= in /etc/kernel/cmdline) - add fido2-device=auto by hand"
 }
 
+# On the Steam Deck (a tablet without keyboard) the key is enrolled WITHOUT a
+# PIN: at boot you only plug it in and touch it, because there's no way to type
+# a PIN before the desktop (and its on-screen keyboard) has started.
+is_steamdeck() {
+  [[ "$(cat /sys/class/dmi/id/board_vendor 2>/dev/null) $(cat /sys/class/dmi/id/board_name 2>/dev/null)" == "Valve Jupiter" ]]
+}
+
 setup_luks() {
-  local dev enrolled=0
-  local -a devs
+  local dev enrolled=0 existing replace_old pin_opt pin_text
+  local -a devs extra
+
+  if is_steamdeck; then
+    pin_opt=no
+    pin_text="your LUKS passphrase, then a touch (no PIN on the Steam Deck)"
+  else
+    pin_opt=yes
+    pin_text="your LUKS passphrase, the key PIN (if set), then a touch"
+  fi
 
   section "3. Unlock the LUKS disk with the YubiKey"
   mapfile -t devs < <(lsblk -rpno NAME,FSTYPE | awk '$2 == "crypto_LUKS" { print $1 }')
@@ -308,12 +323,27 @@ setup_luks() {
   for dev in "${devs[@]}"; do
     echo
     lsblk -no NAME,SIZE,FSTYPE,UUID "$dev" | head -1 | sed 's/^/  /'
-    echo "  Already enrolled FIDO2 keys: $(systemd-cryptenroll "$dev" 2>/dev/null | grep -c fido2)"
+    existing="$(systemd-cryptenroll "$dev" 2>/dev/null | grep -c fido2)"
+    echo "  Already enrolled FIDO2 keys: $existing"
     ask "Enroll a YubiKey for $dev?" || continue
+
+    # Old enrollments may need a PIN (on the Deck there's no keyboard at boot to
+    # type it). Replacing them is safe: systemd-cryptenroll only removes the old
+    # FIDO2 slots after the new key was enrolled successfully, never the new one,
+    # and your LUKS passphrase is not touched.
+    replace_old=0
+    if [[ $existing -gt 0 ]] && ask "Replace the $existing existing FIDO2 enrollment(s) with the new key(s)?"; then
+      replace_old=1
+    fi
+
     while :; do
-      echo "Plug in ONE key. You'll be asked for the LUKS passphrase, the key PIN (if set), then a touch."
-      if systemd-cryptenroll --fido2-device=auto "$dev"; then
-        ok "key enrolled for $dev"
+      echo "Plug in ONE key. You'll be asked for $pin_text."
+      extra=()
+      # only on the first new key: on later keys it would also remove the ones just added
+      [[ $replace_old -eq 1 && $enrolled -eq 0 ]] && extra=(--wipe-slot=fido2)
+      if systemd-cryptenroll --fido2-device=auto --fido2-with-client-pin="$pin_opt" "${extra[@]}" "$dev"; then
+        ok "key enrolled for $dev (PIN required: $pin_opt)"
+        [[ ${#extra[@]} -gt 0 ]] && ok "old FIDO2 enrollments removed"
         enrolled=1
       else
         fail "enrollment failed for $dev"
