@@ -1,0 +1,107 @@
+#!/bin/bash
+# steamdeck-bios-update
+# Automatic Steam Deck BIOS updates, WITHOUT the automatic reboot.
+#
+# Valve's `jupiter-biosupdate --auto` (what SteamOS runs at boot) flashes and
+# then reboots straight away. Run without --auto it passes the flasher's -N
+# ("no reboot") flag instead: the update is prepared and installs on the next
+# restart. This wrapper does that, keeping the safety rules of auto mode:
+#   - only versions Valve marks as safe for automatic updates (others are
+#     reported as "manual")
+#   - charger connected and battery at 20% or more
+#   - at most one attempt per BIOS version per 24 hours
+#
+# It writes what it found to /var/lib/steamdeck-bios-update/ (readable by
+# everyone); ~/.config/hypr/scripts/bios-update-notify.sh turns that into
+# notifications. Runs from steamdeck-bios-update.timer: 2 min after boot, then hourly.
+
+set -uo pipefail
+
+DIR=/var/lib/steamdeck-bios-update
+mkdir -p "$DIR"
+chmod 755 "$DIR"
+
+current="$(cat /sys/class/dmi/id/bios_version 2>/dev/null || true)"
+
+log() { echo "[steamdeck-bios-update] $*"; }
+
+# write_status <state> [target]
+write_status() {
+  {
+    echo "STATE=$1"
+    echo "CURRENT=$current"
+    echo "TARGET=${2:-}"
+    echo "TIME=$(date -Is)"
+  } > "$DIR/status.tmp" && chmod 644 "$DIR/status.tmp" && mv "$DIR/status.tmp" "$DIR/status"
+  log "state=$1 current=$current target=${2:-none}"
+}
+
+if [[ -z "$current" ]]; then
+  log "can't read the BIOS version"; exit 1
+fi
+
+# --- 1. Did a prepared update get installed during the last restart? ---
+last_seen="$(cat "$DIR/last-version" 2>/dev/null || true)"
+if [[ -n "$last_seen" && "$last_seen" != "$current" ]]; then
+  printf 'FROM=%s\nTO=%s\nTIME=%s\n' "$last_seen" "$current" "$(date -Is)" > "$DIR/last-update"
+  chmod 644 "$DIR/last-update"
+  rm -f "$DIR/staged"
+  log "BIOS changed: $last_seen -> $current"
+fi
+echo "$current" > "$DIR/last-version"
+
+# --- 2. Is there an update for this BIOS? ---
+check_out="$(jupiter-biosupdate check 2>&1)"; rc=$?
+if [[ $rc -eq 0 ]]; then
+  rm -f "$DIR/staged"
+  write_status up-to-date; exit 0
+elif [[ $rc -ne 7 ]]; then
+  log "$check_out"
+  write_status failed; exit 1
+fi
+target="$(sed -n 's/^BIOS //p' <<<"$check_out" | tail -1)"
+
+# Already prepared (installs on the next restart)? Then there's nothing to do.
+if [[ "$(cat "$DIR/staged" 2>/dev/null)" == "$target" ]]; then
+  write_status staged "$target"; exit 0
+fi
+
+# Does Valve allow this update to be installed automatically?
+auto_out="$(jupiter-biosupdate --auto check 2>&1)"; auto_rc=$?
+if [[ $auto_rc -ne 7 ]]; then
+  log "$auto_out"
+  write_status manual "$target"; exit 0
+fi
+
+# --- 3. Safety checks ---
+on_ac=0
+for ps in /sys/class/power_supply/*; do
+  if [[ "$(cat "$ps/type" 2>/dev/null)" == "Mains" && "$(cat "$ps/online" 2>/dev/null)" == "1" ]]; then
+    on_ac=1
+  fi
+done
+if [[ $on_ac -ne 1 ]]; then
+  write_status needs-ac "$target"; exit 0
+fi
+battery="$(cat /sys/class/power_supply/BAT1/capacity 2>/dev/null || echo 0)"
+if (( battery < 20 )); then
+  write_status low-battery "$target"; exit 0
+fi
+
+attempt_file="$DIR/attempt-$target"
+now="$(date +%s)"
+last_attempt="$(cat "$attempt_file" 2>/dev/null || echo 0)"
+if (( now < last_attempt + 86400 )); then
+  log "already tried $target in the last 24 hours"
+  write_status failed "$target"; exit 0
+fi
+echo "$now" > "$attempt_file"
+
+# --- 4. Prepare the update (no --auto = no reboot) ---
+log "preparing BIOS $target (installs on the next restart)"
+if jupiter-biosupdate; then
+  echo "$target" > "$DIR/staged"
+  write_status staged "$target"
+else
+  write_status failed "$target"; exit 1
+fi

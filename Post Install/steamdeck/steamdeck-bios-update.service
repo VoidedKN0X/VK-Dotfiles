@@ -1,0 +1,9 @@
+[Unit]
+Description=Steam Deck BIOS update check (prepares updates, never reboots)
+ConditionPathExists=/usr/bin/jupiter-biosupdate
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/steamdeck-bios-update
+# writing the update can take a few minutes
+TimeoutStartSec=10min
