@@ -49,10 +49,13 @@ to be made once.
 
 ## Notes
 
-- Wallpaper colors are generated with [wallust](https://wallust.codeberg.page/); the outputs it writes
-  (`hypr/colors/`, `rofi/colors/`, `swaync/colors/`, `waybar/colors/`, `foot/colors-dark.ini`) are
-  generated files and are **not tracked** — they appear after the first wallpaper is applied
-  (`~/.config/hypr/scripts/wallpaper.sh`).
+- Wallpaper colors are generated with [wallust](https://wallust.codeberg.page/) via
+  `~/.config/hypr/scripts/wallpaper.sh`. The core outputs (`hypr/colors/colors.lua`,
+  `hypr/hyprland/border-colors.lua`, `rofi/colors/colors.rasi`, `swaync/colors/colors.css`,
+  `waybar/colors/colors.css`) are tracked as working defaults so a fresh clone loads before the
+  first wallpaper is applied — wallust simply overwrites them once you set one. The remaining
+  generated outputs (`hypr/colors/hyprlock-colors.conf`, `hypr/colors/current-wallpaper.conf`,
+  `foot/colors-dark.ini`) stay untracked.
 - ⚠️ **The install scripts are personal and only partially automated.** I do not fully automate the
   install yet. Read every script before running it — they install my packages, enable services and
   copy configs into your home directory. Don't run them blindly on a machine you care about.
