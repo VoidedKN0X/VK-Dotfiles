@@ -14,11 +14,13 @@
 #
 # Stages (in order):
 #   1. CachyOS repository setup (official installer)
-#   2. CachyOS kernel install + systemd-boot default entry
+#   2. CachyOS kernel install + systemd-boot default entry (boot menu timeout 0)
+#      + Plymouth boot splash (cmdline params + mkinitcpio hook)
 #   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs; sbctl is
 #      installed by Install.sh)
 #   4. Performance tune (profile-specific: desktop/laptop)
-#   5. CachyOS-kernel compatibility overrides
+#   5. CachyOS-kernel compatibility check (verification only; stage 4 already
+#      applies the bfq-free udev rules, fq + bbr and transparent_hugepage=madvise)
 #
 # Tune groups (stage 4):
 #   A. sysctl + I/O (NVMe scheduler, swappiness, BBR, readahead, dirty pages)
@@ -26,14 +28,16 @@
 #   C. Install: lib32-gamemode, ananicy-cpp, irqbalance, lib32-mangohud
 #   D. Enable: gamemoded, irqbalance, ananicy-cpp
 #   E. fstab noatime (REBOOT required)
-#   F. systemd-boot kernel cmdline: thp=madvise, split_lock_mitigate=0
-#      (REBOOT required, UKI regenerated). A cpufreq governor is only added
-#      when CPUFREQ_GOVERNOR is explicitly set.
+#   F. systemd-boot kernel cmdline: thp=madvise, split_lock_mitigate=0,
+#      quiet splash plymouth.boot-log=/dev/null plymouth.nolog
+#      (REBOOT required). The cmdline is written in stage 2, before the images
+#      are built, so the UKIs only need to be generated once. A cpufreq governor
+#      is only added when CPUFREQ_GOVERNOR is explicitly set.
 #   G. /etc/environment: RADV_PERFTEST=gpl, MESA_NO_ERROR=1 (LOGOUT required)
 #   H. Audio: HDA power-save off (REBOOT required for HDA)
 #
 # Persistence:
-#   /etc/sysctl.d/99-perf-tune.conf, /etc/sysctl.d/zz-cachyos-compat.conf
+#   /etc/sysctl.d/99-perf-tune.conf
 #   /etc/udev/rules.d/60-ioschedulers.rules
 #   /etc/modules-load.d/bbr.conf
 #   /etc/kernel/cmdline (modified, systemd-boot)
@@ -76,22 +80,13 @@ FSTAB="/etc/fstab"
 ENV_FILE="/etc/environment"
 KCMDLINE="/etc/kernel/cmdline"
 
-# === UKI AUTO-DETECT ===
-# Find UKI(s) in the standard systemd-boot location. If multiple, prefer
-# the most recently modified (matches the last kernel build).
-UKI=""
-if [[ -d /boot/EFI/Linux ]]; then
-  mapfile -t _UKI_CANDIDATES < <(find /boot/EFI/Linux -maxdepth 1 -name '*.efi' -type f 2>/dev/null | sort)
-  if [[ ${#_UKI_CANDIDATES[@]} -eq 0 ]]; then
-    echo "WARN: no UKI found in /boot/EFI/Linux/" >&2
-  elif [[ ${#_UKI_CANDIDATES[@]} -eq 1 ]]; then
-    UKI="${_UKI_CANDIDATES[0]}"
-  else
-    UKI=$(ls -1t "${_UKI_CANDIDATES[@]}" | head -1)
-    echo "WARN: multiple UKIs found; using most recent: $UKI" >&2
-  fi
-fi
-unset _UKI_CANDIDATES
+# Kernel cmdline parameters added in stage 2 (and verified in stages 4 and 5)
+NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
+# Plymouth: show the splash, hide boot messages, don't write a boot log
+NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
+# Only add cpufreq.default_governor= if a value is set. auto-cpufreq manages the
+# governor at runtime, so the kernel-cmdline default is usually omitted.
+[[ -n "$CPUFREQ_GOVERNOR" ]] && NEW_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
 
 PASS=0
 FAIL=0
@@ -106,9 +101,179 @@ fi
 ok()   { printf '%s[✓]%s %s\n' "$C_OK" "$C_0" "$*"; PASS=$((PASS+1)); }
 fail() { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; FAIL=$((FAIL+1)); WARNINGS+=("$*"); }
 warn() { printf '%s[!]%s %s\n' "$C_W" "$C_0" "$*"; }
-head() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
+# NOTE: named section(), not head(), so it doesn't shadow /usr/bin/head
+section() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
 die()  { fail "$@"; exit 1; }
 info() { printf '\n%s=== [%d/%d] %s ===%s\n' "$C_B" "$1" "$2" "$3" "$C_0"; }
+
+# --------------- shared helpers -------------------------------------------
+# Newest UKI in the ESP (the one built last), or empty
+newest_uki() {
+  local dir="${1:-/boot/EFI/Linux}"
+  find "$dir" -maxdepth 1 -name '*.efi' -type f -printf '%T@ %p\n' 2>/dev/null \
+    | sort -rn | head -1 | cut -d' ' -f2-
+}
+
+# Print the .cmdline section embedded in a UKI
+uki_cmdline() {
+  local tmp
+  tmp="$(mktemp)" || return 1
+  if objcopy -O binary --only-section=.cmdline "$1" "$tmp" 2>/dev/null; then
+    tr -d '\0' < "$tmp"
+  fi
+  rm -f "$tmp"
+}
+
+# Regenerate all initramfs images / UKIs with whichever tool is installed
+regenerate_images() {
+  if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
+    if mkinitcpio -P; then ok "mkinitcpio -P regenerated all images"; else fail "mkinitcpio -P failed"; return 1; fi
+  elif command -v dracut >/dev/null; then
+    if dracut --regenerate-all; then ok "dracut regenerated all images"; else fail "dracut --regenerate-all failed"; return 1; fi
+  else
+    fail "no initramfs tool (mkinitcpio/dracut) found"; return 1
+  fi
+}
+
+# Add NEW_PARAMS to /etc/kernel/cmdline. Sets CMDLINE_CHANGED=1 if it wrote anything.
+CMDLINE_CHANGED=0
+update_kernel_cmdline() {
+  if [[ ! -f "$KCMDLINE" ]]; then
+    fail "systemd-boot kernel cmdline file not found: $KCMDLINE"
+    return 1
+  fi
+  local current added="" p
+  current="$(cat "$KCMDLINE")"
+  for p in "${NEW_PARAMS[@]}"; do
+    if ! grep -qw -- "$p" <<<"$current"; then
+      current="$current $p"
+      added="$added $p"
+    fi
+  done
+  if [[ -n "$added" ]]; then
+    current="$(sed -E 's/^ +//; s/ +/ /g; s/ +$//' <<<"$current")"
+    echo "$current" > "$KCMDLINE"
+    CMDLINE_CHANGED=1
+    ok "kernel cmdline updated. Added:$added"
+  else
+    ok "all kernel cmdline params already present"
+  fi
+}
+
+# Add the plymouth hook to mkinitcpio.conf. The Arch wiki rule: plymouth must
+# come AFTER "systemd" and BEFORE "encrypt"/"sd-encrypt". It's inserted directly
+# after "systemd", and the final order is checked before anything is written.
+# Every case where the right position isn't certain is skipped with a warning.
+ensure_plymouth_hook() {
+  local conf=/etc/mkinitcpio.conf line i sys=-1 ply=-1 enc=-1
+  local -a hooks new
+  if [[ ! -f /usr/lib/initcpio/install/plymouth && ! -f /etc/initcpio/install/plymouth ]]; then
+    warn "plymouth mkinitcpio hook not installed (Install.sh installs plymouth) - skipping"
+    return 0
+  fi
+  if grep -qsE '^[[:space:]]*HOOKS=' /etc/mkinitcpio.conf.d/*.conf; then
+    warn "HOOKS is overridden in /etc/mkinitcpio.conf.d/ - not touching it, add plymouth there by hand"
+    return 0
+  fi
+  if [[ "$(grep -cE '^[[:space:]]*HOOKS=' "$conf")" -ne 1 ]]; then
+    warn "expected exactly one active HOOKS= line in $conf - plymouth hook not added"
+    return 0
+  fi
+  line="$(grep -E '^[[:space:]]*HOOKS=' "$conf")"
+  if [[ ! "$line" =~ ^[[:space:]]*HOOKS=\(([^\)]*)\)[[:space:]]*(#.*)?$ ]]; then
+    warn "HOOKS line isn't a single-line HOOKS=(...) - plymouth hook not added"
+    return 0
+  fi
+  read -ra hooks <<<"${BASH_REMATCH[1]}"
+  for i in "${!hooks[@]}"; do
+    case "${hooks[$i]}" in
+      systemd)              sys=$i ;;
+      plymouth)             ply=$i ;;
+      encrypt|sd-encrypt)   [[ $enc -lt 0 ]] && enc=$i ;;
+    esac
+  done
+  if [[ $ply -ge 0 ]]; then
+    if [[ $sys -lt $ply && ( $enc -lt 0 || $ply -lt $enc ) ]]; then
+      ok "plymouth hook already present in the right position"
+    else
+      fail "plymouth hook is present but in the wrong position (must be after systemd, before (sd-)encrypt) - fix $conf by hand"
+    fi
+    return 0
+  fi
+  if [[ $sys -lt 0 ]]; then
+    warn "no systemd hook (udev-based initramfs) - plymouth hook not added, position isn't certain"
+    return 0
+  fi
+  new=("${hooks[@]:0:sys+1}" plymouth "${hooks[@]:sys+1}")
+  # re-check the order on the new list before writing
+  sys=-1; ply=-1; enc=-1
+  for i in "${!new[@]}"; do
+    case "${new[$i]}" in
+      systemd) sys=$i ;; plymouth) ply=$i ;;
+      encrypt|sd-encrypt) [[ $enc -lt 0 ]] && enc=$i ;;
+    esac
+  done
+  if [[ $sys -lt $ply && ( $enc -lt 0 || $ply -lt $enc ) ]]; then
+    sed -i -E "s/^([[:space:]]*HOOKS=\()[^)]*\)/\1${new[*]})/" "$conf"
+    ok "added plymouth hook: HOOKS=(${new[*]})"
+  else
+    fail "could not place plymouth safely - $conf left unchanged"
+  fi
+}
+
+# For every mkinitcpio preset: copy a missing vmlinuz into /boot and repoint
+# default_uki/fallback_uki paths that live in a non-existent directory.
+# $1 = UKI directory. Sets NEED_REGEN=1 when it changed anything.
+NEED_REGEN=0
+sync_kernel_images() {
+  local uki_dir="$1" preset kver_line kver name mod_dir d kname key line val newpath
+  for preset in /etc/mkinitcpio.d/*.preset; do
+    [[ -f "$preset" ]] || continue
+    kver_line=$(grep -m1 -E '^ALL_kver=' "$preset")
+    [[ -z "$kver_line" ]] && continue
+    kver="${kver_line#ALL_kver=}"
+    kver="${kver#\"}"; kver="${kver%\"}"
+    if [[ ! -f "$kver" ]]; then
+      name="$(basename "$preset" .preset)"
+      mod_dir=""
+      for d in /usr/lib/modules/*/; do
+        [[ -f "${d}pkgbase" && "$(cat "${d}pkgbase")" == "$name" ]] && { mod_dir="$d"; break; }
+      done
+      if [[ -z "$mod_dir" ]]; then
+        kname="${name#linux-}"; kname="${kname#linux}"
+        for d in /usr/lib/modules/*/; do
+          if [[ -n "$kname" && "$(basename "$d")" == *"$kname"* && -f "${d}vmlinuz" ]]; then
+            mod_dir="$d"; break
+          fi
+        done
+      fi
+      if [[ -n "$mod_dir" && -f "${mod_dir}vmlinuz" ]]; then
+        cp "${mod_dir}vmlinuz" "$kver"
+        ok "copied ${mod_dir}vmlinuz -> $kver"
+        NEED_REGEN=1
+      else
+        warn "could not find vmlinuz for $name in /usr/lib/modules/"
+      fi
+    else
+      ok "$kver already present"
+    fi
+
+    # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
+    [[ -d "$uki_dir" ]] || continue
+    for key in default_uki fallback_uki; do
+      line=$(grep -m1 -E "^${key}=" "$preset")
+      [[ -z "$line" ]] && continue
+      val="${line#${key}=}"
+      val="${val#\"}"; val="${val%\"}"
+      if [[ ! -d "$(dirname "$val")" ]]; then
+        newpath="${uki_dir}/$(basename "$val")"
+        sed -i "s|^${key}=.*|${key}=\"${newpath}\"|" "$preset"
+        ok "fixed ${key} in $(basename "$preset"): $val -> $newpath"
+        NEED_REGEN=1
+      fi
+    done
+  done
+}
 
 
 # === AUTO-DETECT non-root user (for gamemoded user service) ===
@@ -152,7 +317,7 @@ INSTALL_USER="$(detect_user)"
 info 1 5 "CachyOS Repository Setup"
 
 if ! grep -qE '^\[cachyos' /etc/pacman.conf 2>/dev/null; then
-  head "Adding CachyOS repos (official installer)"
+  section "Adding CachyOS repos (official installer)"
   (
     TMP="$(mktemp -d)"
     trap 'rm -rf "$TMP"' EXIT
@@ -167,7 +332,7 @@ else
   ok "CachyOS repo already present in /etc/pacman.conf"
 fi
 
-head "Verification"
+section "Verification"
 OK=1
 if grep -qE '^\[cachyos' /etc/pacman.conf; then
   ok "cachyos repo enabled in /etc/pacman.conf"
@@ -203,7 +368,7 @@ if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
   fi
 fi
 # ---------- pre-flight checks ----------
-head "Pre-flight checks"
+section "Pre-flight checks"
 
 [[ "$(uname -m)" == "x86_64" ]] || { fail "CachyOS kernels are x86_64 only"; exit 1; }
 command -v pacman >/dev/null || { fail "pacman not found - this script is for Arch Linux"; exit 1; }
@@ -248,7 +413,7 @@ fi
 ok "systemd-boot + UKI dir found: $ESP/EFI/Linux"
 
 # ---------- target info ----------
-head "Target"
+section "Target"
 warn "Kernel package : $PKG_BASE"
 warn "Running kernel : $(uname -r) ($(cat "/usr/lib/modules/$(uname -r)/pkgbase" 2>/dev/null || echo unknown))"
 if pacman -Q "$PKG_BASE" >/dev/null 2>&1; then
@@ -270,7 +435,7 @@ if pacman -Q zfs >/dev/null 2>&1; then
 fi
 
 # ---------- install ----------
-head "Install $PKG_BASE"
+section "Install $PKG_BASE"
 
 # refresh the package DB if the target package isn't known yet
 if ! pacman -Si "$PKG_BASE" >/dev/null 2>&1; then
@@ -291,99 +456,43 @@ else
 fi
 
 # ---------- sync vmlinuz to /boot if missing ----------
-head "Sync kernel images to /boot"
-for _preset in /etc/mkinitcpio.d/*.preset; do
-  [[ -f "$_preset" ]] || continue
-  _kver_line=$(grep -E '^ALL_kver=' "$_preset" | awk 'NR==1{print;exit}')
-  [[ -z "$_kver_line" ]] && continue
-  _kver="${_kver_line#ALL_kver=\"}"
-  _kver="${_kver%\"}"
-  _kver="${_kver#ALL_kver=}"
-  if [[ ! -f "$_kver" ]]; then
-    _name="$(basename "$_preset" .preset)"
-    _mod_dir=""
-    for _d in /usr/lib/modules/*/; do
-      [[ -f "${_d}pkgbase" ]] && [[ "$(cat "${_d}pkgbase")" == "$_name" ]] && { _mod_dir="$_d"; break; }
-    done
-    if [[ -z "$_mod_dir" ]]; then
-      _kname="${_name#linux-}"
-      _kname="${_kname#linux}"
-      [[ -z "$_kname" ]] && _kname=""
-      for _d in /usr/lib/modules/*/; do
-        _base="$(basename "$_d")"
-        if [[ -n "$_kname" ]] && [[ "$_base" == *"$_kname"* ]] && [[ -f "${_d}vmlinuz" ]]; then
-          _mod_dir="$_d"; break
-        fi
-      done
-    fi
-    if [[ -n "$_mod_dir" && -f "${_mod_dir}vmlinuz" ]]; then
-      cp "${_mod_dir}vmlinuz" "$_kver"
-      ok "copied $(basename "${_mod_dir}vmlinuz") -> $_kver"
-    else
-      warn "could not find vmlinuz for $_name in /usr/lib/modules/"
-    fi
-  else
-    ok "$_kver already present"
-  fi
+section "Sync kernel images to /boot"
+sync_kernel_images "$ESP/EFI/Linux"
 
-  # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
-  _uki_dir="$ESP/EFI/Linux"
-  if [[ -d "$_uki_dir" ]]; then
-    for _uki_key in default_uki fallback_uki; do
-      _uki_line=$(grep -E "^${_uki_key}=" "$_preset" | awk 'NR==1{print;exit}')
-      [[ -z "$_uki_line" ]] && continue
-      _uki_val="${_uki_line#${_uki_key}=\"}"
-      _uki_val="${_uki_val%\"}"
-      _uki_val="${_uki_val#${_uki_key}=}"
-      _uki_parent="$(dirname "$_uki_val")"
-      if [[ ! -d "$_uki_parent" ]]; then
-        _uki_fname="$(basename "$_uki_val")"
-        _new_uki="${_uki_dir}/${_uki_fname}"
-        sed -i "s|^${_uki_key}=.*|${_uki_key}=\"${_new_uki}\"|" "$_preset"
-        ok "fixed ${_uki_key} in $(basename "$_preset"): $_uki_val -> $_new_uki"
-      fi
-    done
-  fi
-done
+# ---------- kernel cmdline + plymouth hook (BEFORE the images are built) ----------
+# Making these changes now means the single build below already includes them,
+# so no later stage needs to rebuild everything a second time.
+section "Kernel cmdline"
+update_kernel_cmdline
+
+section "Plymouth hook"
+ensure_plymouth_hook
 
 # ---------- regenerate initramfs / UKIs ----------
-head "Regenerate initramfs / UKIs"
-if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
-  if mkinitcpio -P; then
-    ok "mkinitcpio -P regenerated all images"
-  else
-    fail "mkinitcpio -P failed"; exit 1
-  fi
-elif command -v dracut >/dev/null; then
-  if dracut --regenerate-all; then
-    ok "dracut regenerated all images"
-  else
-    fail "dracut --regenerate-all failed"; exit 1
-  fi
-else
-  fail "no initramfs tool (mkinitcpio/dracut) found"; exit 1
-fi
+section "Regenerate initramfs / UKIs"
+regenerate_images || exit 1
+NEED_REGEN=0
 
 # ---------- configure systemd-boot default entry ----------
-head "Configure systemd-boot default entry"
+section "Configure systemd-boot default entry"
 LOADER_DIR="$ESP/loader"
 LOADER_CONF="$LOADER_DIR/loader.conf"
 mkdir -p "$LOADER_DIR"
 
 if [[ -f "$LOADER_CONF" ]]; then
   TMP=$(mktemp)
-  grep -vE '^default([[:space:]]|$)' "$LOADER_CONF" > "$TMP"
-  printf 'default %s*\n' "$DEFAULT_MATCH" >> "$TMP"
+  grep -vE '^(default|timeout)([[:space:]]|$)' "$LOADER_CONF" > "$TMP"
+  printf 'default %s*\ntimeout 0\n' "$DEFAULT_MATCH" >> "$TMP"
   cat "$TMP" > "$LOADER_CONF"
   rm -f "$TMP"
 else
-  printf 'default %s*\ntimeout 5\n' "$DEFAULT_MATCH" > "$LOADER_CONF"
+  printf 'default %s*\ntimeout 0\n' "$DEFAULT_MATCH" > "$LOADER_CONF"
 fi
 chmod 644 "$LOADER_CONF"
-ok "loader.conf default entry set to '$DEFAULT_MATCH*'"
+ok "loader.conf default entry set to '$DEFAULT_MATCH*', timeout 0 (hold Space at boot for the menu)"
 
 # ---------- verification ----------
-head "Verification"
+section "Verification"
 NEW_VER="$(pacman -Q "$PKG_BASE" 2>/dev/null | awk '{print $2}')"
 ok "installed: $PKG_BASE ${NEW_VER:-?}"
 
@@ -406,6 +515,9 @@ fi
 grep -q "^default $DEFAULT_MATCH" "$LOADER_CONF" \
   && ok "loader.conf default = $DEFAULT_MATCH*" \
   || fail "loader.conf default was not set"
+grep -qx "timeout 0" "$LOADER_CONF" \
+  && ok "loader.conf timeout = 0" \
+  || fail "loader.conf timeout was not set to 0"
 
 # ---------- old kernel removal ----------
 # Keeps the newly installed kernel ($PKG_BASE). Every other kernel is removed:
@@ -554,7 +666,7 @@ UNIT_BODY
   fi
 }
 
-head "Old kernel removal"
+section "Old kernel removal"
 
 RUN_BASE="$(running_base)"
 TARGETS=()
@@ -581,7 +693,7 @@ else
 fi
 
 # ---------- summary ----------
-head "DONE"
+section "DONE"
 cat <<EOF
   Installed kernel : $PKG_BASE ${NEW_VER:-?}
   Boot default     : systemd-boot -> ${DEFAULT_MATCH}*  ($LOADER_CONF)
@@ -596,7 +708,7 @@ EOF
 info 3 5 "Fix UKI Setup"
 
 # ---------- find ESP ----------
-head "Pre-flight checks"
+section "Pre-flight checks"
 ESP=""
 for _e in /boot /efi /boot/efi; do
   if [[ -d "$_e/EFI/Linux" ]]; then ESP="$_e"; break; fi
@@ -611,7 +723,7 @@ mapfile -t PRESETS < <(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' -type
 ok "Found ${#PRESETS[@]} preset(s): $(basename -a "${PRESETS[@]}" | tr '\n' ' ')"
 
 # ---------- enable UKI for presets using default_image ----------
-head "Enabling UKI for presets using traditional initramfs"
+section "Enabling UKI for presets using traditional initramfs"
 SWITCHED=0
 NEED_REGEN=0
 for p in "${PRESETS[@]}"; do
@@ -631,7 +743,7 @@ for p in "${PRESETS[@]}"; do
     continue
   fi
 
-  head "Updating $NAME"
+  section "Updating $NAME"
 
   # Comment out default_image, uncomment default_uki
   sed -i -E '
@@ -659,7 +771,7 @@ if [[ $SWITCHED -eq 0 ]]; then
 fi
 
 # ---------- show presets ----------
-head "Current presets"
+section "Current presets"
 for p in "${PRESETS[@]}"; do
   NAME="$(basename "$p" .preset)"
   UKI_LINE=$(grep -E '^default_uki=' "$p" 2>/dev/null | head -1)
@@ -672,81 +784,25 @@ for p in "${PRESETS[@]}"; do
 done
 
 # ---------- sync vmlinuz to /boot if missing ----------
-head "Syncing kernel images to /boot"
-for _preset in /etc/mkinitcpio.d/*.preset; do
-  [[ -f "$_preset" ]] || continue
-  _kver_line=$(grep -E '^ALL_kver=' "$_preset" | awk 'NR==1{print;exit}')
-  [[ -z "$_kver_line" ]] && continue
-  _kver="${_kver_line#ALL_kver=\"}"
-  _kver="${_kver%\"}"
-  _kver="${_kver#ALL_kver=}"
-  if [[ ! -f "$_kver" ]]; then
-    _name="$(basename "$_preset" .preset)"
-    _mod_dir=""
-    for _d in /usr/lib/modules/*/; do
-      [[ -f "${_d}pkgbase" ]] && [[ "$(cat "${_d}pkgbase")" == "$_name" ]] && { _mod_dir="$_d"; break; }
-    done
-    if [[ -z "$_mod_dir" ]]; then
-      _kname="${_name#linux-}"
-      _kname="${_kname#linux}"
-      for _d in /usr/lib/modules/*/; do
-        _base="$(basename "$_d")"
-        if [[ -n "$_kname" ]] && [[ "$_base" == *"$_kname"* ]] && [[ -f "${_d}vmlinuz" ]]; then
-          _mod_dir="$_d"; break
-        fi
-      done
-    fi
-    if [[ -n "$_mod_dir" && -f "${_mod_dir}vmlinuz" ]]; then
-      cp "${_mod_dir}vmlinuz" "$_kver"
-      ok "copied $(basename "${_mod_dir}vmlinuz") -> $_kver"
-      NEED_REGEN=1
-    else
-      warn "could not find vmlinuz for $_name in /usr/lib/modules/"
-    fi
-  else
-    ok "$_kver already present"
-  fi
-
-  # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
-  _uki_dir="$UKI_DIR"
-  if [[ -d "$_uki_dir" ]]; then
-    for _uki_key in default_uki fallback_uki; do
-      _uki_line=$(grep -E "^${_uki_key}=" "$_preset" | awk 'NR==1{print;exit}')
-      [[ -z "$_uki_line" ]] && continue
-      _uki_val="${_uki_line#${_uki_key}=\"}"
-      _uki_val="${_uki_val%\"}"
-      _uki_val="${_uki_val#${_uki_key}=}"
-      _uki_parent="$(dirname "$_uki_val")"
-      if [[ ! -d "$_uki_parent" ]]; then
-        _uki_fname="$(basename "$_uki_val")"
-        _new_uki="${_uki_dir}/${_uki_fname}"
-        sed -i "s|^${_uki_key}=.*|${_uki_key}=\"${_new_uki}\"|" "$_preset"
-        ok "fixed ${_uki_key} in $(basename "$_preset"): $_uki_val -> $_new_uki"
-        NEED_REGEN=1
-      fi
-    done
-  fi
-done
+section "Syncing kernel images to /boot"
+sync_kernel_images "$UKI_DIR"
 
 # ---------- regenerate (only if a preset was actually changed) ----------
 if [[ $NEED_REGEN -eq 1 ]]; then
-  head "Regenerating all UKIs with mkinitcpio -P"
-  if mkinitcpio -P; then
-    ok "mkinitcpio -P completed"
-  else
-    die "mkinitcpio -P failed"
-  fi
+  section "Regenerating all UKIs"
+  regenerate_images || die "image regeneration failed"
+  NEED_REGEN=0
 else
   ok "No preset changes; skipping UKI regeneration (images already built in stage 2)"
 fi
 
 # ---------- secure boot: create keys, enroll (-m), sign (sbctl installed by Install.sh) ----------
-head "Secure Boot setup (sbctl)"
+section "Secure Boot setup (sbctl)"
 if ! command -v sbctl >/dev/null; then
   warn "sbctl not installed (Install.sh installs it) - skipping Secure Boot setup"
 else
   if [[ ! -d /var/lib/sbctl/keys ]]; then
-    head "Creating Secure Boot keys"
+    section "Creating Secure Boot keys"
     if sbctl create-keys; then
       ok "created Secure Boot keys in /var/lib/sbctl/keys"
     else
@@ -761,7 +817,7 @@ else
      && grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
     ok "Secure Boot already active with enrolled keys - skipping enrollment"
   else
-    head "Enrolling Secure Boot keys (Microsoft keys included via -m)"
+    section "Enrolling Secure Boot keys (Microsoft keys included via -m)"
     # Try to enroll; if immutable vars block, unfreeze and retry once
     for f in /sys/firmware/efi/efivars/PK* /sys/firmware/efi/efivars/KEK* /sys/firmware/efi/efivars/db*; do
       [[ -e "$f" ]] && chattr -i "$f" 2>/dev/null || true
@@ -777,23 +833,36 @@ else
     done
   fi
 
-  head "Signing UKIs with sbctl"
-  UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
-  if [[ -n "$UNSIGNED" ]]; then
-    warn "signing unsigned files"
-    while IFS= read -r efi; do
-      [[ -f "$efi" ]] || continue
-      sbctl sign -s "$efi"
-    done <<< "$UNSIGNED"
-    ok "signed unsigned files"
-  else
-    ok "all UKIs already signed"
+  section "Signing EFI binaries with sbctl"
+  # `sbctl verify` prints "✗ /path/file.efi is not signed": the path is field 2.
+  # Every UKI is also signed explicitly, so nothing depends on that output format.
+  # -s saves each file in sbctl's database so its mkinitcpio hook re-signs it
+  # automatically whenever the image is rebuilt.
+  mapfile -t TO_SIGN < <(
+    { sbctl verify 2>/dev/null | awk '/^✗/ {print $2}'
+      find "$UKI_DIR" -maxdepth 1 -name '*.efi' -type f 2>/dev/null
+    } | sort -u
+  )
+  SIGN_FAIL=0
+  for efi in "${TO_SIGN[@]}"; do
+    [[ -f "$efi" ]] || continue
+    if sbctl sign -s "$efi" >/dev/null 2>&1; then
+      ok "signed: $efi"
+    else
+      fail "could not sign: $efi"; SIGN_FAIL=1
+    fi
+  done
+  [[ ${#TO_SIGN[@]} -eq 0 ]] && warn "no EFI binaries found to sign"
+  if sbctl verify 2>/dev/null | grep -q '^✗'; then
+    fail "sbctl verify still reports unsigned files:"
+    sbctl verify 2>/dev/null | grep '^✗'
+  elif [[ $SIGN_FAIL -eq 0 ]]; then
+    ok "sbctl verify: everything signed"
   fi
-  sbctl verify || true
 fi
 
 # ---------- verify ----------
-head "Verification"
+section "Verification"
 mapfile -t UKIS < <(find "$UKI_DIR" -maxdepth 1 -name '*.efi' -type f 2>/dev/null | sort)
 if [[ ${#UKIS[@]} -gt 0 ]]; then
   for u in "${UKIS[@]}"; do
@@ -812,7 +881,7 @@ if command -v bootctl >/dev/null; then
   fi
 fi
 
-head "DONE"
+section "DONE"
 cat <<EOF
   UKI enabled; Secure Boot keys ensured and enrolled with -m (when sbctl is present).
   REBOOT REQUIRED to boot from the new UKIs and to finalize key enrollment.
@@ -821,7 +890,7 @@ EOF
 info 4 5 "Performance Tuning"
 
 # =====================================================================
-head "A. sysctl + I/O"
+section "A. sysctl + I/O"
 
 # A.1 sysctl config
 SYSCTL_FILE="$CONF_DIR/99-perf-tune.conf"
@@ -837,14 +906,7 @@ vm.laptop_mode = ${LAPTOP_MODE}
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
-EOF
-sysctl -p "$SYSCTL_FILE" >/dev/null
-
-# A.2 THP and TCP buffers (Group B)
-cat >> "$SYSCTL_FILE" <<'EOF'
-# THP - keep madvise so defrag stays sane
-# (runtime set via /sys in B; this is a no-op for kernel cmdline users)
-# Extra network
+# Extra network (group B)
 net.core.netdev_max_backlog = 16384
 net.ipv4.tcp_max_syn_backlog = 8192
 net.core.rmem_max = 16777216
@@ -853,6 +915,7 @@ net.ipv4.tcp_rmem = 4096 87380 16777216
 net.ipv4.tcp_wmem = 4096 65536 16777216
 EOF
 sysctl -p "$SYSCTL_FILE" >/dev/null
+# (THP has no sysctl key: it's set at runtime in B and by the kernel cmdline in F)
 
 # A.3 I/O scheduler + readahead (runtime + udev persistence)
 # Detect which schedulers this kernel provides, then only emit rules that
@@ -914,7 +977,7 @@ else
 fi
 
 # =====================================================================
-head "B. THP + TCP buffers (runtime)"
+section "B. THP + TCP buffers (runtime)"
 
 # THP (defer+madvise exists only on newer kernels; fall back to madvise)
 THP_DEFRAG_TARGET="defer+madvise"
@@ -922,13 +985,8 @@ echo madvise > /sys/kernel/mm/transparent_hugepage/enabled
 echo "$THP_DEFRAG_TARGET" > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null \
   || { THP_DEFRAG_TARGET="madvise"; echo "$THP_DEFRAG_TARGET" > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null; }
 
-# Make THP survive reboot via sysctl too (no-op at runtime but documents intent)
-cat >> "$SYSCTL_FILE" <<'EOF'
-# Mark as user-tunable at runtime; no sysctl key exists, kept here for documentation
-EOF
-
 # =====================================================================
-head "C. Install packages (official repos)"
+section "C. Install packages (official repos)"
 
 PKGS=(ananicy-cpp irqbalance)
 # lib32-* packages only exist on x86_64
@@ -953,7 +1011,7 @@ else
 fi
 
 # =====================================================================
-head "D. Enable services"
+section "D. Enable services"
 
 enable_svc() {
   local svc="$1"
@@ -996,7 +1054,7 @@ else
 fi
 
 # =====================================================================
-head "E. fstab noatime (REBOOT required)"
+section "E. fstab noatime (REBOOT required)"
 
 # Auto-detect local filesystems from fstab (unless FILESYSTEM is set)
 if [[ -z "$FILESYSTEM" ]]; then
@@ -1023,62 +1081,18 @@ fi
 rm -f "$TMP"
 
 # =====================================================================
-head "F. Kernel cmdline (REBOOT required)"
+section "F. Kernel cmdline (REBOOT required)"
 
-NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
-# Only add cpufreq.default_governor= to the cmdline if a value is set.
-# On laptops auto-cpufreq manages the governor at runtime, so the kernel-cmdline
-# default is usually omitted.
-[[ -n "$CPUFREQ_GOVERNOR" ]] && NEW_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
-
-# systemd-boot: the kernel cmdline lives in /etc/kernel/cmdline
-if [[ ! -f "$KCMDLINE" ]]; then
-  fail "systemd-boot kernel cmdline file not found: $KCMDLINE"
-else
-  warn "systemd-boot + UKI detected - updating $KCMDLINE and regenerating images"
-  CURRENT=$(cat "$KCMDLINE")
-  ADDED=""
-  for p in "${NEW_PARAMS[@]}"; do
-    if ! grep -qw -- "$p" <<<"$CURRENT"; then
-      CURRENT="$CURRENT $p"
-      ADDED="$ADDED $p"
-    fi
-  done
-  CURRENT=$(echo "$CURRENT" | sed -E 's/^ +//; s/ +/ /g; s/ +$//')
-  if [[ -n "$ADDED" ]]; then
-    echo "$CURRENT" > "$KCMDLINE"
-    ok "kernel cmdline updated. Added:$ADDED"
-
-    # Regenerate images for ALL detected kernels, not a hardcoded one.
-    if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
-      if mkinitcpio -P >/dev/null 2>&1; then
-        ok "mkinitcpio regenerated images for all presets"
-      else
-        fail "mkinitcpio -P failed - images not regenerated; reboot with current params"
-      fi
-    elif command -v dracut >/dev/null; then
-      if dracut --regenerate-all >/dev/null 2>&1; then
-        ok "dracut regenerated all initramfs images"
-      else
-        fail "dracut --regenerate-all failed"
-      fi
-    else
-      fail "no initramfs tool (mkinitcpio/dracut) or presets found - cannot regenerate images"
-    fi
-
-    # Re-pick the most recently modified UKI for later verification
-    mapfile -t _UKI_ALL < <(find /boot/EFI/Linux -maxdepth 1 -name '*.efi' -type f 2>/dev/null | sort)
-    if [[ ${#_UKI_ALL[@]} -gt 0 ]]; then
-      UKI=$(ls -1t "${_UKI_ALL[@]}" | head -1)
-    fi
-    unset _UKI_ALL
-  else
-    ok "All kernel cmdline params already present"
-  fi
+# Normally already done in stage 2 (before the images were built), so this is a
+# no-op; it only rebuilds if a param is somehow still missing.
+CMDLINE_CHANGED=0
+update_kernel_cmdline
+if [[ $CMDLINE_CHANGED -eq 1 ]]; then
+  regenerate_images
 fi
 
 # =====================================================================
-head "G. /etc/environment (LOGOUT required)"
+section "G. /etc/environment (LOGOUT required)"
 
 [[ -f "$ENV_FILE" ]] || touch "$ENV_FILE"
 chmod 644 "$ENV_FILE"
@@ -1109,7 +1123,7 @@ else
 fi
 
 # =====================================================================
-head "H. Audio (HDA power-save) (REBOOT required for HDA)"
+section "H. Audio (HDA power-save) (REBOOT required for HDA)"
 
 # H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume
 # Kept for laptop use too: relevant when hooked up to an external HDMI/DP output.
@@ -1152,7 +1166,7 @@ fi
 # (rtkit package + rtkit-daemon service are installed and enabled by Install.sh)
 
 # =====================================================================
-head "VERIFICATION"
+section "VERIFICATION"
 
 v_check() {
   local label="$1" expected="$2" actual="$3"
@@ -1250,9 +1264,7 @@ fi
 # Kernel cmdline (systemd-boot)
 gline=""
 [[ -f "$KCMDLINE" ]] && gline=$(cat "$KCMDLINE")
-VERIFY_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
-[[ -n "$CPUFREQ_GOVERNOR" ]] && VERIFY_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
-for p in "${VERIFY_PARAMS[@]}"; do
+for p in "${NEW_PARAMS[@]}"; do
   if grep -qw -- "$p" <<<"$gline"; then
     ok "kernel cmdline: $p present"
   else
@@ -1261,9 +1273,10 @@ for p in "${VERIFY_PARAMS[@]}"; do
 done
 
 # UKI: verify cmdline section contains the new params
+UKI="$(newest_uki "$UKI_DIR")"
 if [[ -n "$UKI" && -f "$UKI" ]] && command -v objcopy >/dev/null; then
-  uki_cmd=$(objcopy -O binary --only-section=.cmdline "$UKI" /tmp/uki-cmdline-$$ 2>/dev/null && tr -d '\0' < /tmp/uki-cmdline-$$; rm -f /tmp/uki-cmdline-$$)
-  for p in "${VERIFY_PARAMS[@]}"; do
+  uki_cmd="$(uki_cmdline "$UKI")"
+  for p in "${NEW_PARAMS[@]}"; do
     if grep -qw -- "$p" <<<"$uki_cmd"; then
       ok "UKI: $p present"
     else
@@ -1271,14 +1284,13 @@ if [[ -n "$UKI" && -f "$UKI" ]] && command -v objcopy >/dev/null; then
     fi
   done
 elif [[ -z "$UKI" ]]; then
-  warn "UKI auto-detect found nothing in /boot/EFI/Linux/ - skipping UKI verification"
+  warn "no UKI found in $UKI_DIR - skipping UKI verification"
 fi
 
 # environment (only check if file exists and was modified)
 ENV_CHECKS="MESA_NO_ERROR=1"
-if command -v lspci >/dev/null && lspci -nn 2>/dev/null | grep -qi '1002:'; then
-  ENV_CHECKS="$ENV_CHECKS RADV_PERFTEST=gpl"
-fi
+# same detection result as group G, so set and verify can't disagree
+[[ $AMD_GPU -eq 1 ]] && ENV_CHECKS="$ENV_CHECKS RADV_PERFTEST=gpl"
 for kv in $ENV_CHECKS; do
   k=${kv%=*}; v=${kv#*=}
   if [[ -f "$ENV_FILE" ]] && grep -qE "^${k}=" "$ENV_FILE" && grep -E "^${k}=" "$ENV_FILE" | grep -q "$v"; then
@@ -1311,140 +1323,51 @@ else
 fi
 
 # =====================================================================
-info 5 5 "CachyOS Compatibility Fixes"
+info 5 5 "CachyOS Compatibility Check"
 
-UDEV_FILE="/etc/udev/rules.d/60-ioschedulers.rules"
-SYSCTL_FILE="/etc/sysctl.d/zz-cachyos-compat.conf"
-KCMDLINE="/etc/kernel/cmdline"
+# Stage 4 already writes everything the CachyOS kernels need (bfq-free udev
+# rules, fq + bbr, transparent_hugepage=madvise in the cmdline/UKI). This stage
+# used to write all of it a second time; now it only confirms it.
 
-# =====================================================================
-head "1. I/O scheduler rules (no bfq - CachyOS kernels don't ship it)"
+check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; fi; }
 
-# The tune stage (A.3) already writes these bfq-free rules; just confirm it.
-if [[ -f "$UDEV_FILE" ]] && ! grep -v '^#' "$UDEV_FILE" 2>/dev/null | grep -q bfq; then
+section "1. I/O scheduler rules (no bfq - CachyOS kernels don't ship it)"
+if [[ -f "$UDEV_FILE" ]] && ! grep -v '^#' "$UDEV_FILE" | grep -q bfq; then
   ok "$UDEV_FILE present and bfq-free"
 else
   fail "$UDEV_FILE missing or still references bfq"
 fi
 
-# =====================================================================
-head "2. sysctl: fq qdisc + bbr congestion control (CachyOS recommendation)"
-
-# Applied last (zz- prefix) so these win over the tune scripts' defaults.
-cat > "$SYSCTL_FILE" <<'EOF'
-# Generated by run-all-common.sh (cachyos-compat stage)
-# CachyOS networking recommendation: fq qdisc + BBR
-net.core.default_qdisc = fq
-net.ipv4.tcp_congestion_control = bbr
-EOF
-
+section "2. fq qdisc + bbr congestion control"
 if sysctl net.ipv4.tcp_available_congestion_control 2>/dev/null | grep -qw bbr; then
-  if sysctl -p "$SYSCTL_FILE" >/dev/null 2>&1; then
-    ok "sysctl applied: fq + bbr"
-  else
-    fail "sysctl -p $SYSCTL_FILE failed (check /etc/sysctl.conf or .d ordering)"
-  fi
+  QDISC="$(sysctl -n net.core.default_qdisc 2>/dev/null)"
+  CC="$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)"
+  check "qdisc = fq (got '$QDISC')" "$([[ "$QDISC" == "fq" ]]; echo $?)"
+  check "tcp_congestion_control = bbr (got '$CC')" "$([[ "$CC" == "bbr" ]]; echo $?)"
 else
-  warn "bbr not available on the running kernel yet - config written, takes effect on CachyOS"
+  warn "bbr not available on the running kernel yet - $CONF_DIR/99-perf-tune.conf applies it on CachyOS"
 fi
 
-# =====================================================================
-head "3. Kernel cmdline: transparent_hugepage=madvise + UKI regeneration"
-
-if [[ ! -f "$KCMDLINE" ]]; then
-  warn "no $KCMDLINE (systemd-boot cmdline file) - nothing to align"
-else
-  CURRENT="$(cat "$KCMDLINE")"
-  ADDED=""
-  if ! grep -qw -- "transparent_hugepage=madvise" <<<"$CURRENT"; then
-    CURRENT="$CURRENT transparent_hugepage=madvise"
-    ADDED=" transparent_hugepage=madvise"
-  fi
-  CURRENT="$(echo "$CURRENT" | sed -E 's/^ +//; s/ +/ /g; s/ +$//')"
-  if [[ -n "$ADDED" ]]; then
-    echo "$CURRENT" > "$KCMDLINE"
-    ok "cmdline updated, added:$ADDED"
-  else
-    ok "cmdline already contains transparent_hugepage=madvise"
-  fi
-fi
-
-# Only regenerate if this stage actually changed the cmdline (the tune stage F
-# already added transparent_hugepage=madvise, so normally this is a no-op).
-if [[ -n "${ADDED:-}" ]]; then
-  if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
-    if mkinitcpio -P >/dev/null 2>&1; then
-      ok "mkinitcpio regenerated all UKIs"
-    else
-      fail "mkinitcpio -P failed"
-    fi
-  elif command -v dracut >/dev/null; then
-    if dracut --regenerate-all >/dev/null 2>&1; then
-      ok "dracut regenerated all images"
-    else
-      fail "dracut --regenerate-all failed"
-    fi
-  else
-    warn "no mkinitcpio/dracut found - UKIs not regenerated"
-  fi
-else
-  ok "cmdline unchanged; skipping UKI regeneration"
-fi
-
-# =====================================================================
-head "4. Verification"
-
-check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; fi; }
-
-QDISK="$(sysctl -n net.core.default_qdisc 2>/dev/null)"
-CC="$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)"
-check "qdisc = fq (got '$QDISK')" "$([[ "$QDISK" == "fq" ]]; echo $?)"
-check "tcp_congestion_control = bbr (got '$CC')" "$([[ "$CC" == "bbr" ]]; echo $?)"
-
-if grep -v '^#' "$UDEV_FILE" | grep -q bfq; then
-  check "udev rules contain no bfq" 1
-else
-  check "udev rules contain no bfq" 0
-fi
-
+section "3. transparent_hugepage=madvise in cmdline and UKI"
 if [[ -f "$KCMDLINE" ]] && grep -qw -- "transparent_hugepage=madvise" "$KCMDLINE"; then
   check "cmdline has transparent_hugepage=madvise" 0
 else
   check "cmdline has transparent_hugepage=madvise" 1
 fi
-
-# UKI carries the param (if a UKI exists)
-mapfile -t _UKIS < <(find /boot/EFI/Linux -maxdepth 1 -name '*.efi' -type f 2>/dev/null | sort)
-if [[ ${#_UKIS[@]} -gt 0 ]] && command -v objcopy >/dev/null; then
-  _UKI="$(ls -1t "${_UKIS[@]}" 2>/dev/null | head -1)"
-  if [[ -n "$_UKI" && -f "$_UKI" ]]; then
-    _cmd="$(objcopy -O binary --only-section=.cmdline "$_UKI" /tmp/cachyos-uki-cmd-$$ 2>/dev/null && tr -d '\0' < /tmp/cachyos-uki-cmd-$$; rm -f /tmp/cachyos-uki-cmd-$$)"
-    if grep -qw -- "transparent_hugepage=madvise" <<<"$_cmd"; then
-      check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 0
-    else
-      check "UKI $(basename "$_UKI") carries transparent_hugepage=madvise" 1
-    fi
+UKI="$(newest_uki "$UKI_DIR")"
+if [[ -n "$UKI" ]] && command -v objcopy >/dev/null; then
+  if grep -qw -- "transparent_hugepage=madvise" <<<"$(uki_cmdline "$UKI")"; then
+    check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 0
   else
-    warn "could not locate a valid UKI file"
+    check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 1
   fi
-elif [[ ${#_UKIS[@]} -eq 0 ]]; then
-  warn "no UKIs found yet - the CachyOS kernel stage should have created one; check stage 2 output"
+elif [[ -z "$UKI" ]]; then
+  warn "no UKIs found - the CachyOS kernel stage should have created one; check stage 2 output"
 fi
-unset _UKIS
-
-head "DONE"
-cat <<EOF
-  Applied CachyOS-kernel-safe overrides:
-    - $UDEV_FILE (no bfq)
-    - $SYSCTL_FILE (fq + bbr, applied last)
-    - $KCMDLINE (transparent_hugepage=madvise)
-
-  REBOOT required for the cmdline/udev changes to fully apply.
-EOF
 
 # =====================================================================
 echo
-head "SUMMARY"
+section "SUMMARY"
 printf '%s passed: %d%s\n' "$C_OK" "$PASS" "$C_0"
 if [[ $FAIL -gt 0 ]]; then
   printf '%s failed: %d%s\n' "$C_E" "$FAIL" "$C_0"
@@ -1455,7 +1378,6 @@ fi
 cat <<EOF
 
 Persistence files:
-  /etc/sysctl.d/99-perf-tune.conf
   $SYSCTL_FILE
   $UDEV_FILE
   $MODPROBE_DIR/bbr.conf
@@ -1464,7 +1386,7 @@ Persistence files:
   $ENV_FILE   (modified)
 
 ACTION REQUIRED (won't take effect until you do):
-  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq)
+  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq, plymouth)
                    + HDA power-save (snd_hda_intel module reload)
   2. REBOOT     - same reboot picks up new modules-load and udev rules
   3. LOGOUT     - for RADV_PERFTEST and MESA_NO_ERROR to load

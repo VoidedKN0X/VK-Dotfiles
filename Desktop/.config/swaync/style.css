@@ -320,7 +320,7 @@ listview row:active {
 }
 
 /* ============================================================
-   SLIDERS — volume & backlight
+   SLIDERS — volume
    GTK widget hierarchy: scale > trough > highlight
                                         > slider
    ============================================================ */
@@ -356,14 +356,6 @@ scale trough slider {
 
 /* ── Volume widget ───────────────────────────────────────── */
 .widget-volume {
-    background: transparent;
-    padding: 6px 12px;
-    margin: 2px 8px;
-    border-radius: 10px;
-}
-
-/* ── Backlight widget ────────────────────────────────────── */
-.widget-backlight {
     background: transparent;
     padding: 6px 12px;
     margin: 2px 8px;

@@ -2,7 +2,7 @@
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
 # Path to your Oh My Zsh installation.
-export PATH=/home/axel/.opencode/bin:$PATH
+export PATH="$HOME/.opencode/bin:$PATH"
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will
@@ -101,7 +101,7 @@ source $ZSH/oh-my-zsh.sh
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias ls="exa -la"
+alias ls="eza -la"
 alias clean='pacman -Qdtq | xargs -r sudo pacman -Rns --noconfirm && sudo pacman -Scc --noconfirm && yay -Scc --noconfirm && yay -Yc --noconfirm && sudo journalctl --vacuum-time=2weeks && rm -rf ~/.cache/thumbnails/*(N) ~/.local/share/Trash/*(N) ~/.local/share/recently-used.xbel'
 alias download="yt-dlp --no-part --no-continue --sleep-interval 5 --max-sleep-interval 10 --embed-thumbnail --embed-metadata -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0"
 

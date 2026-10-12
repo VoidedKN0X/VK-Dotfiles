@@ -1,64 +1,22 @@
-# Install OhMyZSH
-- sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+# Run order
+# 1. <profile>/Install.sh  (as your normal user, not with sudo)
+#    Also sets up: Oh My Zsh (+ zsh as login shell), OpenCode, greetd/tuigreet,
+#    the TrueNAS fstab entry, the Canon printer and the ufw firewall rules
+#    (Syncthing, LocalSend, OrcaSlicer, WiVRn on the desktop).
+# 2. sudo "Post Install/run-all-desktop.sh"  (or run-all-laptop.sh), then reboot
+#    Also sets up: Plymouth (kernel parameters + mkinitcpio hook) and the
+#    systemd-boot menu timeout (0 - hold Space at boot to see the menu).
+# 3. sudo "Post Install/yubikey-setup.sh"  (with your YubiKey(s) at hand)
+#    Registers your keys, accepts them for sudo/greetd/hyprlock/logins
+#    (pam_u2f in /etc/pam.d/system-auth) and enrolls them for the LUKS disk.
 
-# Install OpenCode
-- curl -fsSL https://opencode.ai/install | bash
-
-# Configure Greetd
-- sudo nano /etc/greetd/config.toml (tuigreet --cmd start-hyprland)
-
-# Edit Bootloader
-- sudo nano /boot/loader/loader.conf
-
-# Edit pam.d greetd
-- sudo nano /etc/pam.d/greetd
-- Add "auth       optional     pam_gnome_keyring.so" and "session    optional     pam_gnome_keyring.so auto_start"
-
-# Add TrueNAS to fstab
-# TrueNAS
-192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0
-
-# Generate yubikey keys
-- mkdir .config/Yubico
-- pamu2fcfg > $HOME/.config/Yubico/u2f_keys
-# Add 2nd yubukey
-- pamu2fcfg >> $HOME/.config/Yubico/u2f_keys
-
-# Enroll yubikey for LUKS
-- sudo systemd-cryptenroll --fido2-device=auto /dev/xxx
-
-# Add "auth sufficient pam_u2f.so authfile=.config/Yubico/u2f_keys cue" to
-- sudo nano /etc/pam.d/system-login
-- sudo nano /etc/pam.d/system-auth
-- sudo nano /etc/pam.d/greetd
-- sudo nano /etc/pam.d/sudo
-- sudo nano /etc/pam.d/hyprlock
-
-#Edit "/etc/kernel/cmdline" and add quiet splash plymouth.boot-log=/dev/null plymouth.nolog
-
-# Edit /etc/mkinitcpio.conf and add plymouth to modules next to systemd
+# Still manual:
 
 # Edit "/etc/mkinitcpio.d/..." to remove splash
-
-# Update mkinitcpio
-- sudo mkinitcpio -P
-
-# Add Canon TS5350a printer using CUPS
-- localhost:631
-- add printer using IP "ipp://192.168.1.60/ipp/print"
+# then: sudo mkinitcpio -P
 
 # Secure Boot
 # Automated by run-all-common.sh stage 3 (sbctl is installed by Install.sh):
 # creates keys if missing, enrolls with -m (Microsoft keys), signs the UKIs.
 # Only enrolls if not already locked down.
 - read: sbctl status / sbctl verify
-
-# Set firewall rules
-- sudo ufw allow syncthing
-- sudo ufw allow 2021/udp
-- sudo ufw allow 9757
-
-# Install CachyOS repo
-- curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
-- tar xvf cachyos-repo.tar.xz && cd cachyos-repo
-- sudo ./cachyos-repo.sh

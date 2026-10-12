@@ -1,29 +1,18 @@
 #!/bin/bash
+# rofi script mode: with no argument, list wallpapers; with one, apply it.
 
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 
 if [ $# -eq 0 ]; then
+    # Show the path relative to WALLPAPER_DIR so files in subfolders still resolve
     find "$WALLPAPER_DIR" -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f | sort | while IFS= read -r file; do
-        name=$(basename "$file")
-        printf "%s\0icon\x1f%s\n" "$name" "$file"
+        printf "%s\0icon\x1f%s\n" "${file#"$WALLPAPER_DIR"/}" "$file"
     done
 else
-    SELECTED="$1"
-    WALLPAPER="$WALLPAPER_DIR/$SELECTED"
+    WALLPAPER="$WALLPAPER_DIR/$1"
+    [ -f "$WALLPAPER" ] || exit 1
 
-    if [ ! -f "$WALLPAPER" ]; then
-        exit 1
-    fi
-
-    awww img "$WALLPAPER" >/dev/null 2>&1
-
-    wallust run "$WALLPAPER" >/dev/null 2>&1
-
-    echo "\$current_wallpaper = $WALLPAPER" > "$HOME/.config/hypr/colors/current-wallpaper.conf"
-
-    swaync-client --reload-css >/dev/null 2>&1 || true
-
-    killall -SIGUSR2 waybar >/dev/null 2>&1 || true
-
+    # Same steps as at login, kept in one place
+    "$HOME/.config/hypr/scripts/wallpaper.sh" "$WALLPAPER" >/dev/null 2>&1
     exit 0
 fi

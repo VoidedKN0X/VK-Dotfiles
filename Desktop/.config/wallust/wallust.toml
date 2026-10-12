@@ -28,3 +28,11 @@ border-colors.pywal = true
 hyprlock-colors.template = 'hyprlock-colors.template'
 hyprlock-colors.target = '~/.config/hypr/colors/hyprlock-colors.conf'
 hyprlock-colors.pywal = true
+
+btop.template = 'btop.template'
+btop.target = '~/.config/btop/themes/wallust.theme'
+btop.pywal = true
+
+opencode.template = 'opencode.template'
+opencode.target = '~/.config/opencode/themes/wallust.json'
+opencode.pywal = true

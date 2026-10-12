@@ -1,6 +1,6 @@
-{
+{{
   "$schema": "https://opencode.ai/theme.json",
-  "defs": {
+  "defs": {{
     "bg": "{background}",
     "fg": "{foreground}",
     "black": "{color0}",
@@ -19,8 +19,8 @@
     "brightMagenta": "{color13}",
     "brightCyan": "{color14}",
     "brightWhite": "{color15}"
-  },
-  "theme": {
+  }},
+  "theme": {{
     "primary": "{color4}",
     "secondary": "{color6}",
     "accent": "{color12}",
@@ -74,5 +74,5 @@
     "syntaxPunctuation": "{foreground}",
     "selectedListItemText": "{foreground}",
     "thinkingOpacity": 0.0
-  }
-}
+  }}
+}}

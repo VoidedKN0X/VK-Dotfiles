@@ -10,27 +10,13 @@ hl.bind("SUPER + right", hl.dsp.focus({ direction = "right" }))
 hl.bind("SUPER + up", hl.dsp.focus({ direction = "up" }))
 hl.bind("SUPER + down", hl.dsp.focus({ direction = "down" }))
 
-hl.bind("SUPER + 1", hl.dsp.focus({ workspace = "1" }))
-hl.bind("SUPER + 2", hl.dsp.focus({ workspace = "2" }))
-hl.bind("SUPER + 3", hl.dsp.focus({ workspace = "3" }))
-hl.bind("SUPER + 4", hl.dsp.focus({ workspace = "4" }))
-hl.bind("SUPER + 5", hl.dsp.focus({ workspace = "5" }))
-hl.bind("SUPER + 6", hl.dsp.focus({ workspace = "6" }))
-hl.bind("SUPER + 7", hl.dsp.focus({ workspace = "7" }))
-hl.bind("SUPER + 8", hl.dsp.focus({ workspace = "8" }))
-hl.bind("SUPER + 9", hl.dsp.focus({ workspace = "9" }))
-hl.bind("SUPER + 0", hl.dsp.focus({ workspace = "10" }))
-
-hl.bind("SUPER + ALT + 1", hl.dsp.window.move({ workspace = "1" }))
-hl.bind("SUPER + ALT + 2", hl.dsp.window.move({ workspace = "2" }))
-hl.bind("SUPER + ALT + 3", hl.dsp.window.move({ workspace = "3" }))
-hl.bind("SUPER + ALT + 4", hl.dsp.window.move({ workspace = "4" }))
-hl.bind("SUPER + ALT + 5", hl.dsp.window.move({ workspace = "5" }))
-hl.bind("SUPER + ALT + 6", hl.dsp.window.move({ workspace = "6" }))
-hl.bind("SUPER + ALT + 7", hl.dsp.window.move({ workspace = "7" }))
-hl.bind("SUPER + ALT + 8", hl.dsp.window.move({ workspace = "8" }))
-hl.bind("SUPER + ALT + 9", hl.dsp.window.move({ workspace = "9" }))
-hl.bind("SUPER + ALT + 0", hl.dsp.window.move({ workspace = "10" }))
+-- Workspaces 1-10 (key 0 = workspace 10): SUPER switches, SUPER + ALT moves the window there
+for i = 1, 10 do
+    local key = tostring(i % 10)
+    local ws = tostring(i)
+    hl.bind("SUPER + " .. key, hl.dsp.focus({ workspace = ws }))
+    hl.bind("SUPER + ALT + " .. key, hl.dsp.window.move({ workspace = ws }))
+end
 
 hl.bind("SUPER + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
@@ -72,5 +58,6 @@ hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen({ mode = 1 }))
 hl.bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 
 hl.bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprlock --immediate"), { locked = true })
-hl.bind("switch:off:Lid Switch", hl.dsp.exec_cmd("hyprlock --immediate"), { locked = true })
+-- Lid closed: lock via hypridle's lock_cmd ("pidof hyprlock || hyprlock"), so
+-- hyprlock never starts twice. Opening the lid doesn't need a bind.
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("loginctl lock-session"), { locked = true })
