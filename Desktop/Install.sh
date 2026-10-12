@@ -165,6 +165,8 @@ AUR_PKGS=(
     qt6ct-kde
     yubico-authenticator-bin
     bedrock-on-linux-bin
+    claude-desktop
+    claude-code
 )
 
 # === Services (enabled AND started) ===
