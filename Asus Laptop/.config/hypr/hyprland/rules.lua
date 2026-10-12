@@ -9,6 +9,8 @@ hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol|yad-icon-brow
 hl.window_rule({ match = { class = "steam" }, rounding = 10 })
 hl.window_rule({ match = { class = "steam", title = "Friends List" }, float = true })
 
+hl.window_rule({ match = { class = "com\\.moonlight_stream\\.Moonlight", title = ".* - Moonlight$" }, fullscreen = true })
+
 hl.window_rule({ match = { class = "nwg-look" }, float = true })
 hl.window_rule({ match = { class = "nwg-look" }, size = "50% 60%" })
 hl.window_rule({ match = { class = "nwg-look" }, center = true })
