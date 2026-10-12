@@ -15,21 +15,22 @@
 # Stages (in order):
 #   1. CachyOS repository setup (official installer)
 #   2. CachyOS kernel install + systemd-boot default entry
-#   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs)
+#   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs; sbctl is
+#      installed by Install.sh)
 #   4. Performance tune (profile-specific: desktop/laptop)
 #   5. CachyOS-kernel compatibility overrides
 #
 # Tune groups (stage 4):
 #   A. sysctl + I/O (NVMe scheduler, swappiness, BBR, readahead, dirty pages)
 #   B. THP madvise + TCP buffers + netdev backlog
-#   C. Install: gamemode, lib32-gamemode, ananicy-cpp, irqbalance, lib32-mangohud
+#   C. Install: lib32-gamemode, ananicy-cpp, irqbalance, lib32-mangohud
 #   D. Enable: gamemoded, irqbalance, ananicy-cpp
 #   E. fstab noatime (REBOOT required)
 #   F. systemd-boot kernel cmdline: thp=madvise, split_lock_mitigate=0
 #      (REBOOT required, UKI regenerated). A cpufreq governor is only added
 #      when CPUFREQ_GOVERNOR is explicitly set.
 #   G. /etc/environment: RADV_PERFTEST=gpl, MESA_NO_ERROR=1 (LOGOUT required)
-#   H. Audio: HDA power-save off + rtkit install/enable (REBOOT required for HDA)
+#   H. Audio: HDA power-save off (REBOOT required for HDA)
 #
 # Persistence:
 #   /etc/sysctl.d/99-perf-tune.conf, /etc/sysctl.d/zz-cachyos-compat.conf
@@ -39,8 +40,8 @@
 #   /etc/fstab           (modified)
 #   /etc/environment     (modified)
 #
-# Backup: /var/lib/perf-tune-backup/ (chmod 600)
-# Rollback: run the entry point with --rollback (reverts the tune stage)
+# No backups are made: this script is meant to run once on a clean install, so
+# there is nothing worth preserving. It takes no command-line arguments.
 
 # === PROFILE (must be set by the sourcing entry point) ===
 if [[ -z "${PROFILE_NAME:-}" ]]; then
@@ -74,9 +75,6 @@ MODPROBE_DIR="/etc/modules-load.d"
 FSTAB="/etc/fstab"
 ENV_FILE="/etc/environment"
 KCMDLINE="/etc/kernel/cmdline"
-BACKUP_DIR="/var/lib/perf-tune-backup"
-TS="$(date +%Y%m%d-%H%M%S)"
-BACKUP_FILE="$BACKUP_DIR/baseline-$TS.env"
 
 # === UKI AUTO-DETECT ===
 # Find UKI(s) in the standard systemd-boot location. If multiple, prefer
@@ -140,59 +138,16 @@ require_root() {
 }
 require_root "$@"
 
-# === ARG PARSING (only --rollback; the profile comes from the entry point) ===
-ROLLBACK=0
-while [[ $# -gt 0 ]]; do
-  case "$1" in
-    --rollback) ROLLBACK=1; shift ;;
-    *) echo "Unknown argument: $1" >&2; exit 2 ;;
-  esac
-done
+# === ARG PARSING (none; the profile comes from the entry point) ===
+if [[ $# -gt 0 ]]; then
+  echo "Unknown argument: $1" >&2
+  exit 2
+fi
 
 # Auto-detect the tuning target user (override with INSTALL_USER=...)
 INSTALL_USER="$(detect_user)"
 [[ -n "$INSTALL_USER" ]] || warn "no non-root user detected for gamemoded (set INSTALL_USER)"
 
-# --------------- rollback mode --------------------------------------------
-if [[ $ROLLBACK -eq 1 ]]; then
-  head "Rollback"
-  LATEST="$(ls -1t "$BACKUP_DIR"/baseline-*.env 2>/dev/null | head -1)"
-  if [[ -z "$LATEST" ]]; then
-    fail "No backup found in $BACKUP_DIR"
-    exit 1
-  fi
-  warn "Restoring from: $LATEST"
-  # shellcheck disable=SC1090
-  source "$LATEST"
-
-  # Revert sysctl
-  [[ -n "${SYSCTL_vm_swappiness:-}" ]] && sysctl -w vm.swappiness="$SYSCTL_vm_swappiness" >/dev/null
-  [[ -n "${SYSCTL_vm_dirty_ratio:-}" ]] && sysctl -w vm.dirty_ratio="$SYSCTL_vm_dirty_ratio" >/dev/null
-  [[ -n "${SYSCTL_vm_dirty_background_ratio:-}" ]] && sysctl -w vm.dirty_background_ratio="$SYSCTL_vm_dirty_background_ratio" >/dev/null
-  [[ -n "${SYSCTL_net_core_default_qdisc:-}" ]] && sysctl -w net.core.default_qdisc="$SYSCTL_net_core_default_qdisc" >/dev/null
-  [[ -n "${SYSCTL_net_ipv4_tcp_congestion_control:-}" ]] && sysctl -w net.ipv4.tcp_congestion_control="$SYSCTL_net_ipv4_tcp_congestion_control" >/dev/null
-  [[ -n "${SYSCTL_net_ipv4_tcp_fastopen:-}" ]] && sysctl -w net.ipv4.tcp_fastopen="$SYSCTL_net_ipv4_tcp_fastopen" >/dev/null
-  # B extras
-  for k in net.core.netdev_max_backlog net.ipv4.tcp_max_syn_backlog \
-           net.core.rmem_max net.core.wmem_max vm.laptop_mode; do
-    v=$(sysctl -n "$k")
-    echo "Note: $k was set to $v during this run; manually set it back if needed"
-  done
-
-  # Remove our files
-  rm -f "$CONF_DIR/99-perf-tune.conf" \
-        "$UDEV_DIR/60-ioschedulers.rules" \
-        "$MODPROBE_DIR/bbr.conf"
-  warn "Manual rollback still required for:"
-  echo "  - /etc/fstab (revert noatime change)"
-  echo "  - /etc/environment (remove RADV_PERFTEST, MESA_NO_ERROR)"
-  echo "  - pacman -Rns gamemode lib32-gamemode ananicy-cpp ananicy-cpp-rules irqbalance lib32-mangohud"
-  echo "  - systemctl disable --now gamemoded irqbalance ananicy-cpp"
-  ok "Sysctl reverted and config files removed"
-  exit 0
-fi
-
-mkdir -p "$BACKUP_DIR"
 # =====================================================================
 info 1 5 "CachyOS Repository Setup"
 
@@ -372,7 +327,7 @@ for _preset in /etc/mkinitcpio.d/*.preset; do
   fi
 
   # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
-  _uki_dir="/boot/EFI/Linux"
+  _uki_dir="$ESP/EFI/Linux"
   if [[ -d "$_uki_dir" ]]; then
     for _uki_key in default_uki fallback_uki; do
       _uki_line=$(grep -E "^${_uki_key}=" "$_preset" | awk 'NR==1{print;exit}')
@@ -416,8 +371,6 @@ LOADER_CONF="$LOADER_DIR/loader.conf"
 mkdir -p "$LOADER_DIR"
 
 if [[ -f "$LOADER_CONF" ]]; then
-  cp -a "$LOADER_CONF" "$LOADER_CONF.bak-$TS"
-  warn "backed up existing loader.conf -> loader.conf.bak-$TS"
   TMP=$(mktemp)
   grep -vE '^default([[:space:]]|$)' "$LOADER_CONF" > "$TMP"
   printf 'default %s*\n' "$DEFAULT_MATCH" >> "$TMP"
@@ -632,7 +585,6 @@ head "DONE"
 cat <<EOF
   Installed kernel : $PKG_BASE ${NEW_VER:-?}
   Boot default     : systemd-boot -> ${DEFAULT_MATCH}*  ($LOADER_CONF)
-  loader.conf backup: ${LOADER_CONF}.bak-${TS}
 
 REBOOT REQUIRED - the CachyOS kernel will load on next boot.
 If old kernel removal was deferred, it runs automatically on that boot and
@@ -642,10 +594,6 @@ EOF
 
 # =====================================================================
 info 3 5 "Fix UKI Setup"
-
-BACKUP_DIR="/var/lib/perf-tune-backup"
-TS="$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$BACKUP_DIR"
 
 # ---------- find ESP ----------
 head "Pre-flight checks"
@@ -660,11 +608,12 @@ ok "UKI directory: $UKI_DIR"
 # ---------- check presets ----------
 mapfile -t PRESETS < <(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' -type f 2>/dev/null | sort)
 [[ ${#PRESETS[@]} -eq 0 ]] && die "No presets found in /etc/mkinitcpio.d"
-ok "Found ${#PRESETS[@]} preset(s): $(printf '%s ' "$(basename "${PRESETS[@]}")")"
+ok "Found ${#PRESETS[@]} preset(s): $(basename -a "${PRESETS[@]}" | tr '\n' ' ')"
 
 # ---------- enable UKI for presets using default_image ----------
 head "Enabling UKI for presets using traditional initramfs"
 SWITCHED=0
+NEED_REGEN=0
 for p in "${PRESETS[@]}"; do
   NAME="$(basename "$p" .preset)"
   KERNEL_NAME="${NAME#linux-}"
@@ -683,8 +632,6 @@ for p in "${PRESETS[@]}"; do
   fi
 
   head "Updating $NAME"
-  cp -a "$p" "$BACKUP_DIR/${NAME}.preset.$TS"
-  ok "backed up -> $BACKUP_DIR/${NAME}.preset.$TS"
 
   # Comment out default_image, uncomment default_uki
   sed -i -E '
@@ -704,6 +651,7 @@ for p in "${PRESETS[@]}"; do
 
   ok "$NAME: switched to UKI"
   SWITCHED=1
+  NEED_REGEN=1
 done
 
 if [[ $SWITCHED -eq 0 ]]; then
@@ -751,6 +699,7 @@ for _preset in /etc/mkinitcpio.d/*.preset; do
     if [[ -n "$_mod_dir" && -f "${_mod_dir}vmlinuz" ]]; then
       cp "${_mod_dir}vmlinuz" "$_kver"
       ok "copied $(basename "${_mod_dir}vmlinuz") -> $_kver"
+      NEED_REGEN=1
     else
       warn "could not find vmlinuz for $_name in /usr/lib/modules/"
     fi
@@ -759,7 +708,7 @@ for _preset in /etc/mkinitcpio.d/*.preset; do
   fi
 
   # fix UKI paths that point to a non-existent directory (e.g. /efi/ instead of /boot/)
-  _uki_dir="/boot/EFI/Linux"
+  _uki_dir="$UKI_DIR"
   if [[ -d "$_uki_dir" ]]; then
     for _uki_key in default_uki fallback_uki; do
       _uki_line=$(grep -E "^${_uki_key}=" "$_preset" | awk 'NR==1{print;exit}')
@@ -773,68 +722,68 @@ for _preset in /etc/mkinitcpio.d/*.preset; do
         _new_uki="${_uki_dir}/${_uki_fname}"
         sed -i "s|^${_uki_key}=.*|${_uki_key}=\"${_new_uki}\"|" "$_preset"
         ok "fixed ${_uki_key} in $(basename "$_preset"): $_uki_val -> $_new_uki"
+        NEED_REGEN=1
       fi
     done
   fi
 done
 
-# ---------- regenerate ----------
-head "Regenerating all UKIs with mkinitcpio -P"
-if mkinitcpio -P; then
-  ok "mkinitcpio -P completed"
+# ---------- regenerate (only if a preset was actually changed) ----------
+if [[ $NEED_REGEN -eq 1 ]]; then
+  head "Regenerating all UKIs with mkinitcpio -P"
+  if mkinitcpio -P; then
+    ok "mkinitcpio -P completed"
+  else
+    die "mkinitcpio -P failed"
+  fi
 else
-  die "mkinitcpio -P failed"
+  ok "No preset changes; skipping UKI regeneration (images already built in stage 2)"
 fi
 
-# ---------- secure boot: install sbctl, create keys, enroll (-m), sign ----------
+# ---------- secure boot: create keys, enroll (-m), sign (sbctl installed by Install.sh) ----------
 head "Secure Boot setup (sbctl)"
 if ! command -v sbctl >/dev/null; then
-  warn "sbctl not installed - installing it now"
-  if pacman -S --needed --noconfirm sbctl; then
-    ok "installed sbctl"
-  else
-    die "failed to install sbctl"
-  fi
-fi
-
-if [[ ! -d /var/lib/sbctl/keys ]]; then
-  head "Creating Secure Boot keys"
-  if sbctl create-keys; then
-    ok "created Secure Boot keys in /var/lib/sbctl/keys"
-  else
-    die "failed to create Secure Boot keys"
-  fi
+  warn "sbctl not installed (Install.sh installs it) - skipping Secure Boot setup"
 else
-  ok "Secure Boot keys already exist in /var/lib/sbctl/keys"
-fi
-
-SB_STATUS="$(sbctl status 2>/dev/null || true)"
-if grep -qi 'secure boot:.*enabled' <<< "$SB_STATUS" \
-   && grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
-  ok "Secure Boot already active with enrolled keys - skipping enrollment"
-else
-  head "Enrolling Secure Boot keys (Microsoft keys included via -m)"
-  if sbctl enroll-keys -m; then
-    ok "enrolled keys with Microsoft keys (-m)"
-    warn "a reboot may be required for the firmware to activate the keys"
+  if [[ ! -d /var/lib/sbctl/keys ]]; then
+    head "Creating Secure Boot keys"
+    if sbctl create-keys; then
+      ok "created Secure Boot keys in /var/lib/sbctl/keys"
+    else
+      die "failed to create Secure Boot keys"
+    fi
   else
-    die "failed to enroll Secure Boot keys (-m)"
+    ok "Secure Boot keys already exist in /var/lib/sbctl/keys"
   fi
-fi
 
-head "Signing UKIs with sbctl"
-UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
-if [[ -n "$UNSIGNED" ]]; then
-  warn "signing unsigned files"
-  while IFS= read -r efi; do
-    [[ -f "$efi" ]] || continue
-    sbctl sign -s "$efi"
-  done <<< "$UNSIGNED"
-  ok "signed unsigned files"
-else
-  ok "all UKIs already signed"
+  SB_STATUS="$(sbctl status 2>/dev/null || true)"
+  if grep -qi 'secure boot:.*enabled' <<< "$SB_STATUS" \
+     && grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
+    ok "Secure Boot already active with enrolled keys - skipping enrollment"
+  else
+    head "Enrolling Secure Boot keys (Microsoft keys included via -m)"
+    if sbctl enroll-keys -m; then
+      ok "enrolled keys with Microsoft keys (-m)"
+      warn "a reboot may be required for the firmware to activate the keys"
+    else
+      die "failed to enroll Secure Boot keys (-m)"
+    fi
+  fi
+
+  head "Signing UKIs with sbctl"
+  UNSIGNED=$(sbctl verify 2>/dev/null | grep '^✗' | sed 's/^✗ //;s/:.*//')
+  if [[ -n "$UNSIGNED" ]]; then
+    warn "signing unsigned files"
+    while IFS= read -r efi; do
+      [[ -f "$efi" ]] || continue
+      sbctl sign -s "$efi"
+    done <<< "$UNSIGNED"
+    ok "signed unsigned files"
+  else
+    ok "all UKIs already signed"
+  fi
+  sbctl verify || true
 fi
-sbctl verify || true
 
 # ---------- verify ----------
 head "Verification"
@@ -858,40 +807,11 @@ fi
 
 head "DONE"
 cat <<EOF
-  UKI enabled; Secure Boot keys created and enrolled (with Microsoft keys, -m).
-  Backup: $BACKUP_DIR/*.preset.$TS
+  UKI enabled; Secure Boot keys ensured and enrolled with -m (when sbctl is present).
   REBOOT REQUIRED to boot from the new UKIs and to finalize key enrollment.
 EOF
 # =====================================================================
 info 4 5 "Performance Tuning"
-
-# --------------- 0. baseline snapshot -------------------------------------
-head "0. Baseline snapshot"
-{
-  echo "# Baseline captured $(date -Iseconds)"
-  for k in vm.swappiness vm.dirty_ratio vm.dirty_background_ratio vm.laptop_mode \
-           net.core.default_qdisc net.ipv4.tcp_congestion_control \
-           net.ipv4.tcp_fastopen \
-           net.core.netdev_max_backlog net.ipv4.tcp_max_syn_backlog \
-           net.core.rmem_max net.core.wmem_max; do
-    printf 'SYSCTL_%s=%s\n' "${k//./_}" "$(sysctl -n "$k")"
-  done
-  echo "THP_enabled=$(cat /sys/kernel/mm/transparent_hugepage/enabled)"
-  echo "THP_defrag=$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
-  for d in /sys/block/*; do
-    [[ -f "$d/queue/scheduler" ]] || continue
-    n=$(basename "$d")
-    echo "SCHED_${n}=$(cat "$d/queue/scheduler")"
-    [[ -r "$d/queue/read_ahead_kb" ]] && echo "READAHEAD_${n}=$(cat "$d/queue/read_ahead_kb")"
-  done
-  cp -a "$FSTAB" "$BACKUP_DIR/fstab.$TS"
-  cp -a "$KCMDLINE" "$BACKUP_DIR/cmdline.$TS" 2>/dev/null
-  [[ -f "$ENV_FILE" ]] && cp -a "$ENV_FILE" "$BACKUP_DIR/environment.$TS"
-} | tee "$BACKUP_FILE" >/dev/null
-chmod 600 "$BACKUP_FILE"
-chmod 600 "$BACKUP_DIR/fstab.$TS" "$BACKUP_DIR/cmdline.$TS" "$BACKUP_DIR/environment.$TS" 2>/dev/null
-ok "Backup written to $BACKUP_FILE"
-ok "fstab/cmdline/environment backups written to $BACKUP_DIR/"
 
 # =====================================================================
 head "A. sysctl + I/O"
@@ -929,20 +849,21 @@ sysctl -p "$SYSCTL_FILE" >/dev/null
 
 # A.3 I/O scheduler + readahead (runtime + udev persistence)
 # Detect which schedulers this kernel provides, then only emit rules that
-# reference available schedulers (bfq is not built into every kernel).
+# reference available schedulers. bfq is intentionally excluded: the CachyOS
+# kernels do not ship it, so mq-deadline is the preferred rotational scheduler.
 AVAIL_SCHEDS=""
 for d in /sys/block/*; do
   [[ -f "$d/queue/scheduler" ]] || continue
   AVAIL_SCHEDS="$AVAIL_SCHEDS $(cat "$d/queue/scheduler")"
 done
 HDD_SCHED=""
-for s in bfq mq-deadline deadline none; do
+for s in mq-deadline deadline none; do
   if grep -qw "$s" <<<"$AVAIL_SCHEDS"; then HDD_SCHED="$s"; break; fi
 done
 if [[ -n "$HDD_SCHED" ]]; then
   ok "HDD scheduler available on this kernel: $HDD_SCHED"
 else
-  warn "no HDD scheduler candidate (bfq/mq-deadline) found on this kernel"
+  warn "no HDD scheduler candidate (mq-deadline) found on this kernel"
 fi
 
 UDEV_FILE="$UDEV_DIR/60-ioschedulers.rules"
@@ -1007,7 +928,8 @@ PKGS=(ananicy-cpp irqbalance)
 if [[ "$(uname -m)" == "x86_64" ]]; then
   PKGS+=(lib32-gamemode lib32-mangohud)
 fi
-# gamemode is already installed; lib32-* and ananicy-cpp rules are bundled in ananicy-cpp.
+# gamemode and mangohud (native) are installed by Install.sh; only the lib32-*
+# variants and ananicy-cpp rules are handled here.
 MISSING=()
 for p in "${PKGS[@]}"; do
   pacman -Q "$p" >/dev/null 2>&1 || MISSING+=("$p")
@@ -1022,8 +944,6 @@ if [[ ${#MISSING[@]} -gt 0 ]]; then
 else
   ok "All packages already installed"
 fi
-# Reinstall gamemode to fix the missing-binary issue observed earlier
-pacman -S --noconfirm --overwrite='*' gamemode >/dev/null 2>&1 || true
 
 # =====================================================================
 head "D. Enable services"
@@ -1109,8 +1029,6 @@ if [[ ! -f "$KCMDLINE" ]]; then
   fail "systemd-boot kernel cmdline file not found: $KCMDLINE"
 else
   warn "systemd-boot + UKI detected - updating $KCMDLINE and regenerating images"
-  cp -a "$KCMDLINE" "$BACKUP_DIR/cmdline.$TS"
-  chmod 600 "$BACKUP_DIR/cmdline.$TS"
   CURRENT=$(cat "$KCMDLINE")
   ADDED=""
   for p in "${NEW_PARAMS[@]}"; do
@@ -1123,13 +1041,6 @@ else
   if [[ -n "$ADDED" ]]; then
     echo "$CURRENT" > "$KCMDLINE"
     ok "kernel cmdline updated. Added:$ADDED"
-
-    # Back up every existing UKI (kernel-agnostic)
-    for _u in /boot/EFI/Linux/*.efi; do
-      [[ -f "$_u" ]] || continue
-      cp -a "$_u" "$BACKUP_DIR/$(basename "$_u").$TS"
-      chmod 600 "$BACKUP_DIR/$(basename "$_u").$TS"
-    done
 
     # Regenerate images for ALL detected kernels, not a hardcoded one.
     if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
@@ -1191,7 +1102,7 @@ else
 fi
 
 # =====================================================================
-head "H. Audio (HDA power-save + rtkit) (REBOOT required for HDA)"
+head "H. Audio (HDA power-save) (REBOOT required for HDA)"
 
 # H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume
 # Kept for laptop use too: relevant when hooked up to an external HDMI/DP output.
@@ -1199,7 +1110,7 @@ HDA_CONF="/etc/modprobe.d/audio-disable-power-save.conf"
 if [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
   ok "HDA power-save config already present"
 else
-  sudo tee "$HDA_CONF" > /dev/null <<'EOF'
+  tee "$HDA_CONF" > /dev/null <<'EOF'
 # Disable HDA codec power-saving - prevents HDMI audio crackling/popping
 # Default power_save=10 lets the HDA codec enter D3 after 10s of silence,
 # which can produce an audible pop on resume from HDMI/DP outputs.
@@ -1217,8 +1128,8 @@ PIPEWIRE_CONF="/etc/pipewire/pipewire.conf.d/99-low-latency.conf"
 if [[ -f "$PIPEWIRE_CONF" ]] && grep -q "default.clock.quantum" "$PIPEWIRE_CONF"; then
   ok "PipeWire low-latency config already present"
 else
-  sudo mkdir -p "$(dirname "$PIPEWIRE_CONF")"
-  sudo tee "$PIPEWIRE_CONF" > /dev/null <<'PWCONF'
+  mkdir -p "$(dirname "$PIPEWIRE_CONF")"
+  tee "$PIPEWIRE_CONF" > /dev/null <<'PWCONF'
 # Lower default PipeWire quantum for reduced audio latency
 # 512 samples @ 48 kHz = ~10.7 ms (was 1024 / ~21 ms)
 # No impact on audio quality - only changes buffer size / latency.
@@ -1231,31 +1142,7 @@ PWCONF
   ok "Wrote $PIPEWIRE_CONF"
 fi
 
-# H.3 rtkit - real-time scheduling for PipeWire/WirePlumber threads
-if ! command -v rtkitctl >/dev/null 2>&1; then
-  warn "rtkit not installed - installing"
-  if sudo pacman -S --noconfirm --needed rtkit >/dev/null 2>&1; then
-    ok "rtkit installed"
-  else
-    fail "rtkit install failed"
-  fi
-else
-  ok "rtkit already installed"
-fi
-if systemctl list-unit-files rtkit-daemon.service >/dev/null 2>&1; then
-  if systemctl is-enabled --quiet rtkit-daemon 2>/dev/null; then
-    ok "rtkit-daemon already enabled"
-  else
-    sudo systemctl enable rtkit-daemon 2>&1
-  fi
-  if systemctl is-active --quiet rtkit-daemon 2>/dev/null; then
-    ok "rtkit-daemon active"
-  else
-    sudo systemctl start rtkit-daemon 2>&1
-  fi
-else
-  fail "rtkit-daemon.service not found (package missing?)"
-fi
+# (rtkit package + rtkit-daemon service are installed and enabled by Install.sh)
 
 # =====================================================================
 head "VERIFICATION"
@@ -1422,45 +1309,16 @@ info 5 5 "CachyOS Compatibility Fixes"
 UDEV_FILE="/etc/udev/rules.d/60-ioschedulers.rules"
 SYSCTL_FILE="/etc/sysctl.d/zz-cachyos-compat.conf"
 KCMDLINE="/etc/kernel/cmdline"
-BACKUP_DIR="/var/lib/perf-tune-backup"
-TS="$(date +%Y%m%d-%H%M%S)"
-mkdir -p "$BACKUP_DIR"
 
 # =====================================================================
 head "1. I/O scheduler rules (no bfq - CachyOS kernels don't ship it)"
 
-# Detect which schedulers the current kernel provides (CachyOS lacks bfq).
-AVAIL_SCHEDS=""
-for d in /sys/block/*; do
-  [[ -f "$d/queue/scheduler" ]] || continue
-  AVAIL_SCHEDS="$AVAIL_SCHEDS $(cat "$d/queue/scheduler")"
-done
-# Candidate list deliberately excludes bfq.
-HDD_SCHED=""
-for s in mq-deadline deadline none; do
-  if grep -qw "$s" <<<"$AVAIL_SCHEDS"; then HDD_SCHED="$s"; break; fi
-done
-
-if [[ -f "$UDEV_FILE" ]] && grep -q bfq "$UDEV_FILE"; then
-  cp -a "$UDEV_FILE" "$BACKUP_DIR/ioschedulers.bfq.$TS"
-  chmod 600 "$BACKUP_DIR/ioschedulers.bfq.$TS"
-  warn "backed up bfq-containing rules -> $BACKUP_DIR/ioschedulers.bfq.$TS"
+# The tune stage (A.3) already writes these bfq-free rules; just confirm it.
+if [[ -f "$UDEV_FILE" ]] && ! grep -v '^#' "$UDEV_FILE" 2>/dev/null | grep -q bfq; then
+  ok "$UDEV_FILE present and bfq-free"
+else
+  fail "$UDEV_FILE missing or still references bfq"
 fi
-
-{
-  printf '# Generated by run-all-common.sh (cachyos-compat stage, no bfq)\n'
-  printf '# NVMe (multi-queue) -> none scheduler, 256 KiB readahead\n'
-  printf 'ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none", ATTR{queue/read_ahead_kb}="256"\n'
-  if [[ -n "$HDD_SCHED" ]]; then
-    printf '# Rotational disks -> %s scheduler (CachyOS-safe), 8 MiB readahead\n' "$HDD_SCHED"
-    printf 'ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|mmcblk*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="%s", ATTR{queue/read_ahead_kb}="8192"\n' "$HDD_SCHED"
-  else
-    printf '# No HDD scheduler available on this kernel; rule omitted\n'
-  fi
-} > "$UDEV_FILE"
-udevadm control --reload-rules >/dev/null 2>&1
-udevadm trigger --action=change --subsystem-match=block >/dev/null 2>&1 || true
-ok "udev rules rewritten without bfq (rotational -> ${HDD_SCHED:-none})"
 
 # =====================================================================
 head "2. sysctl: fq qdisc + bbr congestion control (CachyOS recommendation)"
@@ -1489,8 +1347,6 @@ head "3. Kernel cmdline: transparent_hugepage=madvise + UKI regeneration"
 if [[ ! -f "$KCMDLINE" ]]; then
   warn "no $KCMDLINE (systemd-boot cmdline file) - nothing to align"
 else
-  cp -a "$KCMDLINE" "$BACKUP_DIR/cmdline.cachyos.$TS" 2>/dev/null
-  chmod 600 "$BACKUP_DIR/cmdline.cachyos.$TS" 2>/dev/null
   CURRENT="$(cat "$KCMDLINE")"
   ADDED=""
   if ! grep -qw -- "transparent_hugepage=madvise" <<<"$CURRENT"; then
@@ -1506,27 +1362,32 @@ else
   fi
 fi
 
-if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
-  if mkinitcpio -P >/dev/null 2>&1; then
-    ok "mkinitcpio regenerated all UKIs"
+# Only regenerate if this stage actually changed the cmdline (the tune stage F
+# already added transparent_hugepage=madvise, so normally this is a no-op).
+if [[ -n "${ADDED:-}" ]]; then
+  if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
+    if mkinitcpio -P >/dev/null 2>&1; then
+      ok "mkinitcpio regenerated all UKIs"
+    else
+      fail "mkinitcpio -P failed"
+    fi
+  elif command -v dracut >/dev/null; then
+    if dracut --regenerate-all >/dev/null 2>&1; then
+      ok "dracut regenerated all images"
+    else
+      fail "dracut --regenerate-all failed"
+    fi
   else
-    fail "mkinitcpio -P failed"
-  fi
-elif command -v dracut >/dev/null; then
-  if dracut --regenerate-all >/dev/null 2>&1; then
-    ok "dracut regenerated all images"
-  else
-    fail "dracut --regenerate-all failed"
+    warn "no mkinitcpio/dracut found - UKIs not regenerated"
   fi
 else
-  warn "no mkinitcpio/dracut found - UKIs not regenerated"
+  ok "cmdline unchanged; skipping UKI regeneration"
 fi
 
 # =====================================================================
 head "4. Verification"
 
-V=0
-check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; V=1; fi; }
+check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; fi; }
 
 QDISK="$(sysctl -n net.core.default_qdisc 2>/dev/null)"
 CC="$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)"
@@ -1570,11 +1431,9 @@ cat <<EOF
     - $UDEV_FILE (no bfq)
     - $SYSCTL_FILE (fq + bbr, applied last)
     - $KCMDLINE (transparent_hugepage=madvise)
-  Backups: $BACKUP_DIR/ (ioschedulers.bfq.$TS, cmdline.cachyos.$TS)
 
   REBOOT required for the cmdline/udev changes to fully apply.
 EOF
-[[ ${V:-0} -eq 0 ]] || FAIL=$((FAIL+1))
 
 # =====================================================================
 echo
@@ -1596,21 +1455,12 @@ Persistence files:
   $KCMDLINE   (modified, systemd-boot)
   $FSTAB      (modified)
   $ENV_FILE   (modified)
-Baseline backup:
-  $BACKUP_FILE
-  $BACKUP_DIR/fstab.$TS
-  $BACKUP_DIR/cmdline.$TS
-  $BACKUP_DIR/environment.$TS
 
 ACTION REQUIRED (won't take effect until you do):
   1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq)
                    + HDA power-save (snd_hda_intel module reload)
   2. REBOOT     - same reboot picks up new modules-load and udev rules
   3. LOGOUT     - for RADV_PERFTEST and MESA_NO_ERROR to load
-
-To rollback (after reboot if already done):
-  sudo $0 --rollback
-  # plus manual revert of fstab/cmdline/environment + pacman -Rns and disable services
 EOF
 
 if [[ $FAIL -gt 0 ]]; then

@@ -37,8 +37,9 @@ same single pipeline, in order:
      is actually running, removes the remaining old kernel(s), then deletes the unit, its config
      (`/etc/remove-old-kernel.conf`, `/usr/local/bin/remove-old-kernel.sh`) — removed, not
      just disabled. Nothing is removed if CachyOS hasn't booted yet.
-3. Fix/enable UKI and set up Secure Boot: installs `sbctl`, creates keys if missing,
-   enrolls them with `-m` (Microsoft keys included for dual-boot), signs the UKIs
+3. Fix/enable UKI and set up Secure Boot via `sbctl` (installed by `Install.sh`):
+   creates keys if missing, enrolls them with `-m` (Microsoft keys included for
+   dual-boot), signs the UKIs
 4. Performance tune (the desktop/laptop difference is only `vm.laptop_mode`: 0 vs 5)
 5. CachyOS-kernel compatibility overrides
 

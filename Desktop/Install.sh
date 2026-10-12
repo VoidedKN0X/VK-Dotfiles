@@ -7,10 +7,12 @@ sudo pacman -S libayatana-indicator yt-dlp gst-plugin-gtk gst-libav feishin bcac
 git clone https://aur.archlinux.org/yay.git && cd yay && makepkg -si && cd && rm -rf /home/$USER/yay
 
 # Install Apps from yay
-yay -S rapidraw-bin bs-manager-bin faugus-launcher xrizer opencomposite wivrn-dashboard amethyst-mod-manager wallust-git github-desktop-bin eid-mw heroic-games-launcher-bin jdownloader2 protonplus orca-slicer-bin auto-cpufreq mangojuice-bin localsend-bin opendeck-bin imsprog vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator-bin bedrock-on-linux-bin --needed
+yay -S rapidraw-bin bs-manager-bin faugus-launcher xrizer opencomposite-git wivrn-dashboard amethyst-mod-manager wallust-git github-desktop-bin eid-mw heroic-games-launcher-bin jdownloader2 protonplus orca-slicer-bin auto-cpufreq mangojuice-bin localsend-bin opendeck-bin imsprog vscodium-bin vscodium-bin-marketplace bibata-cursor-theme-bin waybar-module-music-git qt6ct-kde yubico-authenticator-bin bedrock-on-linux-bin --needed
 
 # Remove leftover install files
-sudo pacman -Rscnu $(pacman -Qdtq) --noconfirm && sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
+ORPHANS=$(pacman -Qdtq)
+[ -n "$ORPHANS" ] && sudo pacman -Rscnu $ORPHANS --noconfirm
+sudo pacman -Sc --noconfirm && yay -Sc --noconfirm && yay -Yc --noconfirm
 
 # Enable Services
 sudo systemctl enable --now pcscd.service && sudo systemctl enable --now cups && sudo systemctl enable --now auto-cpufreq && sudo systemctl enable --now syncthing@$USER.service && sudo systemctl enable --now fwupd-refresh.timer && sudo systemctl enable --now fstrim.timer && sudo systemctl enable greetd && sudo systemctl enable --now lactd && sudo systemctl enable --now avahi-daemon && sudo systemctl enable --now rtkit-daemon
@@ -22,7 +24,9 @@ sudo mkdir /media/TrueNAS
 xdg-user-dirs-update
 
 # Make all folder in /media writable
-sudo chmod 777 /media /media/Games /media/Recordings /media/Data /media/Backup
+for _d in /media /media/Games /media/Recordings /media/Data /media/Backup; do
+    [ -d "$_d" ] && sudo chmod 777 "$_d"
+done
 
 # Copy .config folder
 cp "VK-Dotfiles/Desktop/.config" -r /home/$USER/
