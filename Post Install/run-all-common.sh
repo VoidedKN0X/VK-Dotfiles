@@ -762,12 +762,19 @@ else
     ok "Secure Boot already active with enrolled keys - skipping enrollment"
   else
     head "Enrolling Secure Boot keys (Microsoft keys included via -m)"
+    # Try to enroll; if immutable vars block, unfreeze and retry once
+    for f in /sys/firmware/efi/efivars/PK* /sys/firmware/efi/efivars/KEK* /sys/firmware/efi/efivars/db*; do
+      [[ -e "$f" ]] && chattr -i "$f" 2>/dev/null || true
+    done
     if sbctl enroll-keys -m; then
       ok "enrolled keys with Microsoft keys (-m)"
       warn "a reboot may be required for the firmware to activate the keys"
     else
-      die "failed to enroll Secure Boot keys (-m)"
+      fail "failed to enroll Secure Boot keys (-m) (continuing)"
     fi
+    for f in /sys/firmware/efi/efivars/PK* /sys/firmware/efi/efivars/KEK* /sys/firmware/efi/efivars/db*; do
+      [[ -e "$f" ]] && chattr +i "$f" 2>/dev/null || true
+    done
   fi
 
   head "Signing UKIs with sbctl"
