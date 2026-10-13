@@ -178,6 +178,9 @@ It's based on the laptop profile.
   gesture. While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
   swipe-up gesture still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
   keyboard it detected.
+- **Screen rotation:** the rotate button in the notification center switches between landscape
+  and portrait; the touchscreen and gestures turn with it, and the choice is kept after a
+  reboot.
 - **Power button:** a short press puts the Deck to sleep, like SteamOS.
 - **Login and lock:** logs in automatically at boot. The screen is **not locked automatically**
   (like SteamOS), because the on-screen keyboard can't appear on a lock screen. You can still lock by

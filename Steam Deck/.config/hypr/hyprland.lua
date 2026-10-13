@@ -1,6 +1,7 @@
 require("variables")
 require("colors/colors")
 
+require("hyprland/rotation")
 require("hyprland/monitors")
 require("hyprland/execs")
 require("hyprland/input")

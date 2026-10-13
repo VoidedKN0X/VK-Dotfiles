@@ -1,11 +1,12 @@
 -- Steam Deck LCD: the panel is physically portrait (800x1280). transform = 3
--- rotates it 270 degrees so the desktop is landscape (1280x800).
+-- rotates it 270 degrees so the desktop is landscape (1280x800). The rotate
+-- button can change it (see rotation.lua).
 hl.monitor({
     output = "eDP-1",
     mode = "800x1280@60",
     position = "0x0",
     scale = 1,
-    transform = 3,
+    transform = screenTransform,
 })
 
 -- Anything else (a monitor on a USB-C dock): preferred mode, placed automatically

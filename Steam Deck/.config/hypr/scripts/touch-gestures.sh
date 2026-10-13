@@ -21,11 +21,12 @@ SCRIPTS="$HOME/.config/hypr/scripts"
 # /dev/input/touchscreen is created by the udev rule Install.sh adds
 DEVICE="/dev/input/touchscreen"
 
-# The panel is mounted portrait and Hyprland rotates it (transform = 3), but
-# the touchscreen still reports portrait coordinates. lisgd's -o rotates the
-# gestures by this many 90-degree steps to match. If swipes come out in the
-# wrong direction (e.g. "up" acts like "left"), change 3 to 1.
-ROTATION=3
+# The panel is mounted portrait and Hyprland rotates it (transform 3 by
+# default, or whatever rotate.sh saved), but the touchscreen still reports
+# portrait coordinates. lisgd's -o rotates the gestures by the same number of
+# 90-degree steps to match.
+ROTATION=$(cat "$HOME/.local/state/hypr/rotation" 2>/dev/null)
+[ "$ROTATION" = 0 ] || ROTATION=3
 
 hypr() { hyprctl dispatch "$1" >/dev/null; }
 

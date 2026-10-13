@@ -63,6 +63,10 @@
           "command": "~/.config/swaync/scripts/bluetooth.sh"
         },
         {
+          "label": "󰑵",
+          "command": "~/.config/hypr/scripts/rotate.sh"
+        },
+        {
           "label": "",
           "command": "reboot"
         },
