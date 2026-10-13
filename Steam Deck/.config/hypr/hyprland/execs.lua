@@ -28,6 +28,8 @@ hl.on("hyprland.start", function()
     -- turns that setting off while a physical keyboard is connected.
     hl.exec_cmd("~/.config/hypr/scripts/osk-auto.sh")
     hl.exec_cmd("squeekboard")
+    -- Touch-friendly app menu, kept in memory so it opens instantly
+    hl.exec_cmd("~/.config/hypr/scripts/app-drawer.sh start")
     -- Touchscreen gestures (edge swipes, 3-finger swipes)
     hl.exec_cmd("~/.config/hypr/scripts/touch-gestures.sh")
     -- Automatic brightness from the light sensor

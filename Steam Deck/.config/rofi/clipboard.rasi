@@ -5,8 +5,8 @@ configuration {
 }
 
 /*****----- Global Properties -----*****/
-@import                          "launchers/type-2/shared/colors.rasi"
-@import                          "launchers/type-2/shared/fonts.rasi"
+@import                          "shared/colors.rasi"
+@import                          "shared/fonts.rasi"
 
 /*****----- Main Window -----*****/
 window {

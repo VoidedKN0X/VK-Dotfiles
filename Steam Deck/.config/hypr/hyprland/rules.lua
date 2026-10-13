@@ -51,7 +51,8 @@ hl.window_rule({
     float = true,
 })
 
--- Layer rules (blur + animations for swaync and rofi)
+-- Layer rules (blur + animations for swaync, rofi and the app menu)
 hl.layer_rule({ match = { namespace = "swaync-control-center" }, blur = true, ignore_alpha = 0.45, animation = "slide left" })
 hl.layer_rule({ match = { namespace = "swaync-notification-window" }, blur = true, ignore_alpha = 0 })
 hl.layer_rule({ match = { namespace = "rofi" }, blur = true, ignore_alpha = 0, animation = "slide bottom" })
+hl.layer_rule({ match = { namespace = "nwg-drawer" }, blur = true, ignore_alpha = 0, animation = "fade" })

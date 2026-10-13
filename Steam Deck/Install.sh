@@ -98,6 +98,7 @@ PACMAN_PKGS=(
     base-devel
     zsh
     rofi
+    nwg-drawer
     waybar
     swaync
     noto-fonts
@@ -138,7 +139,6 @@ PACMAN_PKGS=(
 AUR_PKGS=(
     lisgd
     wluma
-    bottles
     amethyst-mod-manager
     wallust-git
     github-desktop-bin
@@ -335,5 +335,4 @@ cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
-         "$HOME"/.config/swaync/scripts/*.sh \
-         "$HOME"/.config/rofi/launchers/type-2/launcher.sh
+         "$HOME"/.config/swaync/scripts/*.sh

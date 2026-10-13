@@ -33,7 +33,7 @@ hypr() { hyprctl dispatch "$1" >/dev/null; }
 case "${1:-start}" in
     keyboard)       "$SCRIPTS/osk-toggle.sh" ;;
     notifications)  swaync-client -t -sw ;;
-    launcher)       pkill rofi || "$HOME/.config/rofi/launchers/type-2/launcher.sh" ;;
+    launcher)       "$SCRIPTS/app-drawer.sh" ;;
     next-workspace) hypr 'hl.dsp.focus({ workspace = "e+1" })' ;;
     prev-workspace) hypr 'hl.dsp.focus({ workspace = "e-1" })' ;;
     fullscreen)     hypr 'hl.dsp.window.fullscreen({ mode = 0 })' ;;

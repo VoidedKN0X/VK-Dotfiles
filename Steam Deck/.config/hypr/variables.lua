@@ -1,6 +1,6 @@
 terminal = "foot"
 fileManager = "thunar"
-menu = "pkill rofi || ~/.config/rofi/launchers/type-2/launcher.sh"
+menu = "~/.config/hypr/scripts/app-drawer.sh"
 browser = "librewolf"
 cursorTheme = "Bibata-Modern-Ice"
 cursorSize = "24"

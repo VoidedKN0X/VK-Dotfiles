@@ -42,3 +42,8 @@ swaync-client --reload-css >/dev/null 2>&1 || true
 
 # Reload waybar
 killall -SIGUSR2 waybar >/dev/null 2>&1 || true
+
+# Restart the app menu so it picks up the new colors (if it's running)
+if pgrep -x nwg-drawer >/dev/null; then
+    "$HOME/.config/hypr/scripts/app-drawer.sh" start
+fi

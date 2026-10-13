@@ -167,7 +167,7 @@ It's based on the laptop profile.
 | --- | --- |
 | Swipe up from the bottom edge | On-screen keyboard |
 | Swipe down from the top edge | Notification center |
-| Swipe right from the left edge | App launcher |
+| Swipe right from the left edge | App menu |
 | 3 fingers left / right | Next / previous workspace |
 | 3 fingers up | Fullscreen on/off |
 | 3 fingers down | Close the window |
@@ -178,6 +178,10 @@ It's based on the laptop profile.
   gesture. While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
   swipe-up gesture still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
   keyboard it detected.
+- **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
+  full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
+  still filters). Opens with the Super key or the left-edge swipe. Rofi is only used for the
+  clipboard history and the wallpaper picker.
 - **Screen rotation:** the rotate button in the notification center switches between landscape
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a
   reboot.

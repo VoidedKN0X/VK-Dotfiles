@@ -21,6 +21,10 @@ colors-rofi.template = 'colors-rofi.template'
 colors-rofi.target = '~/.config/rofi/colors/colors.rasi'
 colors-rofi.pywal = true
 
+colors-nwg-drawer.template = 'colors-nwg-drawer.template'
+colors-nwg-drawer.target = '~/.config/nwg-drawer/colors.css'
+colors-nwg-drawer.pywal = true
+
 border-colors.template = 'border-colors.template'
 border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
 border-colors.pywal = true

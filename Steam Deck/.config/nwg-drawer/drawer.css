@@ -1,0 +1,69 @@
+/* nwg-drawer: touch-friendly app menu (Steam Deck). Colors come from the
+   wallpaper via wallust (colors.css), like swaync and waybar. */
+@import 'colors.css';
+
+window {
+    background-color: alpha(@color0, 0.95);
+    color: @foreground;
+}
+
+/* search box: hidden (nwg-drawer has no option to remove it). GTK3 CSS
+   can't hide a widget, so shrink it to nothing and make it invisible */
+entry {
+    opacity: 0;
+    min-height: 0;
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: 1px;
+    background: none;
+    box-shadow: none;
+}
+
+button, image {
+    background: none;
+    border: none;
+    box-shadow: none;
+}
+
+/* app tiles: rounded, with room for a finger */
+button {
+    border-radius: 16px;
+    padding: 10px;
+    color: @foreground;
+}
+
+/* the GTK theme highlights the grid cell itself (flowboxchild) in grey;
+   clear that and highlight the tile in the accent color instead */
+flowboxchild,
+flowboxchild:hover,
+flowboxchild:selected,
+flowboxchild:focus {
+    background: none;
+    outline: none;
+}
+
+button:hover,
+button:focus,
+button:active,
+flowboxchild:hover button,
+flowboxchild:selected button {
+    background-color: alpha(@color5, 0.25);
+}
+
+#pinned-box {
+    padding-bottom: 8px;
+    border-bottom: 1px solid alpha(@color8, 0.5);
+}
+
+#files-box {
+    padding: 8px;
+    border: 1px solid alpha(@color8, 0.5);
+    border-radius: 16px;
+}
+
+#math-label {
+    font-weight: bold;
+    font-size: 18px;
+}
