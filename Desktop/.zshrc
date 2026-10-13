@@ -102,7 +102,7 @@ source $ZSH/oh-my-zsh.sh
 #
 # Example aliases
 alias ls="eza -la"
-alias clean='pacman -Qdtq | xargs -r sudo pacman -Rns --noconfirm && sudo pacman -Scc --noconfirm && yay -Scc --noconfirm && yay -Yc --noconfirm && sudo journalctl --vacuum-time=2weeks && rm -rf ~/.cache/thumbnails/*(N) ~/.local/share/Trash/*(N) ~/.local/share/recently-used.xbel'
+alias clean='pacman -Qdtq | xargs -r sudo pacman -Rns --noconfirm && yes | sudo pacman -Scc && yes | yay -Scc && yay -Yc --noconfirm && sudo journalctl --vacuum-time=2weeks && rm -rf ~/.cache/thumbnails/*(N) ~/.local/share/Trash/*(N) ~/.local/share/recently-used.xbel'
 alias download="yt-dlp --no-part --no-continue --sleep-interval 5 --max-sleep-interval 10 --embed-thumbnail --embed-metadata -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0"
 
 fastfetch

@@ -149,6 +149,12 @@ tooltip {
     color: #ffbe61;
 }
 
+@keyframes blink {
+    to {
+        color: @color7;
+    }
+}
+
 #battery.critical:not(.charging) {
     color: #f53c3c;
     animation-name: blink;

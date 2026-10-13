@@ -2,7 +2,7 @@
 -- (float + size + center ...) instead of one rule per property.
 
 -- Small utility windows: float, sized, centered
-hl.window_rule({ match = { class = "foot", title = "nmtui" }, float = true, size = "60% 70%", center = true })
+hl.window_rule({ match = { class = "nmtui" }, float = true, size = "60% 70%", center = true })
 hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol|yad-icon-browser" }, float = true, size = "60% 70%", center = true })
 hl.window_rule({ match = { class = "nwg-look" }, float = true, size = "50% 60%", center = true })
 hl.window_rule({ match = { class = "blueman-manager" }, float = true })
@@ -27,9 +27,6 @@ hl.window_rule({ match = { class = "(steam_app_(default|[0-9]+))|gamescope" }, o
 -- Wine/XWayland helper windows
 hl.window_rule({ match = { xwayland = true, title = "win[0-9]+" }, no_dim = true, no_shadow = true, rounding = 10 })
 
--- Special workspaces
-hl.window_rule({ match = { class = "feishin|Spotify|Supersonic|Cider|com.github.th_ch.youtube_music|Plexamp" }, workspace = "special:music" })
-hl.window_rule({ match = { class = "discord|equibop|vesktop|whatsapp" }, workspace = "special:communication" })
 
 -- General fixes (these used to live in workspaces.lua)
 hl.window_rule({

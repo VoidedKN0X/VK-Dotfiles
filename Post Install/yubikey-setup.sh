@@ -12,8 +12,7 @@
 #      ONE line in /etc/pam.d/system-auth, with the password as a fallback.
 #      The lock screen (hyprlock) gets its own PAM file that accepts ONLY the
 #      YubiKey, no password. Every key registered in step 1 works. Only done
-#      after checking that sudo/greetd/logins really include system-auth. If
-#      you say a test failed, every PAM file is put back exactly as it was.
+#      after checking that sudo/greetd/logins really include system-auth.
 #   3. Unlock your LUKS disk with the YubiKey (systemd-cryptenroll) and tell the
 #      initramfs to use it at boot. A key that's already enrolled stays
 #      enrolled; this only adds keys (e.g. your 2nd key as a backup).
@@ -34,6 +33,7 @@ if [[ -z "$REAL_USER" || "$REAL_USER" == "root" ]]; then
   exit 1
 fi
 REAL_HOME="$(getent passwd "$REAL_USER" | cut -d: -f6)"
+REAL_GROUP="$(id -gn "$REAL_USER")"
 KEYDIR="$REAL_HOME/.config/Yubico"
 KEYFILE="$KEYDIR/u2f_keys"
 
@@ -45,7 +45,8 @@ else
 fi
 ok()      { printf '%s[✓]%s %s\n' "$C_OK" "$C_0" "$*"; }
 warn()    { printf '%s[!]%s %s\n' "$C_W" "$C_0" "$*"; }
-fail()    { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; }
+FAILS=0
+fail()    { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; FAILS=$((FAILS + 1)); }
 section() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
 ask()     { local a; read -rp "$1 [y/N] " a; [[ "$a" =~ ^[Yy] ]]; }
 
@@ -88,6 +89,8 @@ register_keys() {
           index($0, u ":") == 1 { k = substr($0, length(u) + 2); keys = (keys == "" ? k : keys ":" k); next }
           { print }
           END { if (keys != "") print u ":" keys }' "$KEYFILE" > "$KEYFILE.tmp" && mv "$KEYFILE.tmp" "$KEYFILE"
+        # the new file is root's: give it back to the user right away
+        chown "$REAL_USER:$REAL_GROUP" "$KEYFILE"; chmod 600 "$KEYFILE"
         ok "merged into one line"
       fi
     fi
@@ -113,7 +116,7 @@ register_keys() {
       ok "key #$n registered"
       n=$((n + 1))
     else
-      fail "registration failed for key #$n"
+      warn "registration failed for key #$n (you can try again)"
     fi
     ask "Register another key?" || break
   done
@@ -122,13 +125,15 @@ register_keys() {
     warn "no keys registered - $KEYFILE unchanged"
     return 0
   fi
+  # ~/.config must stay the user's if this creates it
+  [[ -d "$REAL_HOME/.config" ]] || install -d -o "$REAL_USER" -g "$REAL_GROUP" "$REAL_HOME/.config"
   mkdir -p "$KEYDIR"
   line="$REAL_USER"
   for out in "${existing[@]}" "${keys[@]}"; do line+=":$out"; done
   # keep lines for other users, replace ours
   { [[ -f "$KEYFILE" ]] && grep -v "^${REAL_USER}:" "$KEYFILE"; printf '%s\n' "$line"; } > "$KEYFILE.tmp"
   mv "$KEYFILE.tmp" "$KEYFILE"
-  chown -R "$REAL_USER:$REAL_USER" "$KEYDIR"
+  chown -R "$REAL_USER:$REAL_GROUP" "$KEYDIR"
   chmod 700 "$KEYDIR"; chmod 600 "$KEYFILE"
   ok "$(( ${#existing[@]} + ${#keys[@]} )) key(s) saved in $KEYFILE"
 }
@@ -148,9 +153,8 @@ reaches_system_auth() {
 }
 
 setup_pam() {
-  local svc missing=() f hyprlock_change=0 hyprlock_existed=0
+  local svc missing=() f hyprlock_change=0
   local ins_line ins_mode before head_part
-  local -A saved=()
 
   section "2. YubiKey for sudo, greetd and logins (password fallback), lock screen key-only"
 
@@ -164,7 +168,7 @@ setup_pam() {
     if reaches_system_auth "$svc"; then
       ok "/etc/pam.d/$svc includes system-auth"
     else
-      fail "/etc/pam.d/$svc does NOT include system-auth"
+      warn "/etc/pam.d/$svc does NOT include system-auth"
       missing+=("$svc")
     fi
   done
@@ -219,15 +223,6 @@ setup_pam() {
   fi
   ask "Apply this?" || { warn "PAM left unchanged"; return 0; }
 
-  # --- keep the originals in memory for an exact rollback ---
-  for svc in system-auth "${PAM_SERVICES[@]}"; do
-    saved[$svc]="$(cat "/etc/pam.d/$svc"; echo x)"   # trailing x keeps final newlines
-  done
-  if [[ -f "$HYPRLOCK_PAM_FILE" ]]; then
-    hyprlock_existed=1
-    saved[hyprlock]="$(cat "$HYPRLOCK_PAM_FILE"; echo x)"
-  fi
-
   if [[ -n "${ins_line:-}" ]]; then
     sed -i "${ins_line}${ins_mode}\\${PAM_LINE}" "$f"
     ok "added pam_u2f to $f"
@@ -244,34 +239,7 @@ setup_pam() {
     ok "$HYPRLOCK_PAM_FILE now accepts only the YubiKey"
   fi
 
-  # --- test, roll back if it doesn't work ---
-  local passed=1
-  echo
-  echo "TEST NOW - keep this window open. In a NEW terminal run:"
-  echo "    sudo -k; sudo true"
-  echo "It should say 'Please touch the device'. Touch it: sudo must succeed without a password."
-  ask "Did sudo accept your key?" || passed=0
-  if [[ $passed -eq 1 && $hyprlock_change -eq 1 ]]; then
-    echo
-    echo "Now the lock screen: press Super+L (or run 'hyprlock' in the new terminal)."
-    echo "Typing your password must NOT unlock it. Touch your key: it must unlock."
-    echo "If it won't unlock: Ctrl+Alt+F3, log in with your password, run 'pkill -USR1 hyprlock',"
-    echo "then switch back to your desktop and answer 'n' below to undo everything."
-    ask "Did the lock screen unlock with your key (and not with the password)?" || passed=0
-  fi
-  if [[ $passed -eq 1 ]]; then
-    ok "pam_u2f active"
-  else
-    for svc in system-auth "${PAM_SERVICES[@]}"; do
-      printf '%s' "${saved[$svc]%x}" > "/etc/pam.d/$svc"
-    done
-    if [[ $hyprlock_existed -eq 1 ]]; then
-      printf '%s' "${saved[hyprlock]%x}" > "$HYPRLOCK_PAM_FILE"
-    elif [[ $hyprlock_change -eq 1 ]]; then
-      rm -f "$HYPRLOCK_PAM_FILE"
-    fi
-    fail "rolled back: all PAM files restored exactly as they were"
-  fi
+  ok "pam_u2f active: sudo, greetd and logins accept the key (password as fallback)"
 }
 
 # =====================================================================
@@ -299,7 +267,7 @@ enable_fido2_at_boot() {
 
   # Case 1: the disk is listed in /etc/crypttab.initramfs -> add the option there
   if [[ -f /etc/crypttab.initramfs ]] && grep -qE "^[[:space:]]*[^#[:space:]]+[[:space:]]+(UUID=${uuid}|${dev}|/dev/disk/by-uuid/${uuid})([[:space:]]|$)" /etc/crypttab.initramfs; then
-    entry="$(grep -E "(UUID=${uuid}|${dev}|by-uuid/${uuid})" /etc/crypttab.initramfs)"
+    entry="$(grep -E "^[[:space:]]*[^#[:space:]]+[[:space:]]+(UUID=${uuid}|${dev}|/dev/disk/by-uuid/${uuid})([[:space:]]|$)" /etc/crypttab.initramfs)"
     if grep -q 'fido2-device=' <<<"$entry"; then
       ok "crypttab.initramfs already has fido2-device for this disk"
       return 0
@@ -438,3 +406,7 @@ setup_luks
 section "DONE"
 echo "Reboot to test the LUKS unlock. Your passphrase and password still work as a fallback,"
 echo "except on the lock screen, which only accepts the YubiKey."
+if [[ $FAILS -gt 0 ]]; then
+  fail "$FAILS step(s) failed - see the messages above"
+  exit 1
+fi

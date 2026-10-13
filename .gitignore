@@ -1,11 +1,6 @@
 # Wallust generated files
-# The 5 core colorscheme files per profile are tracked on purpose so a fresh
-# clone loads without "module 'colors/colors' not found" before any wallpaper
-# is applied. wallust still overwrites them when you set a wallpaper.
-Asus Laptop/.config/hypr/colors/hyprlock-colors.conf
-Desktop/.config/hypr/colors/hyprlock-colors.conf
-Steam Deck/.config/hypr/colors/hyprlock-colors.conf
-Asus Laptop/.config/hypr/colors/current-wallpaper.conf
-Desktop/.config/hypr/colors/current-wallpaper.conf
-Steam Deck/.config/hypr/colors/current-wallpaper.conf
-**/foot/colors-dark.ini
+# The generated color files (and hyprlock's wallpaper path) are tracked on
+# purpose, with the default colors, so a fresh install works before any
+# wallpaper is set: Hyprland finds colors/colors.lua, the lock screen and foot
+# find their color files, and hyprlock shows a blurred screenshot as background.
+# wallust and wallpaper.sh overwrite them in ~/.config when you set a wallpaper.

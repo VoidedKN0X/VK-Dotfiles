@@ -50,7 +50,8 @@
       "label": "󰕾 "
     },
     "backlight": {
-      "label": "󰃟 "
+      "label": "󰃟 ",
+      "device": "amdgpu_bl1"
     },
     "buttons-grid": {
       "actions": [
@@ -68,11 +69,11 @@
         },
         {
           "label": "",
-          "command": "reboot"
+          "command": "~/.config/swaync/scripts/power.sh reboot"
         },
         {
           "label": "",
-          "command": "shutdown now"
+          "command": "~/.config/swaync/scripts/power.sh poweroff"
         }
       ]
     }

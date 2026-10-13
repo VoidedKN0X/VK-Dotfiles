@@ -23,7 +23,7 @@ stays self-contained and works on its own.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
-| `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects, AMD GPU |
+| `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, touchscreen gestures, on-screen keyboard, automatic brightness from the light sensor, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
@@ -58,7 +58,8 @@ git clone https://github.com/VoidedKN0X/VK-Dotfiles
 ### 1. `Install.sh`: apps and configs
 
 Run the one for your profile as your **normal user** (not with `sudo`; it asks for your password
-when needed, possibly again before steps 2 and 3). It works from any directory.
+once at the start and keeps sudo active until the end, so the long AUR builds and steps 2 and 3
+don't ask again). It works from any directory.
 
 ```sh
 "VK-Dotfiles/Desktop/Install.sh"        # or "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
@@ -98,9 +99,10 @@ Then **reboot**. It runs these stages in order:
    everything. Enrolling only works while your firmware's Secure Boot is in **Setup Mode**, so
    switch that on in the firmware settings *before* running `Install.sh`; after the reboot, turn
    Secure Boot on. If you skip Setup Mode, this step reports a failure and the rest still runs.
-4. **Performance tuning:** sysctl (memory, BBR networking), I/O schedulers, noatime, gamemode,
-   ananicy-cpp, irqbalance, AMD GPU variables, audio. The only desktop/laptop difference is
-   `vm.laptop_mode` (0 vs 5).
+4. **Performance tuning:** sysctl (memory, BBR networking, split-lock mitigation off), I/O
+   schedulers, transparent huge pages, noatime, ananicy-cpp with CachyOS's rules, 32-bit gamemode
+   and MangoHud, and a lower PipeWire latency. On the laptop and the Deck, `vm.laptop_mode` is 5
+   instead of 0, and irqbalance and the HDA audio power-save tweak are left out to save battery.
 5. **Check:** verifies everything the CachyOS kernels need is in place.
 
 All kernel and boot changes are made before the images are built, so they're only built once. The
@@ -128,8 +130,7 @@ Keep your YubiKey(s) at hand. Every step asks before it changes anything:
 2. **Accepts the key instead of your password** for sudo, the login screen and other logins, with
    your password as a fallback. It checks first that all of these really use the shared PAM file
    it edits.
-   **The lock screen (hyprlock) accepts only the key**, not your password. If the `sudo` or lock
-   screen test afterwards fails, it puts every file back exactly as it was.
+   **The lock screen (hyprlock) accepts only the key**, not your password.
 3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`). It only adds
    keys (e.g. your 2nd key as a backup); a key that's already enrolled stays.
 
@@ -147,7 +148,7 @@ password and run `pkill -USR1 hyprlock`.
 | <kbd>Super</kbd> + <kbd>T</kbd> / <kbd>E</kbd> / <kbd>W</kbd> | Terminal / file manager / browser |
 | <kbd>Super</kbd> + <kbd>D</kbd> | Discord |
 | <kbd>Super</kbd> + <kbd>Q</kbd> | Close window |
-| <kbd>Super</kbd> + <kbd>F</kbd> / <kbd>Alt</kbd> + <kbd>F</kbd> | Fullscreen / maximize |
+| <kbd>Super</kbd> + <kbd>F</kbd> / <kbd>Super</kbd> + <kbd>Alt</kbd> + <kbd>F</kbd> | Fullscreen / maximize |
 | <kbd>Super</kbd> + <kbd>V</kbd> | Toggle floating |
 | <kbd>Super</kbd> + <kbd>P</kbd> / <kbd>J</kbd> | Pseudo-tile / toggle split direction |
 | <kbd>Super</kbd> + arrow keys | Move focus |
@@ -215,9 +216,9 @@ It's based on the laptop profile.
 - **Speakers:** work out of the box with the regular Arch audio packages. Valve's speaker tuning
   for the LCD model is already part of Arch's audio config.
 
-After the first boot, test the gestures once. If a swipe goes the wrong way, change `ROTATION=3`
-to `1` in `~/.config/hypr/scripts/touch-gestures.sh`. `touch-gestures.sh --debug` prints every
-gesture it sees.
+After the first boot, test the gestures once. If a swipe goes the wrong way in landscape, change
+`ROTATION=3` to `ROTATION=1` in `~/.config/hypr/scripts/touch-gestures.sh`.
+`touch-gestures.sh --debug` prints every gesture it sees.
 
 ## Wallpaper and colors
 
@@ -226,13 +227,13 @@ Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick on
 then regenerates the colors for Hyprland, waybar, swaync, rofi, foot, hyprlock, btop and OpenCode.
 The last wallpaper is re-applied at every login.
 
-Seven of the generated color files are included in the repo as working defaults, so a fresh install
+All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
-`hypr/colors/colors.lua`, `hypr/hyprland/border-colors.lua`, `rofi/colors/colors.rasi`,
-`swaync/colors/colors.css`, `waybar/colors/colors.css`, `btop/themes/wallust.theme` and
-`opencode/themes/wallust.json`. wallust overwrites them as soon as you set a wallpaper. The rest
-(`hypr/colors/hyprlock-colors.conf`, `hypr/colors/current-wallpaper.conf`, `foot/colors-dark.ini`)
-are only created on your machine.
+`hypr/colors/colors.lua`, `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
+`rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
+`foot/colors-dark.ini`, `btop/themes/wallust.theme`, `opencode/themes/wallust.json`, and on the
+Steam Deck `nwg-drawer/colors.css`. wallust overwrites them as soon as you set a wallpaper.
+Until then, `hypr/colors/current-wallpaper.conf` makes the lock screen show a blurred screenshot.
 
 ## Things to change for your setup
 
@@ -268,7 +269,7 @@ Post Install/
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
 ├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
-├── run-all-common.sh      # Shared logic for both (used by the two scripts above; don't run it directly)
+├── run-all-common.sh      # Shared logic (used by the three scripts above; don't run it directly)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```
 

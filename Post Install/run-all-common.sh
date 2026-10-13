@@ -6,9 +6,10 @@
 #     -> full-tune (this file) -> cachyos-compat.sh
 # Those files no longer exist; everything lives here.
 #
-# It is sourced by the two clearly separated entry points:
-#     run-all-desktop.sh   ->  sudo ./run-all-desktop.sh
-#     run-all-laptop.sh    ->  sudo ./run-all-laptop.sh
+# It is sourced by the three entry points (Install.sh runs the right one):
+#     run-all-desktop.sh    ->  sudo ./run-all-desktop.sh
+#     run-all-laptop.sh     ->  sudo ./run-all-laptop.sh
+#     run-all-steamdeck.sh  ->  sudo ./run-all-steamdeck.sh
 # Do not run this file directly. The entry point sets PROFILE_NAME, LAPTOP_MODE,
 # CPUFREQ_GOVERNOR and TUNE_NAME before sourcing it. Optional, per device:
 #   KERNEL_FLAVOR  CachyOS kernel flavor ("" = linux-cachyos, "deckify" = the
@@ -23,38 +24,45 @@
 #      + Plymouth boot splash (cmdline params + mkinitcpio hook)
 #   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs; sbctl is
 #      installed by Install.sh)
-#   4. Performance tune (profile-specific: desktop/laptop)
+#   4. Performance tune (profile-specific: desktop/laptop/steamdeck)
 #   5. CachyOS-kernel compatibility check (verification only; stage 4 already
-#      applies the bfq-free udev rules, fq + bbr and transparent_hugepage=madvise)
+#      applies the I/O scheduler rules, fq + bbr and transparent_hugepage=madvise)
 #
 # Tune groups (stage 4):
-#   A. sysctl + I/O (NVMe scheduler, swappiness, BBR, readahead, dirty pages)
-#   B. THP madvise + TCP buffers + netdev backlog
-#   C. Install: lib32-gamemode, ananicy-cpp, irqbalance, lib32-mangohud
-#   D. Enable: gamemoded, irqbalance, ananicy-cpp
+#   A. sysctl (swappiness, dirty pages, BBR, split-lock mitigation off) + I/O
+#      schedulers and readahead per disk type
+#   B. THP madvise (runtime + tmpfiles for the defrag setting)
+#   C. Install: ananicy-cpp + cachyos-ananicy-rules, lib32-gamemode,
+#      lib32-mangohud, and irqbalance on the desktop
+#   D. Enable: ananicy-cpp, and irqbalance on the desktop (gamemoded needs no
+#      enabling: it's started on demand)
 #   E. fstab noatime (REBOOT required)
-#   F. systemd-boot kernel cmdline: thp=madvise, split_lock_mitigate=0,
+#   F. systemd-boot kernel cmdline: transparent_hugepage=madvise,
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog
 #      (REBOOT required). The cmdline is written in stage 2, before the images
-#      are built, so the UKIs only need to be generated once. A cpufreq governor
-#      is only added when CPUFREQ_GOVERNOR is explicitly set.
-#   G. /etc/environment: RADV_PERFTEST=gpl, MESA_NO_ERROR=1 (LOGOUT required)
-#   H. Audio: HDA power-save off (REBOOT required for HDA)
+#      are built, so later stages don't have to rebuild for it. A cpufreq
+#      governor is only added when CPUFREQ_GOVERNOR is explicitly set.
+#   G. /etc/environment: removes RADV_PERFTEST and MESA_NO_ERROR if an older
+#      version of this script added them
+#   H. Audio: HDA power-save off (desktop only, REBOOT required) and a PipeWire
+#      low-latency quantum
 #
 # Persistence:
 #   /etc/sysctl.d/99-perf-tune.conf
 #   /etc/udev/rules.d/60-ioschedulers.rules
 #   /etc/modules-load.d/bbr.conf
+#   /etc/tmpfiles.d/thp-defrag.conf
+#   /etc/modprobe.d/audio-disable-power-save.conf (desktop)
+#   /etc/pipewire/pipewire.conf.d/99-low-latency.conf
 #   /etc/kernel/cmdline (modified, systemd-boot)
 #   /etc/fstab           (modified)
-#   /etc/environment     (modified)
 #
 # No backups are made: this script is meant to run once on a clean install, so
 # there is nothing worth preserving. It takes no command-line arguments.
 
 # === PROFILE (must be set by the sourcing entry point) ===
 if [[ -z "${PROFILE_NAME:-}" ]]; then
-  echo "Error: run run-all-desktop.sh or run-all-laptop.sh, not this file." >&2
+  echo "Error: run run-all-desktop.sh, run-all-laptop.sh or run-all-steamdeck.sh, not this file." >&2
   exit 2
 fi
 
@@ -62,15 +70,12 @@ fi
 set -uo pipefail
 
 # === USER CONFIG (edit only if auto-detection misbehaves) ===
-# Username to enable the gamemoded user service for.
-# Auto-detected from SUDO_USER/logname/USER if left empty.
-INSTALL_USER="${INSTALL_USER:-}"
 # Filesystems to convert relatime->noatime in fstab (space-separated list).
 # Auto-detected from fstab (local, non-pseudo fs) if left empty.
 FILESYSTEM=""
 
 # === PROFILE CONFIG (set by the sourcing entry point) ===
-# LAPTOP_MODE      : vm.laptop_mode value (0 on desktop, 5 on laptop)
+# LAPTOP_MODE      : vm.laptop_mode value (0 on desktop, 5 on laptop and Deck)
 # CPUFREQ_GOVERNOR : optional kernel-cmdline default governor. Empty by default;
 #                    auto-cpufreq manages the governor at runtime.
 # TUNE_NAME        : name stamped into generated config files
@@ -88,7 +93,8 @@ ENV_FILE="/etc/environment"
 KCMDLINE="/etc/kernel/cmdline"
 
 # Kernel cmdline parameters added in stage 2 (and verified in stages 4 and 5)
-NEW_PARAMS=(transparent_hugepage=madvise split_lock_mitigate=0)
+# (split-lock mitigation is a sysctl, kernel.split_lock_mitigate, set in group A)
+NEW_PARAMS=(transparent_hugepage=madvise)
 # Plymouth: show the splash, hide boot messages, don't write a boot log
 NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
 # Only add cpufreq.default_governor= if a value is set. auto-cpufreq manages the
@@ -193,17 +199,26 @@ regenerate_images() {
   fi
 }
 
+# Is $1 one of the space-separated words in $2? (whole words only: "quiet" must
+# not match "foo=quiet", and dots aren't wildcards)
+has_param() {
+  [[ " $(tr -s '[:space:]' ' ' <<<"$2") " == *" $1 "* ]]
+}
+
 # Add NEW_PARAMS to /etc/kernel/cmdline. Sets CMDLINE_CHANGED=1 if it wrote anything.
 CMDLINE_CHANGED=0
 update_kernel_cmdline() {
   if [[ ! -f "$KCMDLINE" ]]; then
-    fail "systemd-boot kernel cmdline file not found: $KCMDLINE"
-    return 1
+    # No cmdline file yet: start from the running kernel's command line, minus
+    # the boot loader's own entries, which don't belong in a UKI
+    mkdir -p "$(dirname "$KCMDLINE")"
+    tr -s '[:space:]' '\n' </proc/cmdline | grep -vE '^(BOOT_IMAGE|initrd)=' | paste -sd ' ' > "$KCMDLINE"
+    warn "$KCMDLINE didn't exist - created it from the running kernel's command line"
   fi
   local current added="" p
   current="$(cat "$KCMDLINE")"
   for p in "${NEW_PARAMS[@]}"; do
-    if ! grep -qw -- "$p" <<<"$current"; then
+    if ! has_param "$p" "$current"; then
       current="$current $p"
       added="$added $p"
     fi
@@ -334,29 +349,11 @@ sync_kernel_images() {
 }
 
 
-# === AUTO-DETECT non-root user (for gamemoded user service) ===
-# Priority: explicit INSTALL_USER override > SUDO_USER > logname > $USER
-detect_user() {
-  if [[ -n "$INSTALL_USER" ]]; then
-    echo "$INSTALL_USER"
-    return
-  fi
-  local u
-  u="${SUDO_USER:-}"
-  [[ -z "$u" ]] && u="$(logname 2>/dev/null || true)"
-  [[ -z "$u" ]] && u="${USER:-}"
-  # Fall back to the first human (UID >= 1000) account if we still have nothing
-  if [[ -z "$u" || "$u" == "root" ]]; then
-    u="$(awk -F: '$3 >= 1000 && $1 != "nobody" {print $1; exit}' /etc/passwd)"
-  fi
-  echo "$u"
-}
-
 # --------------- root -----------------------------------------------------
 require_root() {
   if [[ $EUID -ne 0 ]]; then
     echo "Re-running with sudo..."
-    exec sudo --preserve-env=HOME "$0" "$@"
+    exec sudo "$0" "$@"
   fi
 }
 require_root "$@"
@@ -367,10 +364,6 @@ if [[ $# -gt 0 ]]; then
   exit 2
 fi
 
-# Auto-detect the tuning target user (override with INSTALL_USER=...)
-INSTALL_USER="$(detect_user)"
-[[ -n "$INSTALL_USER" ]] || warn "no non-root user detected for gamemoded (set INSTALL_USER)"
-
 # =====================================================================
 info 1 5 "CachyOS Repository Setup"
 
@@ -380,9 +373,9 @@ if ! grep -qE '^\[cachyos' /etc/pacman.conf 2>/dev/null; then
     TMP="$(mktemp -d)"
     trap 'rm -rf "$TMP"' EXIT
     cd "$TMP" || exit 1
-    curl -fsSL https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz \
+    curl -fsSL --retry 3 https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz \
       || { fail "download failed"; exit 1; }
-    tar xvf cachyos-repo.tar.xz || { fail "extract failed"; exit 1; }
+    tar xf cachyos-repo.tar.xz || { fail "extract failed"; exit 1; }
     cd cachyos-repo || exit 1
     ./cachyos-repo.sh || { fail "official installer failed"; exit 1; }
   ) || die "CachyOS repo installer failed"
@@ -411,8 +404,6 @@ fi
 info 2 5 "CachyOS Kernel Install"
 
 FLAVOR="$KERNEL_FLAVOR"
-INSTALL_HEADERS=1
-YES=0
 PKG_BASE="linux-cachyos"
 if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
   PKG_BASE="linux-cachyos-${FLAVOR}"
@@ -493,19 +484,15 @@ fi
 # ---------- install ----------
 section "Install $PKG_BASE"
 
-# refresh the package DB if the target package isn't known yet
+# Refresh the package DB if the target package isn't known yet. A full -Syu,
+# never a bare -Sy: that would be a partial upgrade.
 if ! pacman -Si "$PKG_BASE" >/dev/null 2>&1; then
-  warn "package not found in sync database - refreshing (pacman -Sy)"
-  pacman -Sy --noconfirm || { fail "pacman -Sy failed"; exit 1; }
+  warn "package not found in sync database - refreshing and upgrading (pacman -Syu)"
+  pacman -Syu --noconfirm || { fail "pacman -Syu failed"; exit 1; }
 fi
 
-INSTALL=("$PKG_BASE")
-[[ $INSTALL_HEADERS -eq 1 ]] && INSTALL+=("$PKG_BASE-headers")
-INSTALL+=("${EXTRA_PKGS[@]}")
-
-PACOPTS=(--needed)
-[[ $YES -eq 1 ]] && PACOPTS+=(--noconfirm)
-if pacman -S "${PACOPTS[@]}" "${INSTALL[@]}"; then
+INSTALL=("$PKG_BASE" "$PKG_BASE-headers" "${EXTRA_PKGS[@]}")
+if pacman -S --needed --noconfirm "${INSTALL[@]}"; then
   ok "install transaction completed"
 else
   fail "pacman -S failed (see above)"; exit 1
@@ -842,6 +829,9 @@ if [[ "$SECURE_BOOT" != "1" ]]; then
 elif ! command -v sbctl >/dev/null; then
   warn "sbctl not installed (Install.sh installs it) - skipping Secure Boot setup"
 else
+  # Marker written after a successful enroll, so a re-run can tell enrolled keys
+  # from keys that were only created
+  SB_ENROLLED=/var/lib/sbctl/.enrolled-by-run-all
   if [[ ! -d /var/lib/sbctl/keys ]]; then
     section "Creating Secure Boot keys"
     if sbctl create-keys; then
@@ -854,9 +844,13 @@ else
   fi
 
   SB_STATUS="$(sbctl status 2>/dev/null || true)"
-  if grep -qi 'secure boot:.*enabled' <<< "$SB_STATUS" \
-     && grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
-    ok "Secure Boot already active with enrolled keys - skipping enrollment"
+  # Keys can only be enrolled while the firmware is in Setup Mode
+  if grep -qi 'setup mode:.*disabled' <<< "$SB_STATUS"; then
+    if [[ -f "$SB_ENROLLED" ]]; then
+      ok "Setup Mode is off - keys were enrolled by an earlier run, nothing to enroll"
+    else
+      fail "the firmware isn't in Setup Mode, so the keys can't be enrolled - switch Secure Boot to Setup Mode in the firmware settings and run this again"
+    fi
   else
     section "Enrolling Secure Boot keys (Microsoft keys included via -m)"
     # Try to enroll; if immutable vars block, unfreeze and retry once
@@ -864,6 +858,7 @@ else
       [[ -e "$f" ]] && chattr -i "$f" 2>/dev/null || true
     done
     if sbctl enroll-keys -m; then
+      touch "$SB_ENROLLED"
       ok "enrolled keys with Microsoft keys (-m)"
       warn "a reboot may be required for the firmware to activate the keys"
     else
@@ -894,9 +889,11 @@ else
     fi
   done
   [[ ${#TO_SIGN[@]} -eq 0 ]] && warn "no EFI binaries found to sign"
-  if sbctl verify 2>/dev/null | grep -q '^✗'; then
+  # (saved first: piping straight into grep -q can end early and hide a failure)
+  SB_VERIFY="$(sbctl verify 2>/dev/null || true)"
+  if grep -q '^✗' <<<"$SB_VERIFY"; then
     fail "sbctl verify still reports unsigned files:"
-    sbctl verify 2>/dev/null | grep '^✗'
+    grep '^✗' <<<"$SB_VERIFY"
   elif [[ $SIGN_FAIL -eq 0 ]]; then
     ok "sbctl verify: everything signed"
   fi
@@ -914,9 +911,10 @@ else
 fi
 
 if command -v bootctl >/dev/null; then
-  COUNT=$(bootctl --no-pager list 2>/dev/null | grep -ciE 'linux|cachyos|zen' || true)
+  # each boot entry has exactly one "id:" line
+  COUNT=$(bootctl --no-pager list 2>/dev/null | awk '$1 == "id:"' | wc -l)
   if [[ "$COUNT" -gt 0 ]]; then
-    ok "bootctl lists $COUNT bootable kernel entry/entries"
+    ok "bootctl lists $COUNT boot entry/entries"
   else
     warn "bootctl did not list any kernel entries - check manually"
   fi
@@ -954,7 +952,7 @@ vm.laptop_mode = ${LAPTOP_MODE}
 net.core.default_qdisc = fq
 net.ipv4.tcp_congestion_control = bbr
 net.ipv4.tcp_fastopen = 3
-# Extra network (group B)
+# Extra network
 net.core.netdev_max_backlog = 16384
 net.ipv4.tcp_max_syn_backlog = 8192
 net.core.rmem_max = 16777216
@@ -962,13 +960,21 @@ net.core.wmem_max = 16777216
 net.ipv4.tcp_rmem = 4096 87380 16777216
 net.ipv4.tcp_wmem = 4096 65536 16777216
 EOF
+# Split-lock mitigation off: the kernel slows down programs that do split locks
+# (some games), which costs performance. kernel.split_lock_mitigate is a sysctl,
+# not a boot parameter. It only exists on kernels/CPUs with split-lock detection.
+if [[ -e /proc/sys/kernel/split_lock_mitigate ]]; then
+  printf '# CPU\nkernel.split_lock_mitigate = 0\n' >> "$SYSCTL_FILE"
+else
+  warn "kernel.split_lock_mitigate not available on this kernel/CPU - skipped"
+fi
 sysctl -p "$SYSCTL_FILE" >/dev/null
 # (THP has no sysctl key: it's set at runtime in B and by the kernel cmdline in F)
 
 # A.3 I/O scheduler + readahead (runtime + udev persistence)
 # Detect which schedulers this kernel provides, then only emit rules that
-# reference available schedulers. bfq is intentionally excluded: the CachyOS
-# kernels do not ship it, so mq-deadline is the preferred rotational scheduler.
+# reference available schedulers. mq-deadline is used for rotational disks
+# (deadline/none as fallbacks); bfq isn't used.
 AVAIL_SCHEDS=""
 for d in /sys/block/*; do
   [[ -f "$d/queue/scheduler" ]] || continue
@@ -988,10 +994,10 @@ UDEV_FILE="$UDEV_DIR/60-ioschedulers.rules"
 {
   printf '# Generated by %s\n' "${TUNE_NAME}"
   printf '# NVMe (multi-queue) -> none scheduler, 256 KiB readahead\n'
-  printf 'ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ATTR{queue/scheduler}="none", ATTR{queue/read_ahead_kb}="256"\n'
+  printf 'ACTION=="add|change", KERNEL=="nvme[0-9]*n[0-9]*", ENV{DEVTYPE}=="disk", ATTR{queue/scheduler}="none", ATTR{queue/read_ahead_kb}="256"\n'
   if [[ -n "$HDD_SCHED" ]]; then
     printf '# Rotational disks -> %s scheduler, 8 MiB readahead\n' "$HDD_SCHED"
-    printf 'ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|mmcblk*", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="%s", ATTR{queue/read_ahead_kb}="8192"\n' "$HDD_SCHED"
+    printf 'ACTION=="add|change", KERNEL=="sd[a-z]*|vd[a-z]*|mmcblk*", ENV{DEVTYPE}=="disk", ATTR{queue/rotational}=="1", ATTR{queue/scheduler}="%s", ATTR{queue/read_ahead_kb}="8192"\n' "$HDD_SCHED"
   else
     printf '# No suitable HDD scheduler available on this kernel; rule omitted\n'
   fi
@@ -1025,24 +1031,33 @@ else
 fi
 
 # =====================================================================
-section "B. THP + TCP buffers (runtime)"
+section "B. THP (runtime + tmpfiles)"
 
 # THP (defer+madvise exists only on newer kernels; fall back to madvise)
 THP_DEFRAG_TARGET="defer+madvise"
 echo madvise > /sys/kernel/mm/transparent_hugepage/enabled
 echo "$THP_DEFRAG_TARGET" > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null \
   || { THP_DEFRAG_TARGET="madvise"; echo "$THP_DEFRAG_TARGET" > /sys/kernel/mm/transparent_hugepage/defrag 2>/dev/null; }
+# The defrag setting has no boot parameter: a tmpfiles entry sets it at every boot
+THP_TMPFILES="/etc/tmpfiles.d/thp-defrag.conf"
+printf '# Generated by %s\nw /sys/kernel/mm/transparent_hugepage/defrag - - - - %s\n' \
+  "$TUNE_NAME" "$THP_DEFRAG_TARGET" > "$THP_TMPFILES"
+ok "THP defrag = $THP_DEFRAG_TARGET, kept after reboots via $THP_TMPFILES"
 
 # =====================================================================
 section "C. Install packages (official repos)"
 
-PKGS=(ananicy-cpp irqbalance)
+# ananicy-cpp does nothing without rules: cachyos-ananicy-rules (CachyOS repo,
+# added in stage 1) provides them. irqbalance only on the desktop: on the laptop
+# and the Deck it wakes the CPU for little gain.
+PKGS=(ananicy-cpp cachyos-ananicy-rules)
+[[ "$PROFILE_NAME" == "desktop" ]] && PKGS+=(irqbalance)
 # lib32-* packages only exist on x86_64
 if [[ "$(uname -m)" == "x86_64" ]]; then
   PKGS+=(lib32-gamemode lib32-mangohud)
 fi
 # gamemode and mangohud (native) are installed by Install.sh; only the lib32-*
-# variants and ananicy-cpp rules are handled here.
+# variants are handled here.
 MISSING=()
 for p in "${PKGS[@]}"; do
   pacman -Q "$p" >/dev/null 2>&1 || MISSING+=("$p")
@@ -1063,7 +1078,7 @@ section "D. Enable services"
 
 enable_svc() {
   local svc="$1"
-  if systemctl list-unit-files "${svc}.service" >/dev/null 2>&1; then
+  if systemctl cat "${svc}.service" >/dev/null 2>&1; then
     if systemctl enable --now "$svc.service" >/dev/null 2>&1; then
       ok "$svc.service enabled + started"
     else
@@ -1073,29 +1088,13 @@ enable_svc() {
     warn "$svc.service unit not found (package missing?)"
   fi
 }
-# gamemoded is a user-level service (located at /usr/lib/systemd/user/gamemoded.service).
-# Enable lingering for the real user and start the user service.
-REAL_USER="${INSTALL_USER}"
-if [[ -n "$REAL_USER" && "$REAL_USER" != "root" ]]; then
-  if loginctl enable-linger "$REAL_USER" 2>/dev/null; then
-    ok "lingering enabled for $REAL_USER"
-  else
-    warn "could not enable lingering for $REAL_USER"
-  fi
-  if sudo -u "$REAL_USER" XDG_RUNTIME_DIR="/run/user/$(id -u "$REAL_USER")" \
-       systemctl --user enable --now gamemoded.service 2>/dev/null; then
-    ok "user service: gamemoded enabled + started (for $REAL_USER)"
-  else
-    fail "user service: gamemoded could not be enabled (user $REAL_USER)"
-  fi
-else
-  fail "could not determine non-root user for gamemoded (SUDO_USER/USER empty)"
-fi
-enable_svc irqbalance
+# gamemoded needs no enabling: games start it on demand (over D-Bus) through
+# gamemoderun, so no lingering user session is kept running for it.
+[[ "$PROFILE_NAME" == "desktop" ]] && enable_svc irqbalance
 # ananicy-cpp ships unit as either ananicy-cpp or ananicy
-if systemctl list-unit-files ananicy-cpp.service >/dev/null 2>&1; then
+if systemctl cat ananicy-cpp.service >/dev/null 2>&1; then
   enable_svc ananicy-cpp
-elif systemctl list-unit-files ananicy.service >/dev/null 2>&1; then
+elif systemctl cat ananicy.service >/dev/null 2>&1; then
   enable_svc ananicy
 else
   fail "ananicy service unit not found"
@@ -1119,10 +1118,12 @@ BEFORE=$(awk -v fs="$FS_REGEX" '!/^[[:space:]]*#/ && NF>=4 && $3 ~ fs && $4 ~ /r
 TMP=$(mktemp)
 awk -v fs="$FS_REGEX" '!/^[[:space:]]*#/ && NF>=4 && $3 ~ fs && $4 ~ /rw,relatime/ { sub(/rw,relatime/, "rw,noatime") } { print }' "$FSTAB" > "$TMP"
 AFTER=$(awk -v fs="$FS_REGEX" '!/^[[:space:]]*#/ && NF>=4 && $3 ~ fs && $4 ~ /rw,noatime/' "$TMP" | wc -l)
-if [[ "$AFTER" -gt 0 ]]; then
+if [[ "$BEFORE" -gt 0 ]]; then
   cat "$TMP" > "$FSTAB"
   chmod 644 "$FSTAB"
-  ok "Added noatime to $AFTER mount(s) [${FILESYSTEM// /, }] in $FSTAB (was $BEFORE with relatime)"
+  ok "Changed $BEFORE mount(s) [${FILESYSTEM// /, }] from relatime to noatime in $FSTAB"
+elif [[ "$AFTER" -gt 0 ]]; then
+  ok "fstab already uses noatime ($AFTER mount(s)) - nothing to change"
 else
   fail "Did not find any relatime entries to change (filesystems: ${FILESYSTEM:-none})"
 fi
@@ -1140,43 +1141,28 @@ if [[ $CMDLINE_CHANGED -eq 1 ]]; then
 fi
 
 # =====================================================================
-section "G. /etc/environment (LOGOUT required)"
+section "G. /etc/environment"
 
-[[ -f "$ENV_FILE" ]] || touch "$ENV_FILE"
-chmod 644 "$ENV_FILE"
-set_env() {
-  local key="$1" val="$2"
-  if grep -qE "^${key}=" "$ENV_FILE"; then
-    sed -i -E "s|^${key}=.*|${key}=${val}|" "$ENV_FILE"
-  else
-    echo "${key}=${val}" >> "$ENV_FILE"
-  fi
-}
-set_env MESA_NO_ERROR 1
-# RADV_PERFTEST=gpl is only meaningful on AMD GPUs (harmless elsewhere)
-AMD_GPU=0
-if command -v lspci >/dev/null && lspci 2>/dev/null | grep -qiE '1002.*VGA|1002.*Display|VGA.*1002|Display.*1002'; then
-  AMD_GPU=1
-fi
-if [[ $AMD_GPU -eq 0 ]] && [[ -d /sys/class/drm ]]; then
-  for v in /sys/class/drm/card*/device/vendor; do
-    [[ -f "$v" ]] && grep -q '0x1002' "$v" 2>/dev/null && AMD_GPU=1 && break
-  done
-fi
-if [[ $AMD_GPU -eq 1 ]]; then
-  set_env RADV_PERFTEST gpl
-  ok "AMD GPU detected; RADV_PERFTEST=gpl and MESA_NO_ERROR=1 set in $ENV_FILE"
+# Older versions set RADV_PERFTEST=gpl (Mesa's default since 23.1) and
+# MESA_NO_ERROR=1 (no GL error checking for every app, which can turn app bugs
+# into crashes) here. Neither is set anymore; remove them if they're present.
+if [[ -f "$ENV_FILE" ]] && grep -qE '^(RADV_PERFTEST|MESA_NO_ERROR)=' "$ENV_FILE"; then
+  sed -i -E '/^(RADV_PERFTEST|MESA_NO_ERROR)=/d' "$ENV_FILE"
+  ok "removed RADV_PERFTEST / MESA_NO_ERROR from $ENV_FILE"
 else
-  warn "No AMD GPU detected; only MESA_NO_ERROR=1 set in $ENV_FILE"
+  ok "$ENV_FILE has no RADV_PERFTEST / MESA_NO_ERROR"
 fi
 
 # =====================================================================
 section "H. Audio (HDA power-save) (REBOOT required for HDA)"
 
-# H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume
-# Kept for laptop use too: relevant when hooked up to an external HDMI/DP output.
+# H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume.
+# Desktop only: on the laptop and the Deck it would keep the audio chip awake
+# and cost battery.
 HDA_CONF="/etc/modprobe.d/audio-disable-power-save.conf"
-if [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
+if [[ "$PROFILE_NAME" != "desktop" ]]; then
+  ok "HDA power-save left on ($PROFILE_NAME: saves battery)"
+elif [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
   ok "HDA power-save config already present"
 else
   tee "$HDA_CONF" > /dev/null <<'EOF'
@@ -1216,12 +1202,22 @@ fi
 # =====================================================================
 section "VERIFICATION"
 
+# exact value (sysctl numbers: "10" must not pass on "100")
 v_check() {
   local label="$1" expected="$2" actual="$3"
-  if [[ "$actual" == *"$expected"* ]]; then
+  if [[ "$actual" == "$expected" ]]; then
     ok "$label = $actual"
   else
     fail "$label expected '$expected', got '$actual'"
+  fi
+}
+# the selected value in a sysfs list such as "always [madvise] never"
+v_selected() {
+  local label="$1" expected="$2" actual="$3"
+  if [[ "$actual" == *"[$expected]"* ]]; then
+    ok "$label = $expected"
+  else
+    fail "$label expected '[$expected]', got '$actual'"
   fi
 }
 
@@ -1237,21 +1233,25 @@ v_check "rmem_max"             "16777216"    "$(sysctl -n net.core.rmem_max)"
 v_check "wmem_max"             "16777216"    "$(sysctl -n net.core.wmem_max)"
 v_check "netdev_max_backlog"   "16384"       "$(sysctl -n net.core.netdev_max_backlog)"
 v_check "tcp_max_syn_backlog"  "8192"        "$(sysctl -n net.ipv4.tcp_max_syn_backlog)"
+if [[ -e /proc/sys/kernel/split_lock_mitigate ]]; then
+  v_check "split_lock_mitigate" "0"          "$(sysctl -n kernel.split_lock_mitigate)"
+fi
 
 # THP
-v_check "THP enabled"          "[madvise]"   "$(cat /sys/kernel/mm/transparent_hugepage/enabled)"
-v_check "THP defrag"           "[${THP_DEFRAG_TARGET:-madvise}]" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
+v_selected "THP enabled"       "madvise"     "$(cat /sys/kernel/mm/transparent_hugepage/enabled)"
+v_selected "THP defrag"        "${THP_DEFRAG_TARGET:-madvise}" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
 
 # NVMe scheduler
 for d in /sys/block/nvme[0-9]*n[0-9]*; do
   [[ -d "$d" ]] || continue
   n=$(basename "$d")
-  v_check "$n scheduler"        "none"        "$(cat "$d/queue/scheduler")"
+  v_selected "$n scheduler"     "none"        "$(cat "$d/queue/scheduler")"
   v_check "$n readahead"        "256"         "$(cat "$d/queue/read_ahead_kb")"
 done
 
 # Packages
-PKG_CHECK=(gamemode ananicy-cpp irqbalance)
+PKG_CHECK=(gamemode ananicy-cpp cachyos-ananicy-rules)
+[[ "$PROFILE_NAME" == "desktop" ]] && PKG_CHECK+=(irqbalance)
 if [[ "$(uname -m)" == "x86_64" ]]; then
   PKG_CHECK+=(lib32-gamemode lib32-mangohud)
 fi
@@ -1270,35 +1270,23 @@ else
 fi
 
 # System services
-for s in irqbalance; do
-  state=$(systemctl is-active "$s" 2>/dev/null || echo "inactive")
+if [[ "$PROFILE_NAME" == "desktop" ]]; then
+  state=$(systemctl is-active irqbalance 2>/dev/null || echo "inactive")
   if [[ "$state" == "active" ]]; then
-    ok "service (system): $s active"
+    ok "service (system): irqbalance active"
   else
-    fail "service (system): $s $state"
+    fail "service (system): irqbalance $state"
   fi
-done
+fi
 SVC=""
-if systemctl list-unit-files ananicy-cpp.service >/dev/null 2>&1; then SVC=ananicy-cpp
-elif systemctl list-unit-files ananicy.service >/dev/null 2>&1; then SVC=ananicy
+if systemctl cat ananicy-cpp.service >/dev/null 2>&1; then SVC=ananicy-cpp
+elif systemctl cat ananicy.service >/dev/null 2>&1; then SVC=ananicy
 fi
 if [[ -n "$SVC" ]]; then
   state=$(systemctl is-active "$SVC" 2>/dev/null || echo "inactive")
   if [[ "$state" == "active" ]]; then ok "service (system): $SVC active"; else fail "service (system): $SVC $state"; fi
 else
   fail "service (system): ananicy unit not found"
-fi
-
-# User service (gamemoded) - check as the original user
-REAL_USER="${INSTALL_USER}"
-if [[ -n "$REAL_USER" && "$REAL_USER" != "root" ]]; then
-  uid=$(id -u "$REAL_USER")
-  state=$(sudo -u "$REAL_USER" XDG_RUNTIME_DIR="/run/user/$uid" systemctl --user is-active gamemoded 2>/dev/null || echo "inactive")
-  if [[ "$state" == "active" ]]; then
-    ok "service (user): gamemoded active for $REAL_USER"
-  else
-    fail "service (user): gamemoded $state for $REAL_USER"
-  fi
 fi
 
 # fstab
@@ -1313,19 +1301,21 @@ fi
 gline=""
 [[ -f "$KCMDLINE" ]] && gline=$(cat "$KCMDLINE")
 for p in "${NEW_PARAMS[@]}"; do
-  if grep -qw -- "$p" <<<"$gline"; then
+  if has_param "$p" "$gline"; then
     ok "kernel cmdline: $p present"
   else
     fail "kernel cmdline: $p missing"
   fi
 done
 
-# UKI: verify cmdline section contains the new params
-UKI="$(newest_uki "$UKI_DIR")"
+# UKI: verify the default entry's image (the one that boots) carries the new
+# params; fall back to the newest image if it isn't there
+UKI="$UKI_DIR/$DEFAULT_ENTRY"
+[[ -f "$UKI" ]] || UKI="$(newest_uki "$UKI_DIR")"
 if [[ -n "$UKI" && -f "$UKI" ]] && command -v objcopy >/dev/null; then
   uki_cmd="$(uki_cmdline "$UKI")"
   for p in "${NEW_PARAMS[@]}"; do
-    if grep -qw -- "$p" <<<"$uki_cmd"; then
+    if has_param "$p" "$uki_cmd"; then
       ok "UKI: $p present"
     else
       fail "UKI: $p missing (rebuild UKI or will be inert until then)"
@@ -1335,29 +1325,19 @@ elif [[ -z "$UKI" ]]; then
   warn "no UKI found in $UKI_DIR - skipping UKI verification"
 fi
 
-# environment (only check if file exists and was modified)
-ENV_CHECKS="MESA_NO_ERROR=1"
-# same detection result as group G, so set and verify can't disagree
-[[ $AMD_GPU -eq 1 ]] && ENV_CHECKS="$ENV_CHECKS RADV_PERFTEST=gpl"
-for kv in $ENV_CHECKS; do
-  k=${kv%=*}; v=${kv#*=}
-  if [[ -f "$ENV_FILE" ]] && grep -qE "^${k}=" "$ENV_FILE" && grep -E "^${k}=" "$ENV_FILE" | grep -q "$v"; then
-    ok "env: $k=$v"
-  else
-    fail "env: $k not set to $v"
-  fi
-done
-
 # Persistence files
 [[ -f "$SYSCTL_FILE" ]] && ok "persist: $SYSCTL_FILE" || fail "persist: $SYSCTL_FILE missing"
 [[ -f "$UDEV_FILE" ]] && ok "persist: $UDEV_FILE"     || fail "persist: $UDEV_FILE missing"
 [[ -f "$MODPROBE_DIR/bbr.conf" ]] && ok "persist: $MODPROBE_DIR/bbr.conf" || fail "persist: bbr.conf missing"
+[[ -f "$THP_TMPFILES" ]] && ok "persist: $THP_TMPFILES" || fail "persist: $THP_TMPFILES missing"
 
 # Section H - audio
-if [[ -f /etc/modprobe.d/audio-disable-power-save.conf ]] && grep -q "power_save=0" /etc/modprobe.d/audio-disable-power-save.conf; then
-  ok "audio: HDA power-save config present"
-else
-  fail "audio: HDA power-save config missing"
+if [[ "$PROFILE_NAME" == "desktop" ]]; then
+  if [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
+    ok "audio: HDA power-save config present"
+  else
+    fail "audio: HDA power-save config missing"
+  fi
 fi
 if command -v rtkitctl >/dev/null 2>&1; then
   ok "audio: rtkit installed"
@@ -1379,7 +1359,7 @@ info 5 5 "CachyOS Compatibility Check"
 
 check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; fi; }
 
-section "1. I/O scheduler rules (no bfq - CachyOS kernels don't ship it)"
+section "1. I/O scheduler rules (no bfq)"
 if [[ -f "$UDEV_FILE" ]] && ! grep -v '^#' "$UDEV_FILE" | grep -q bfq; then
   ok "$UDEV_FILE present and bfq-free"
 else
@@ -1397,14 +1377,15 @@ else
 fi
 
 section "3. transparent_hugepage=madvise in cmdline and UKI"
-if [[ -f "$KCMDLINE" ]] && grep -qw -- "transparent_hugepage=madvise" "$KCMDLINE"; then
+if [[ -f "$KCMDLINE" ]] && has_param "transparent_hugepage=madvise" "$(cat "$KCMDLINE")"; then
   check "cmdline has transparent_hugepage=madvise" 0
 else
   check "cmdline has transparent_hugepage=madvise" 1
 fi
-UKI="$(newest_uki "$UKI_DIR")"
+UKI="$UKI_DIR/$DEFAULT_ENTRY"
+[[ -f "$UKI" ]] || UKI="$(newest_uki "$UKI_DIR")"
 if [[ -n "$UKI" ]] && command -v objcopy >/dev/null; then
-  if grep -qw -- "transparent_hugepage=madvise" <<<"$(uki_cmdline "$UKI")"; then
+  if has_param "transparent_hugepage=madvise" "$(uki_cmdline "$UKI")"; then
     check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 0
   else
     check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 1
@@ -1429,15 +1410,17 @@ Persistence files:
   $SYSCTL_FILE
   $UDEV_FILE
   $MODPROBE_DIR/bbr.conf
+  $THP_TMPFILES
+  $PIPEWIRE_CONF
   $KCMDLINE   (modified, systemd-boot)
   $FSTAB      (modified)
-  $ENV_FILE   (modified)
+EOF
+[[ "$PROFILE_NAME" == "desktop" ]] && echo "  $HDA_CONF"
+cat <<EOF
 
 ACTION REQUIRED (won't take effect until you do):
-  1. REBOOT     - fstab noatime + kernel cmdline (thp, split_lock, cpufreq, plymouth)
-                   + HDA power-save (snd_hda_intel module reload)
-  2. REBOOT     - same reboot picks up new modules-load and udev rules
-  3. LOGOUT     - for RADV_PERFTEST and MESA_NO_ERROR to load
+  REBOOT - fstab noatime, the kernel cmdline (THP, Plymouth), the new
+           modules-load and udev rules, and on the desktop the HDA power-save
 EOF
 
 if [[ $FAIL -gt 0 ]]; then

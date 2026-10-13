@@ -1,6 +1,7 @@
 #!/bin/bash
 # Install.sh - Asus Laptop profile
-# Run as your normal user (NOT with sudo); it asks for your password when needed.
+# Run as your normal user (NOT with sudo); it asks for your password once at the
+# start and keeps sudo active until the end.
 # Works from any directory: paths are resolved relative to this script.
 # When it's done it runs "Post Install/run-all-laptop.sh" (kernel, boot, tuning)
 # and "Post Install/yubikey-setup.sh" (asks before every step), so this one
@@ -15,7 +16,18 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
-warn() { echo "WARNING: $*" >&2; }
+WARNINGS=0
+warn() { echo "WARNING: $*" >&2; WARNINGS=$((WARNINGS + 1)); }
+
+# $USER is used below for services and file ownership
+USER="${USER:-$(id -un)}"
+
+# Ask for your password once, then keep sudo active in the background, so the
+# long AUR builds and the post-install steps don't ask again
+sudo -v || { echo "This script needs sudo." >&2; exit 1; }
+while sleep 60; do sudo -n true || exit; done 2>/dev/null &
+SUDO_KEEPALIVE=$!
+trap 'kill "$SUDO_KEEPALIVE" 2>/dev/null' EXIT
 
 # === Packages (official repos) ===
 PACMAN_PKGS=(
@@ -212,9 +224,15 @@ yay -S --needed "${AUR_PKGS[@]}" || warn "some AUR packages failed to install"
 # Oh My Zsh: --keep-zshrc so the installer never replaces your .zshrc with its
 # template, --unattended so it doesn't stop to ask questions. The installer
 # refuses to run if ~/.oh-my-zsh exists, so it's skipped in that case.
+# Downloaded to a file first, so a failed download is reported as a failure.
 if [[ ! -d "$HOME/.oh-my-zsh" ]]; then
-    sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended --keep-zshrc \
-        || warn "Oh My Zsh install failed"
+    OMZ_INSTALLER="$(mktemp)"
+    if curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -o "$OMZ_INSTALLER"; then
+        sh "$OMZ_INSTALLER" --unattended --keep-zshrc || warn "Oh My Zsh install failed"
+    else
+        warn "Oh My Zsh download failed"
+    fi
+    rm -f "$OMZ_INSTALLER"
 fi
 # --unattended doesn't change the login shell, so do it here
 if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/zsh" ]]; then
@@ -265,7 +283,7 @@ if lpstat -p Canon_TS5350a >/dev/null 2>&1; then
     echo "Printer Canon_TS5350a already set up"
 elif ! sudo lpadmin -p Canon_TS5350a -E -v ipp://192.168.1.60/ipp/print -m everywhere; then
     warn "could not add the printer (is it switched on?). Rerun later with:"
-    warn "  sudo lpadmin -p Canon_TS5350a -E -v ipp://192.168.1.60/ipp/print -m everywhere"
+    echo "  sudo lpadmin -p Canon_TS5350a -E -v ipp://192.168.1.60/ipp/print -m everywhere" >&2
 fi
 
 # === Firewall (ufw) ===
@@ -316,8 +334,9 @@ chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/rofi/launchers/type-2/launcher.sh
 
 # === Post install: kernel, boot and tuning, then the YubiKey setup ===
-# Both need root, so sudo may ask for your password again. Each one runs even if
-# the other reports a failure, and nothing reboots on its own: reboot at the end.
+# Both run as root (sudo is still active from the start of this script). Each one
+# runs even if the other reports a failure, and nothing reboots on its own:
+# reboot at the end.
 POST_DIR="$PROFILE_DIR/../Post Install"
 
 echo
@@ -338,7 +357,12 @@ fi
 
 echo
 echo "== Setup finished =="
-echo "  Install.sh:           done"
-echo "  run-all-laptop.sh: $POST_RESULT"
-echo "  yubikey-setup.sh:     $YUBIKEY_RESULT"
+if [[ $WARNINGS -gt 0 ]]; then
+    INSTALL_RESULT="done, with $WARNINGS warning(s) (see above)"
+else
+    INSTALL_RESULT="done"
+fi
+printf '  %-22s %s\n' "Install.sh:" "$INSTALL_RESULT" \
+    "run-all-laptop.sh:" "$POST_RESULT" \
+    "yubikey-setup.sh:" "$YUBIKEY_RESULT"
 echo "Reboot now to start the CachyOS kernel and apply everything."

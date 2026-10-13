@@ -23,5 +23,6 @@
 # Secure Boot
 # Automated by run-all-common.sh stage 3 (sbctl is installed by Install.sh):
 # creates keys if missing, enrolls with -m (Microsoft keys), signs the UKIs.
-# Only enrolls if not already locked down.
+# Only enrolls while the firmware is in Setup Mode; a re-run with Setup Mode
+# off keeps the keys from the first run.
 - read: sbctl status / sbctl verify

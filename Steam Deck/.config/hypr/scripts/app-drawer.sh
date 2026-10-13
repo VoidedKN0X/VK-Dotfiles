@@ -1,6 +1,6 @@
 #!/bin/bash
-# Touch-friendly app menu (nwg-drawer): a full-screen grid of big icons with
-# search and category filters. It stays in memory so it opens instantly.
+# Touch-friendly app menu (nwg-drawer): a full-screen grid of big icons,
+# without search bar or categories. It stays in memory so it opens instantly.
 #   app-drawer.sh          open / close it (Super key, swipe from the left edge)
 #   app-drawer.sh start    (re)start it in the background: at login, and after
 #                          a rotation or wallpaper change so the column count
@@ -9,6 +9,12 @@
 case "${1:-toggle}" in
     start)
         pkill -x nwg-drawer
+        # wait (max 2s) for it to exit: a new resident instance quits if it
+        # still sees the old one running
+        for _ in $(seq 20); do
+            pgrep -x nwg-drawer >/dev/null || break
+            sleep 0.1
+        done
         # fewer columns when the screen is in portrait (see rotate.sh)
         if [ "$(cat "$HOME/.local/state/hypr/rotation" 2>/dev/null)" = 0 ]; then
             columns=4

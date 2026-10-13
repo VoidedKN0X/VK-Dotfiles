@@ -60,11 +60,11 @@
         },
         {
           "label": "",
-          "command": "reboot"
+          "command": "~/.config/swaync/scripts/power.sh reboot"
         },
         {
           "label": "",
-          "command": "shutdown now"
+          "command": "~/.config/swaync/scripts/power.sh poweroff"
         }
       ]
     }

@@ -1,7 +1,8 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("swaync")
+    -- (on the Deck the brightness slider's device is set first, then swaync starts)
+    hl.exec_cmd("~/.config/hypr/scripts/backlight-device.sh; swaync")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme '" .. cursorTheme .. "'")
