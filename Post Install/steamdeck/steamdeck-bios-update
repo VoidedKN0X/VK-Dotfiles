@@ -59,7 +59,14 @@ elif [[ $rc -ne 7 ]]; then
   log "$check_out"
   write_status failed; exit 1
 fi
-target="$(sed -n 's/^BIOS //p' <<<"$check_out" | tail -1)"
+# The answer is the line "BIOS F7A0133" on stdout; stderr also has a
+# "BIOS version: <current>" line, so only accept an actual version string.
+target="$(sed -n 's/^BIOS \(F7[^[:space:]]*\)$/\1/p' <<<"$check_out" | tail -1)"
+if [[ -z "$target" ]]; then
+  log "update available, but couldn't read the target version from:"
+  log "$check_out"
+  write_status failed; exit 1
+fi
 
 # Already prepared (installs on the next restart)? Then there's nothing to do.
 if [[ "$(cat "$DIR/staged" 2>/dev/null)" == "$target" ]]; then
