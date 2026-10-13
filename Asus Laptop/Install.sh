@@ -80,6 +80,7 @@ PACMAN_PKGS=(
     unrar
     qt6-multimedia-ffmpeg
     jre-openjdk
+    vulkan-intel
     lib32-vulkan-intel
     sbctl
     chromium
@@ -126,6 +127,8 @@ PACMAN_PKGS=(
     skanlite
     sane-airscan
     rtkit
+    easyeffects
+    calf
     librewolf
     otf-geist-mono-nerd
     bluez
@@ -136,7 +139,6 @@ PACMAN_PKGS=(
 
 # === Packages (AUR, via yay) ===
 AUR_PKGS=(
-    bottles
     amethyst-mod-manager
     wallust-git
     github-desktop-bin

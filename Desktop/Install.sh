@@ -82,6 +82,7 @@ PACMAN_PKGS=(
     nodejs
     qt6-multimedia-ffmpeg
     jre-openjdk
+    vulkan-radeon
     lib32-vulkan-radeon
     sbctl
     chromium
