@@ -2,6 +2,9 @@
 # Install.sh - Steam Deck profile (LCD Steam Deck used as a Hyprland tablet)
 # Run as your normal user (NOT with sudo); it asks for your password when needed.
 # Works from any directory: paths are resolved relative to this script.
+# When it's done it runs "Post Install/run-all-steamdeck.sh" (kernel, boot, tuning)
+# and "Post Install/yubikey-setup.sh" (asks before every step), so this one
+# file does the whole setup. Reboot once at the end.
 
 set -uo pipefail
 
@@ -336,3 +339,31 @@ cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/swaync/scripts/*.sh
+
+# === Post install: kernel, boot and tuning, then the YubiKey setup ===
+# Both need root, so sudo may ask for your password again. Each one runs even if
+# the other reports a failure, and nothing reboots on its own: reboot at the end.
+POST_DIR="$PROFILE_DIR/../Post Install"
+
+echo
+echo "== Apps and configs done. Next: run-all-steamdeck.sh (kernel, boot, tuning) =="
+if sudo "$POST_DIR/run-all-steamdeck.sh"; then
+    POST_RESULT="done"
+else
+    POST_RESULT="finished with failures (see its summary above)"
+fi
+
+echo
+echo "== Next: yubikey-setup.sh (every step asks first; answer N to skip it) =="
+if sudo "$POST_DIR/yubikey-setup.sh"; then
+    YUBIKEY_RESULT="done"
+else
+    YUBIKEY_RESULT="finished with failures (see above)"
+fi
+
+echo
+echo "== Setup finished =="
+echo "  Install.sh:           done"
+echo "  run-all-steamdeck.sh: $POST_RESULT"
+echo "  yubikey-setup.sh:     $YUBIKEY_RESULT"
+echo "Reboot now to start the CachyOS kernel and apply everything."

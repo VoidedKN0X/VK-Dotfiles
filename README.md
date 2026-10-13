@@ -44,8 +44,12 @@ stays self-contained and works on its own.
 
 ## Installation
 
-Start from a fresh Arch install (I use `archinstall`) with **systemd-boot**. Then run three
-scripts, in this order:
+Start from a fresh Arch install (I use `archinstall`) with **systemd-boot**. Then run **one
+script**, your profile's `Install.sh`. When it's done it runs the other two by itself, in this
+order: `run-all-<profile>.sh` (step 2) and `yubikey-setup.sh` (step 3). Reboot once at the end.
+
+Using Secure Boot (desktop and laptop)? Put your firmware's Secure Boot in **Setup Mode** before you
+start; see step 2.
 
 ```sh
 git clone https://github.com/VoidedKN0X/VK-Dotfiles
@@ -54,7 +58,7 @@ git clone https://github.com/VoidedKN0X/VK-Dotfiles
 ### 1. `Install.sh`: apps and configs
 
 Run the one for your profile as your **normal user** (not with `sudo`; it asks for your password
-when needed). It works from any directory.
+when needed, possibly again before steps 2 and 3). It works from any directory.
 
 ```sh
 "VK-Dotfiles/Desktop/Install.sh"        # or "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
@@ -70,8 +74,12 @@ It does the following:
 6. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
    Syncthing, LocalSend, OrcaSlicer, plus WiVRn on the desktop).
 7. Copies `.config` and `.zshrc` into your home folder.
+8. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
+   runs if step 2 reports a failure.
 
-### 2. `run-all-<profile>.sh`: kernel, boot and tuning (optional)
+### 2. `run-all-<profile>.sh`: kernel, boot and tuning
+
+`Install.sh` runs this for you. To run it again on its own:
 
 ```sh
 sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh / run-all-steamdeck.sh
@@ -88,7 +96,7 @@ Then **reboot**. It runs these stages in order:
 3. **Unified kernel images + Secure Boot:** switches to UKIs and sets up Secure Boot with `sbctl`.
    It creates keys, enrolls them together with Microsoft's keys (for dual boot) and signs
    everything. Enrolling only works while your firmware's Secure Boot is in **Setup Mode**, so
-   switch that on in the firmware settings *before* running this script; after the reboot, turn
+   switch that on in the firmware settings *before* running `Install.sh`; after the reboot, turn
    Secure Boot on. If you skip Setup Mode, this step reports a failure and the rest still runs.
 4. **Performance tuning:** sysctl (memory, BBR networking), I/O schedulers, noatime, gamemode,
    ananicy-cpp, irqbalance, AMD GPU variables, audio. The only desktop/laptop difference is
@@ -105,6 +113,9 @@ can't simply be turned off again), and it adds Valve's **fan control** and **BIO
 [Steam Deck](#steam-deck-tablet)).
 
 ### 3. `yubikey-setup.sh`: YubiKey login and disk unlock (optional)
+
+`Install.sh` runs this for you after step 2; answer **N** to the questions to skip it. To run it
+again on its own (for example to add a 2nd key later):
 
 ```sh
 sudo "VK-Dotfiles/Post Install/yubikey-setup.sh"
