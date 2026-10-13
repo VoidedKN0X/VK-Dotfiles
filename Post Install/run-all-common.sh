@@ -131,6 +131,57 @@ uki_cmdline() {
   rm -f "$tmp"
 }
 
+# systemd-boot names a UKI's boot entry after its file name (for example
+# "arch-linux-cachyos.efi"), so loader.conf's "default" must use that exact name.
+# Read it from the kernel's mkinitcpio preset; if the preset has no default_uki
+# (yet), use the name stage 3 gives it: arch-<preset name>.efi
+uki_entry_name() {
+  local pkg="$1" val
+  val="$(grep -m1 -E '^default_uki=' "/etc/mkinitcpio.d/${pkg}.preset" 2>/dev/null)"
+  val="${val#default_uki=}"
+  val="${val//\"/}"; val="${val//\'/}"
+  if [[ -n "$val" ]]; then basename "$val"; else echo "arch-${pkg}.efi"; fi
+}
+
+# Write "default <entry>" + "timeout 0" to loader.conf, keeping its other lines
+set_loader_default() {
+  local conf="$1" entry="$2" tmp
+  mkdir -p "$(dirname "$conf")"
+  tmp="$(mktemp)"
+  [[ -f "$conf" ]] && grep -vE '^(default|timeout)([[:space:]]|$)' "$conf" > "$tmp"
+  printf 'default %s\ntimeout 0\n' "$entry" >> "$tmp"
+  cat "$tmp" > "$conf"
+  rm -f "$tmp"
+  chmod 644 "$conf"
+}
+
+# Check that loader.conf's default really points at a bootable entry.
+# $3 = "fail" or "warn": what a missing UKI counts as (stage 2 builds before the
+# presets may have been switched to UKI, so there it's only a warning)
+check_loader_default() {
+  local conf="$1" entry="$2" missing="$3" uki_dir
+  uki_dir="$(dirname "$(dirname "$conf")")/EFI/Linux"
+  grep -qxF "default $entry" "$conf" \
+    && ok "loader.conf default = $entry" \
+    || fail "loader.conf default was not set to $entry"
+  grep -qx "timeout 0" "$conf" \
+    && ok "loader.conf timeout = 0" \
+    || fail "loader.conf timeout was not set to 0"
+  if [[ -f "$uki_dir/$entry" ]]; then
+    ok "UKI present: $uki_dir/$entry"
+  else
+    "$missing" "default entry $entry has no UKI in $uki_dir"
+  fi
+  if command -v bootctl >/dev/null; then
+    # bootctl prints each entry's name on an "id: <name>" line
+    if bootctl --no-pager list 2>/dev/null | awk -v e="$entry" '$1 == "id:" && $2 == e { f = 1 } END { exit !f }'; then
+      ok "bootctl lists the default entry $entry"
+    else
+      "$missing" "bootctl list has no entry with id $entry"
+    fi
+  fi
+}
+
 # Regenerate all initramfs images / UKIs with whichever tool is installed
 regenerate_images() {
   if command -v mkinitcpio >/dev/null && [[ -n "$(find /etc/mkinitcpio.d -maxdepth 1 -name '*.preset' 2>/dev/null)" ]]; then
@@ -366,8 +417,6 @@ PKG_BASE="linux-cachyos"
 if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
   PKG_BASE="linux-cachyos-${FLAVOR}"
 fi
-# loader.conf default glob - matches any version of this kernel's UKI
-DEFAULT_MATCH="linux-cachyos${FLAVOR:+-$FLAVOR}"
 KNOWN_FLAVORS=(bore bmq deckify eevdf lts hardened rc server rt-bore)
 if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
   if ! printf '%s\n' "${KNOWN_FLAVORS[@]}" | grep -qx "$FLAVOR"; then
@@ -488,49 +537,17 @@ NEED_REGEN=0
 
 # ---------- configure systemd-boot default entry ----------
 section "Configure systemd-boot default entry"
-LOADER_DIR="$ESP/loader"
-LOADER_CONF="$LOADER_DIR/loader.conf"
-mkdir -p "$LOADER_DIR"
-
-if [[ -f "$LOADER_CONF" ]]; then
-  TMP=$(mktemp)
-  grep -vE '^(default|timeout)([[:space:]]|$)' "$LOADER_CONF" > "$TMP"
-  printf 'default %s*\ntimeout 0\n' "$DEFAULT_MATCH" >> "$TMP"
-  cat "$TMP" > "$LOADER_CONF"
-  rm -f "$TMP"
-else
-  printf 'default %s*\ntimeout 0\n' "$DEFAULT_MATCH" > "$LOADER_CONF"
-fi
-chmod 644 "$LOADER_CONF"
-ok "loader.conf default entry set to '$DEFAULT_MATCH*', timeout 0 (hold Space at boot for the menu)"
+LOADER_CONF="$ESP/loader/loader.conf"
+# Exact entry name (no wildcard): set again in stage 3, after the presets are on UKI
+DEFAULT_ENTRY="$(uki_entry_name "$PKG_BASE")"
+set_loader_default "$LOADER_CONF" "$DEFAULT_ENTRY"
+ok "loader.conf default entry set to '$DEFAULT_ENTRY', timeout 0 (hold Space at boot for the menu)"
 
 # ---------- verification ----------
 section "Verification"
 NEW_VER="$(pacman -Q "$PKG_BASE" 2>/dev/null | awk '{print $2}')"
 ok "installed: $PKG_BASE ${NEW_VER:-?}"
-
-mapfile -t UKI_FILES < <(ls "$ESP"/EFI/Linux/${DEFAULT_MATCH}*.efi "$ESP"/EFI/Linux/arch-${DEFAULT_MATCH}*.efi 2>/dev/null)
-if [[ ${#UKI_FILES[@]} -gt 0 ]]; then
-  ok "UKI present: $(basename "${UKI_FILES[0]}")"
-else
-  warn "no UKI matching $DEFAULT_MATCH*.efi or arch-$DEFAULT_MATCH*.efi in $ESP/EFI/Linux"
-  warn "check mkinitcpio preset for correct default_uki path"
-fi
-
-if command -v bootctl >/dev/null; then
-  if bootctl --no-pager list 2>/dev/null | grep -q "$DEFAULT_MATCH"; then
-    ok "bootctl lists the $DEFAULT_MATCH entry"
-  else
-    warn "bootctl list did not show a $DEFAULT_MATCH entry - check manually"
-  fi
-fi
-
-grep -q "^default $DEFAULT_MATCH" "$LOADER_CONF" \
-  && ok "loader.conf default = $DEFAULT_MATCH*" \
-  || fail "loader.conf default was not set"
-grep -qx "timeout 0" "$LOADER_CONF" \
-  && ok "loader.conf timeout = 0" \
-  || fail "loader.conf timeout was not set to 0"
+check_loader_default "$LOADER_CONF" "$DEFAULT_ENTRY" warn
 
 # ---------- old kernel removal ----------
 # Keeps the newly installed kernel ($PKG_BASE). Every other kernel is removed:
@@ -709,7 +726,7 @@ fi
 section "DONE"
 cat <<EOF
   Installed kernel : $PKG_BASE ${NEW_VER:-?}
-  Boot default     : systemd-boot -> ${DEFAULT_MATCH}*  ($LOADER_CONF)
+  Boot default     : systemd-boot -> ${DEFAULT_ENTRY}  ($LOADER_CONF)
 
 REBOOT REQUIRED - the CachyOS kernel will load on next boot.
 If old kernel removal was deferred, it runs automatically on that boot and
@@ -808,6 +825,15 @@ if [[ $NEED_REGEN -eq 1 ]]; then
 else
   ok "No preset changes; skipping UKI regeneration (images already built in stage 2)"
 fi
+
+# ---------- systemd-boot default entry (again, now that every preset uses UKI) ----------
+# Stage 2 set it before this stage switched the presets to UKI, so the entry
+# name may only be final now.
+section "systemd-boot default entry"
+DEFAULT_ENTRY="$(uki_entry_name "$PKG_BASE")"
+set_loader_default "$ESP/loader/loader.conf" "$DEFAULT_ENTRY"
+ok "loader.conf default entry set to '$DEFAULT_ENTRY'"
+check_loader_default "$ESP/loader/loader.conf" "$DEFAULT_ENTRY" fail
 
 # ---------- secure boot: create keys, enroll (-m), sign (sbctl installed by Install.sh) ----------
 section "Secure Boot setup (sbctl)"
