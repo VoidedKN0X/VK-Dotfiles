@@ -4,6 +4,8 @@
 # is applied. wallust still overwrites them when you set a wallpaper.
 Asus Laptop/.config/hypr/colors/hyprlock-colors.conf
 Desktop/.config/hypr/colors/hyprlock-colors.conf
+Steam Deck/.config/hypr/colors/hyprlock-colors.conf
 Asus Laptop/.config/hypr/colors/current-wallpaper.conf
 Desktop/.config/hypr/colors/current-wallpaper.conf
+Steam Deck/.config/hypr/colors/current-wallpaper.conf
 **/foot/colors-dark.ini
