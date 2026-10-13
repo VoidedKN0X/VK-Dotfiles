@@ -175,7 +175,9 @@ It's based on the laptop profile.
 - **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) pops up
   by itself when you tap a text field in most apps (GTK, Qt, Firefox/LibreWolf, foot). For apps
   that don't support that (Steam and other X11 apps, some Electron apps), use the swipe-up
-  gesture.
+  gesture. While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
+  swipe-up gesture still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
+  keyboard it detected.
 - **Power button:** a short press puts the Deck to sleep, like SteamOS.
 - **Login and lock:** logs in automatically at boot. The screen is **not locked automatically**
   (like SteamOS), because the on-screen keyboard can't appear on a lock screen. You can still lock by

@@ -11,9 +11,13 @@ hl.config({
         follow_mouse = 1,
         sensitivity = 0,
         -- Map the touchscreen to the built-in panel, so touches land where you
-        -- tap even though the panel is rotated (and stay there with a dock monitor)
+        -- tap even though the panel is rotated (and stay there with a dock monitor).
+        -- The touchscreen reports raw portrait coordinates (800x1280), so it
+        -- needs the same transform as the monitor. If touches still land
+        -- mirrored/rotated, try 1 instead of 3.
         touchdevice = {
             output = "eDP-1",
+            transform = 3,
         },
     },
 })
