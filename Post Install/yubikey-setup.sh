@@ -8,16 +8,19 @@
 # Steps (each one asks before changing anything):
 #   1. Register your YubiKeys in ~/.config/Yubico/u2f_keys. Keys that are
 #      already registered stay; new ones (e.g. your 2nd key) are added to them.
-#   2. Accept the YubiKey instead of your password for sudo, greetd, hyprlock
-#      and logins: ONE line in /etc/pam.d/system-auth. Every key registered in
-#      step 1 works. Only done after checking that every one of those files
-#      really includes system-auth. If you say the test failed, every PAM file
-#      is put back exactly as it was.
+#   2. Accept the YubiKey instead of your password for sudo, greetd and logins:
+#      ONE line in /etc/pam.d/system-auth, with the password as a fallback.
+#      The lock screen (hyprlock) gets its own PAM file that accepts ONLY the
+#      YubiKey, no password. Every key registered in step 1 works. Only done
+#      after checking that sudo/greetd/logins really include system-auth. If
+#      you say a test failed, every PAM file is put back exactly as it was.
 #   3. Unlock your LUKS disk with the YubiKey (systemd-cryptenroll) and tell the
 #      initramfs to use it at boot. A key that's already enrolled stays
 #      enrolled; this only adds keys (e.g. your 2nd key as a backup).
 #
-# Your password and your LUKS passphrase keep working as a fallback.
+# Your password (sudo, login) and your LUKS passphrase keep working as a
+# fallback. The lock screen doesn't: without a key, unlock it from a text
+# console (Ctrl+Alt+F3, log in with your password) with: pkill -USR1 hyprlock
 
 set -uo pipefail
 
@@ -50,9 +53,19 @@ for cmd in pamu2fcfg systemd-cryptenroll; do
   command -v "$cmd" >/dev/null || { fail "$cmd not found (Install.sh installs pam-u2f and libfido2)"; exit 1; }
 done
 
-# PAM services that must accept the key. All of them have to reach system-auth.
-PAM_SERVICES=(sudo greetd hyprlock system-login)
+# PAM services that accept the key OR the password. All of them have to reach system-auth.
+PAM_SERVICES=(sudo greetd system-login)
 PAM_LINE="auth       sufficient                  pam_u2f.so           cue"
+
+# The lock screen accepts ONLY the key: its own PAM file, without "include login"
+# (which would let the password in through system-auth). "required" = the key
+# must succeed; there's nothing after it to fall back to.
+HYPRLOCK_PAM_FILE=/etc/pam.d/hyprlock
+HYPRLOCK_PAM='# PAM configuration for hyprlock, written by yubikey-setup.sh
+# Only a registered YubiKey unlocks the screen; the password is NOT accepted.
+# Locked out (no key)? Switch to a text console (Ctrl+Alt+F3), log in with your
+# password and run: pkill -USR1 hyprlock
+auth       required                    pam_u2f.so           cue'
 
 # =====================================================================
 # 1. Register keys
@@ -135,11 +148,11 @@ reaches_system_auth() {
 }
 
 setup_pam() {
-  local svc missing=() f
+  local svc missing=() f hyprlock_change=0 hyprlock_existed=0
   local ins_line ins_mode before head_part
   local -A saved=()
 
-  section "2. Accept the YubiKey for sudo, greetd, hyprlock and logins"
+  section "2. YubiKey for sudo, greetd and logins (password fallback), lock screen key-only"
 
   if ! grep -q "^${REAL_USER}:" "$KEYFILE" 2>/dev/null; then
     warn "no keys registered for $REAL_USER (step 1) - skipping, so you can't lock yourself out"
@@ -196,13 +209,24 @@ setup_pam() {
       grep -nE '^[[:space:]]*auth[[:space:]].*pam_u2f\.so' "/etc/pam.d/$svc" | sed 's/^/        /'
     fi
   done
-  echo "Everything that uses system-auth (also su, polkit) will accept the key."
+  echo "Everything that uses system-auth (also su, polkit) will accept the key, with your password as a fallback."
+  if [[ "$(cat "$HYPRLOCK_PAM_FILE" 2>/dev/null)" == "$HYPRLOCK_PAM" ]]; then
+    ok "$HYPRLOCK_PAM_FILE already accepts only the YubiKey"
+  else
+    hyprlock_change=1
+    echo "  - replace $HYPRLOCK_PAM_FILE: the lock screen accepts ONLY the YubiKey, not your password."
+    echo "    Without a key: Ctrl+Alt+F3, log in with your password, run: pkill -USR1 hyprlock"
+  fi
   ask "Apply this?" || { warn "PAM left unchanged"; return 0; }
 
   # --- keep the originals in memory for an exact rollback ---
   for svc in system-auth "${PAM_SERVICES[@]}"; do
     saved[$svc]="$(cat "/etc/pam.d/$svc"; echo x)"   # trailing x keeps final newlines
   done
+  if [[ -f "$HYPRLOCK_PAM_FILE" ]]; then
+    hyprlock_existed=1
+    saved[hyprlock]="$(cat "$HYPRLOCK_PAM_FILE"; echo x)"
+  fi
 
   if [[ -n "${ins_line:-}" ]]; then
     sed -i "${ins_line}${ins_mode}\\${PAM_LINE}" "$f"
@@ -214,18 +238,38 @@ setup_pam() {
       ok "removed old pam_u2f line from /etc/pam.d/$svc"
     fi
   done
+  if [[ $hyprlock_change -eq 1 ]]; then
+    printf '%s\n' "$HYPRLOCK_PAM" > "$HYPRLOCK_PAM_FILE"
+    chmod 644 "$HYPRLOCK_PAM_FILE"
+    ok "$HYPRLOCK_PAM_FILE now accepts only the YubiKey"
+  fi
 
   # --- test, roll back if it doesn't work ---
+  local passed=1
   echo
   echo "TEST NOW - keep this window open. In a NEW terminal run:"
   echo "    sudo -k; sudo true"
   echo "It should say 'Please touch the device'. Touch it: sudo must succeed without a password."
-  if ask "Did sudo accept your key?"; then
+  ask "Did sudo accept your key?" || passed=0
+  if [[ $passed -eq 1 && $hyprlock_change -eq 1 ]]; then
+    echo
+    echo "Now the lock screen: press Super+L (or run 'hyprlock' in the new terminal)."
+    echo "Typing your password must NOT unlock it. Touch your key: it must unlock."
+    echo "If it won't unlock: Ctrl+Alt+F3, log in with your password, run 'pkill -USR1 hyprlock',"
+    echo "then switch back to your desktop and answer 'n' below to undo everything."
+    ask "Did the lock screen unlock with your key (and not with the password)?" || passed=0
+  fi
+  if [[ $passed -eq 1 ]]; then
     ok "pam_u2f active"
   else
     for svc in system-auth "${PAM_SERVICES[@]}"; do
       printf '%s' "${saved[$svc]%x}" > "/etc/pam.d/$svc"
     done
+    if [[ $hyprlock_existed -eq 1 ]]; then
+      printf '%s' "${saved[hyprlock]%x}" > "$HYPRLOCK_PAM_FILE"
+    elif [[ $hyprlock_change -eq 1 ]]; then
+      rm -f "$HYPRLOCK_PAM_FILE"
+    fi
     fail "rolled back: all PAM files restored exactly as they were"
   fi
 }
@@ -392,4 +436,5 @@ setup_pam
 setup_luks
 
 section "DONE"
-echo "Reboot to test the LUKS unlock. Your passphrase and password still work as a fallback."
+echo "Reboot to test the LUKS unlock. Your passphrase and password still work as a fallback,"
+echo "except on the lock screen, which only accepts the YubiKey."

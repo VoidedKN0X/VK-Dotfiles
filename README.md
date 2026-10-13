@@ -112,13 +112,19 @@ sudo "VK-Dotfiles/Post Install/yubikey-setup.sh"
 
 Keep your YubiKey(s) at hand. Every step asks before it changes anything:
 
-1. **Registers your keys** for login.
-2. **Accepts the key instead of your password** for sudo, the login screen, the lock screen and
-   other logins. It checks first that all of these really use the shared PAM file it edits, and
-   if the `sudo` test afterwards fails, it puts every file back exactly as it was.
-3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`).
+1. **Registers your keys** for login. Keys that are already registered stay; a 2nd key is added
+   to them.
+2. **Accepts the key instead of your password** for sudo, the login screen and other logins, with
+   your password as a fallback. It checks first that all of these really use the shared PAM file
+   it edits.
+   **The lock screen (hyprlock) accepts only the key**, not your password. If the `sudo` or lock
+   screen test afterwards fails, it puts every file back exactly as it was.
+3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`). It only adds
+   keys (e.g. your 2nd key as a backup); a key that's already enrolled stays.
 
-Your password and LUKS passphrase always keep working as a fallback.
+Your password and LUKS passphrase keep working as a fallback, except on the lock screen. Locked
+out of the lock screen without a key? Switch to a text console (Ctrl+Alt+F3), log in with your
+password and run `pkill -USR1 hyprlock`.
 
 `Post Install/Post-Install.txt` repeats this run order and lists the few steps that are still manual.
 
@@ -172,12 +178,12 @@ It's based on the laptop profile.
   gesture.
 - **Power button:** a short press puts the Deck to sleep, like SteamOS.
 - **Login and lock:** logs in automatically at boot. The screen is **not locked automatically**
-  (like SteamOS), because the on-screen keyboard can't appear on a lock screen. With a keyboard or
-  a plugged-in YubiKey you can still lock by hand: hyprlock accepts a YubiKey touch without a
-  keyboard.
+  (like SteamOS), because the on-screen keyboard can't appear on a lock screen. You can still lock by
+  hand: hyprlock only unlocks with a YubiKey touch, so no keyboard is needed.
 - **Disk unlock:** on the Deck, `yubikey-setup.sh` enrolls your YubiKey for LUKS **without a PIN**
-  (plug it in and touch it at boot), since there's no keyboard before the desktop starts. It can
-  also replace older enrollments that needed a PIN. Desktop and laptop keep the PIN.
+  (plug it in and touch it at boot), since there's no keyboard before the desktop starts. Keys that
+  were enrolled earlier with a PIN stay; the script warns about them. Desktop and laptop keep the
+  PIN.
 - **Brightness:** [wluma](https://github.com/max-baz/wluma) sets it automatically from the light
   sensor and learns your preference whenever you change it with the slider in the notification
   center.

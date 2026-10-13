@@ -8,8 +8,9 @@
 #    systemd-boot menu timeout (0 - hold Space at boot to see the menu).
 #    Steam Deck: deckify kernel, Valve fan control + BIOS updates, no Secure Boot.
 # 3. sudo "Post Install/yubikey-setup.sh"  (with your YubiKey(s) at hand)
-#    Registers your keys, accepts them for sudo/greetd/hyprlock/logins
-#    (pam_u2f in /etc/pam.d/system-auth) and enrolls them for the LUKS disk.
+#    Registers your keys, accepts them for sudo/greetd/logins with the password
+#    as fallback (pam_u2f in /etc/pam.d/system-auth), makes the lock screen
+#    (hyprlock) accept ONLY the key, and enrolls them for the LUKS disk.
 
 # Still manual:
 
