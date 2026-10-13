@@ -6,13 +6,16 @@
 #     sudo "Post Install/yubikey-setup.sh"
 #
 # Steps (each one asks before changing anything):
-#   1. Register your YubiKey(s) in ~/.config/Yubico/u2f_keys
+#   1. Register your YubiKeys in ~/.config/Yubico/u2f_keys. Keys that are
+#      already registered stay; new ones (e.g. your 2nd key) are added to them.
 #   2. Accept the YubiKey instead of your password for sudo, greetd, hyprlock
-#      and logins: ONE line in /etc/pam.d/system-auth. Only done after checking
-#      that every one of those files really includes system-auth. If you say the
-#      test failed, every PAM file is put back exactly as it was.
+#      and logins: ONE line in /etc/pam.d/system-auth. Every key registered in
+#      step 1 works. Only done after checking that every one of those files
+#      really includes system-auth. If you say the test failed, every PAM file
+#      is put back exactly as it was.
 #   3. Unlock your LUKS disk with the YubiKey (systemd-cryptenroll) and tell the
-#      initramfs to use it at boot.
+#      initramfs to use it at boot. A key that's already enrolled stays
+#      enrolled; this only adds keys (e.g. your 2nd key as a backup).
 #
 # Your password and your LUKS passphrase keep working as a fallback.
 
@@ -59,9 +62,9 @@ PAM_LINE="auth       sufficient                  pam_u2f.so           cue"
 # line is written in one go - no dependency on how the file ends.
 register_keys() {
   local -a keys=() existing=()
-  local out n=1 line
+  local out n line
 
-  section "1. Register YubiKey(s) for login / sudo"
+  section "1. Register YubiKeys for login / sudo / lock screen"
 
   if [[ -s "$KEYFILE" ]]; then
     # Older setups added the 2nd key as a second "user:..." line; merge those.
@@ -77,26 +80,21 @@ register_keys() {
     fi
     line="$(grep -m1 "^${REAL_USER}:" "$KEYFILE")"
     if [[ -n "$line" ]]; then
-      n=$(( $(tr -cd ':' <<<"$line" | wc -c) ))
-      ok "$n key(s) already registered for $REAL_USER"
-      if ! ask "Register keys again from scratch? (No = keep them)"; then
-        if ask "Add another key to the existing ones?"; then
-          IFS=':' read -ra existing <<<"${line#${REAL_USER}:}"
-        else
-          return 0
-        fi
-      fi
-    elif ! ask "Register YubiKey(s) for $REAL_USER now?"; then
+      # the registered keys are always kept; new keys are added after them
+      IFS=':' read -ra existing <<<"${line#${REAL_USER}:}"
+      ok "${#existing[@]} key(s) already registered for $REAL_USER (they stay registered)"
+      ask "Add another key (e.g. your 2nd YubiKey)?" || return 0
+    elif ! ask "Register your YubiKeys for $REAL_USER now?"; then
       return 0
     fi
-  elif ! ask "Register YubiKey(s) now?"; then
+  elif ! ask "Register your YubiKeys now?"; then
     return 0
   fi
 
   n=$(( ${#existing[@]} + 1 ))
   while :; do
     echo
-    echo "Plug in key #$n (only this key), then touch it when it blinks."
+    echo "Plug in key #$n (unplug any other key), then touch it when it blinks."
     if out="$(pamu2fcfg -n)" && [[ -n "$out" ]]; then
       keys+=("${out#:}")
       ok "key #$n registered"
@@ -301,13 +299,41 @@ is_steamdeck() {
   [[ "$(cat /sys/class/dmi/id/board_vendor 2>/dev/null) $(cat /sys/class/dmi/id/board_name 2>/dev/null)" == "Valve Jupiter" ]]
 }
 
+# How many FIDO2 keys enrolled on LUKS device $1 need a PIN at boot ($2 = true)
+# or only a touch ($2 = false). Read from the token data in the LUKS header;
+# luksDump may put the value on the line after the field name, so whitespace is
+# squeezed first.
+fido2_pin_count() {
+  cryptsetup luksDump "$1" 2>/dev/null | tr -s '[:space:]' ' ' \
+    | grep -o "fido2-clientPin-required: $2" | wc -l
+}
+
+# On the Steam Deck: report how the disk's keys unlock, and warn about any key
+# that needs a PIN (it can't be typed at boot). Nothing is removed.
+report_deck_keys() {
+  local dev="$1" pin touch
+  command -v cryptsetup >/dev/null || return 0
+  pin="$(fido2_pin_count "$dev" true)"
+  touch="$(fido2_pin_count "$dev" false)"
+  ok "$dev: $touch key(s) unlock with a touch only"
+  if [[ $pin -gt 0 ]]; then
+    warn "$dev: $pin key(s) need a PIN at boot, which can't be typed on the Steam Deck."
+    warn "  They stay enrolled. See them with: sudo systemd-cryptenroll $dev"
+    warn "  Remove one by hand once a touch-only key works: sudo systemd-cryptenroll --wipe-slot=<slot> $dev"
+  fi
+}
+
 setup_luks() {
-  local dev enrolled=0 existing replace_old pin_opt pin_text
-  local -a devs extra
+  local dev added existing prompt pin_opt pin_text deck=0
+  local -a devs
 
   if is_steamdeck; then
+    deck=1
+    # Touch only: the Deck has no keyboard at boot, so no PIN. If the key has a
+    # PIN set, enrolling may ask for it once (type it on the on-screen keyboard);
+    # unlocking at boot never does.
     pin_opt=no
-    pin_text="your LUKS passphrase, then a touch (no PIN on the Steam Deck)"
+    pin_text="your LUKS passphrase, then a touch (no PIN at boot on the Steam Deck)"
   else
     pin_opt=yes
     pin_text="your LUKS passphrase, the key PIN (if set), then a touch"
@@ -324,33 +350,33 @@ setup_luks() {
     echo
     lsblk -no NAME,SIZE,FSTYPE,UUID "$dev" | head -1 | sed 's/^/  /'
     existing="$(systemd-cryptenroll "$dev" 2>/dev/null | grep -c fido2)"
-    echo "  Already enrolled FIDO2 keys: $existing"
-    ask "Enroll a YubiKey for $dev?" || continue
+    echo "  FIDO2 keys already enrolled: $existing (they stay enrolled)"
+    [[ $deck -eq 1 && $existing -gt 0 ]] && report_deck_keys "$dev"
 
-    # Old enrollments may need a PIN (on the Deck there's no keyboard at boot to
-    # type it). Replacing them is safe: systemd-cryptenroll only removes the old
-    # FIDO2 slots after the new key was enrolled successfully, never the new one,
-    # and your LUKS passphrase is not touched.
-    replace_old=0
-    if [[ $existing -gt 0 ]] && ask "Replace the $existing existing FIDO2 enrollment(s) with the new key(s)?"; then
-      replace_old=1
+    # Keys are only ever added: an enrolled key is never removed or replaced.
+    if [[ $existing -eq 0 ]]; then
+      prompt="Enroll a YubiKey for $dev?"
+    else
+      prompt="Enroll another YubiKey for $dev (e.g. your 2nd key as a backup)?"
     fi
+    ask "$prompt" || continue
 
+    added=0   # counted per disk
     while :; do
-      echo "Plug in ONE key. You'll be asked for $pin_text."
-      extra=()
-      # only on the first new key: on later keys it would also remove the ones just added
-      [[ $replace_old -eq 1 && $enrolled -eq 0 ]] && extra=(--wipe-slot=fido2)
-      if systemd-cryptenroll --fido2-device=auto --fido2-with-client-pin="$pin_opt" "${extra[@]}" "$dev"; then
-        ok "key enrolled for $dev (PIN required: $pin_opt)"
-        [[ ${#extra[@]} -gt 0 ]] && ok "old FIDO2 enrollments removed"
-        enrolled=1
+      echo "Plug in ONE key that isn't enrolled yet (unplug the other one). You'll be asked for $pin_text."
+      # a touch (user presence) is always required; a PIN only off the Deck
+      if systemd-cryptenroll --fido2-device=auto --fido2-with-client-pin="$pin_opt" \
+           --fido2-with-user-presence=yes "$dev"; then
+        ok "key enrolled for $dev (touch required, PIN required: $pin_opt)"
+        added=$((added + 1))
       else
         fail "enrollment failed for $dev"
       fi
-      ask "Enroll another key for $dev (e.g. your backup key)?" || break
+      ask "Enroll another key for $dev?" || break
     done
-    [[ $enrolled -eq 1 ]] && enable_fido2_at_boot "$dev"
+    # check the result: on the Deck the new key(s) must be touch-only
+    [[ $deck -eq 1 && $added -gt 0 ]] && report_deck_keys "$dev"
+    [[ $added -gt 0 ]] && enable_fido2_at_boot "$dev"
   done
 
   if [[ $REBUILD -eq 1 ]]; then
