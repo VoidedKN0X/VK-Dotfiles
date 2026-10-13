@@ -34,7 +34,7 @@ stays self-contained and works on its own.
 | [Hyprland](https://hypr.land) | Window manager (Lua config in `.config/hypr/`) |
 | waybar | Top bar |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
-| rofi | App launcher, wallpaper picker, clipboard history |
+| rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
 | greetd + tuigreet | Login screen |
@@ -132,7 +132,7 @@ password and run `pkill -USR1 hyprlock`.
 
 | Keys | Action |
 | --- | --- |
-| <kbd>Super</kbd> (tap) | App launcher (tap again to close) |
+| <kbd>Super</kbd> (tap) | App launcher (tap again to close; the nwg-drawer app menu on the Steam Deck) |
 | <kbd>Super</kbd> + <kbd>T</kbd> / <kbd>E</kbd> / <kbd>W</kbd> | Terminal / file manager / browser |
 | <kbd>Super</kbd> + <kbd>D</kbd> | Discord |
 | <kbd>Super</kbd> + <kbd>Q</kbd> | Close window |
