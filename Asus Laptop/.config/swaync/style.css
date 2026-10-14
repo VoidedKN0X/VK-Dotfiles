@@ -41,7 +41,6 @@
 /* ── Global ──────────────────────────────────────────────── */
 * {
     outline: none;
-    box-sizing: border-box;
 }
 
 /* ============================================================
@@ -290,7 +289,7 @@ listview row:active {
 .widget-buttons-grid>flowbox>flowboxchild>button label {
     color: inherit;
     font-size: 18px;
-    margin: 0 auto;
+    margin: 0;
     padding: 0;
     transition: color 0.22s ease;
 }
