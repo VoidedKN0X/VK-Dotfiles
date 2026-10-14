@@ -1,7 +1,9 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("waybar")
-    hl.exec_cmd("swaync")
+    -- swaync runs as a systemd user service, so D-Bus activation can't start a
+    -- second copy
+    hl.exec_cmd("systemctl --user start swaync")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme '" .. cursorTheme .. "'")

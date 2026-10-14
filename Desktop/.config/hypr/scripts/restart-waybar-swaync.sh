@@ -1,17 +1,22 @@
 #!/bin/bash
-# Restart waybar and swaync. A normal SIGTERM lets them clean up (tray icons,
-# layer surfaces); then wait for the old processes to exit before starting new
-# ones, so two bars never run at once.
+# Restart waybar and swaync. waybar: a normal SIGTERM lets it clean up (tray
+# icons, layer surfaces); then wait for the old process to exit before starting
+# a new one, so two bars never run at once. swaync runs as a systemd user
+# service (swaync.service), so D-Bus activation and this script never start a
+# second copy.
 
-killall -q waybar swaync
+killall -q waybar
 
 for _ in $(seq 20); do
-    pgrep -x waybar >/dev/null || pgrep -x swaync >/dev/null || break
+    pgrep -x waybar >/dev/null || break
     sleep 0.1
 done
 # Still alive after 2s: force it
-killall -q -9 waybar swaync
+killall -q -9 waybar
+
+# a swaync started outside systemd (older login) would block the service
+pkill -x -f '^swaync$' && sleep 0.5
+systemctl --user restart swaync
 
 waybar >/dev/null 2>&1 &
-swaync >/dev/null 2>&1 &
 disown -a
