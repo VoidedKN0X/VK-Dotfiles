@@ -333,7 +333,7 @@ report_deck_keys() {
 }
 
 setup_luks() {
-  local dev added existing prompt pin_opt pin_text deck=0
+  local dev added existing prompt pin_opt pin_text root_luks uuid deck=0
   local -a devs pin_slots
 
   if is_steamdeck; then
@@ -363,7 +363,27 @@ setup_luks() {
     return 0
   fi
 
+  # Only the disk the system boots from (the one holding /) is unlocked by the
+  # initramfs, so that's the only one the YubiKey is for. archinstall opens every
+  # other encrypted disk after it with a key file stored on it (/etc/crypttab):
+  # a key enrolled there would never be used.
+  root_luks="$(lsblk -nrpso NAME,FSTYPE "$(findmnt -nvo SOURCE /)" 2>/dev/null | awk '$2 == "crypto_LUKS" { print $1; exit }')"
+  if [[ -z "$root_luks" ]]; then
+    ok "/ isn't on an encrypted disk - nothing to enroll"
+    return 0
+  fi
+
   for dev in "${devs[@]}"; do
+    if [[ "$dev" != "$root_luks" ]]; then
+      uuid="$(blkid -s UUID -o value "$dev")"
+      if awk -v u="$uuid" -v d="$dev" '$1 !~ /^#/ && ($2 == "UUID=" u || $2 == "/dev/disk/by-uuid/" u || $2 == d) && $3 != "none" && $3 != "-" && $3 != ""' \
+           /etc/crypttab 2>/dev/null | grep -q .; then
+        ok "$dev: opened with a key file after the boot disk - nothing to do"
+      else
+        ok "$dev: not the boot disk - skipped"
+      fi
+      continue
+    fi
     echo
     lsblk -no NAME,SIZE,FSTYPE,UUID "$dev" | head -1 | sed 's/^/  /'
     existing="$(systemd-cryptenroll "$dev" 2>/dev/null | grep -c fido2)"
