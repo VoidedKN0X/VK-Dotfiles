@@ -36,6 +36,9 @@
     "buttons-grid"
   ],
   "widget-config": {
+    "notifications": {
+      "vexpand": true
+    },
     "mpris": {
       "autohide": true,
       "show-album-art": "never"

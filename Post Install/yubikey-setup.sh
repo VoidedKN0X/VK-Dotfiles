@@ -16,6 +16,7 @@
 #   3. Unlock your LUKS disk with the YubiKey (systemd-cryptenroll) and tell the
 #      initramfs to use it at boot. A key that's already enrolled stays
 #      enrolled; this only adds keys (e.g. your 2nd key as a backup).
+#      Needs the sd-encrypt hook (archinstall's HSM option); skipped otherwise.
 #
 # Your password (sudo, login) and your LUKS passphrase keep working as a
 # fallback. The lock screen doesn't: without a key, unlock it from a text
@@ -255,15 +256,8 @@ hooks_line() {  # all active HOOKS lines (main config + drop-ins)
 
 # Make the initramfs try the YubiKey for device $1 at boot
 enable_fido2_at_boot() {
-  local dev="$1" uuid cmdline hooks entry
+  local dev="$1" uuid cmdline entry
   uuid="$(blkid -s UUID -o value "$dev")"
-  hooks="$(hooks_line)"
-
-  if ! grep -qw 'sd-encrypt' <<<"$hooks"; then
-    warn "your initramfs doesn't use the sd-encrypt hook - FIDO2 unlock at boot needs it."
-    warn "The key is enrolled, but boot will keep asking for the passphrase. HOOKS left unchanged."
-    return 0
-  fi
 
   # Case 1: the disk is listed in /etc/crypttab.initramfs -> add the option there
   if [[ -f /etc/crypttab.initramfs ]] && grep -qE "^[[:space:]]*[^#[:space:]]+[[:space:]]+(UUID=${uuid}|${dev}|/dev/disk/by-uuid/${uuid})([[:space:]]|$)" /etc/crypttab.initramfs; then
@@ -355,6 +349,14 @@ setup_luks() {
   mapfile -t devs < <(lsblk -rpno NAME,FSTYPE | awk '$2 == "crypto_LUKS" { print $1 }')
   if [[ ${#devs[@]} -eq 0 ]]; then
     ok "no LUKS partitions found - nothing to do"
+    return 0
+  fi
+
+  # Only sd-encrypt can use a FIDO2 key at boot; archinstall uses it when its
+  # HSM option is set, otherwise the older encrypt hook (cryptdevice=)
+  if ! grep -qw 'sd-encrypt' <<<"$(hooks_line)"; then
+    fail "your boot image uses the 'encrypt' hook, which can't unlock the disk with a YubiKey."
+    warn "  Nothing enrolled. Reinstall with archinstall's HSM option set to your YubiKey to get sd-encrypt."
     return 0
   fi
 

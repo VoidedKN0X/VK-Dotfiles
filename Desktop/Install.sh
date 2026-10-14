@@ -165,7 +165,6 @@ AUR_PKGS=(
     wallust-git
     github-desktop-bin
     eid-mw
-    heroic-games-launcher-bin
     jdownloader2
     orca-slicer-bin
     auto-cpufreq

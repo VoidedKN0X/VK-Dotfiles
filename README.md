@@ -44,8 +44,11 @@ stays self-contained and works on its own.
 
 ## Installation
 
-Start from a fresh Arch install (I use `archinstall`) with **systemd-boot**. Then run **one
-script**, your profile's `Install.sh`. When it's done it runs the other two by itself, in this
+Start from a fresh Arch install (I use `archinstall`) with **systemd-boot**. Want the YubiKey to
+unlock an encrypted disk at boot? In archinstall's disk encryption menu, also set **HSM** to your
+YubiKey: only then does it build the boot image with `sd-encrypt`, the hook that can use the key
+(without it, step 3 can't set up the disk unlock). Then run **one script**, your profile's
+`Install.sh`. When it's done it runs the other two by itself, in this
 order: `run-all-<profile>.sh` (step 2) and `yubikey-setup.sh` (step 3). Reboot once at the end.
 
 Using Secure Boot (desktop and laptop)? Put your firmware's Secure Boot in **Setup Mode** before you
@@ -136,6 +139,8 @@ Keep your YubiKey(s) at hand. Every step asks before it changes anything:
    **The lock screen (hyprlock) accepts only the key**, not your password.
 3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`). It only adds
    keys (e.g. your 2nd key as a backup); a key that's already enrolled stays.
+   This needs the `sd-encrypt` boot hook (archinstall's **HSM** option, see above); with the older
+   `encrypt` hook the script says so and skips this step.
 
 Your password and LUKS passphrase keep working as a fallback, except on the lock screen. Locked
 out of the lock screen without a key? Switch to a text console (Ctrl+Alt+F3), log in with your

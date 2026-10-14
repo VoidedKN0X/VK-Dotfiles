@@ -19,8 +19,8 @@
 #   1. CachyOS repository setup (official installer)
 #   2. CachyOS kernel install + systemd-boot default entry (boot menu timeout 0)
 #      + Plymouth boot splash (cmdline params + mkinitcpio hook)
-#   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs; sbctl is
-#      installed by Install.sh)
+#   3. Fix/enable UKI (and remove the initramfs images it replaces) + Secure
+#      Boot (sbctl keys, enroll -m, sign UKIs; sbctl is installed by Install.sh)
 #   4. Performance tune (profile-specific: desktop/laptop/steamdeck), then a
 #      check of everything the script set up
 #
@@ -28,8 +28,9 @@
 #   A. sysctl (dirty pages, BBR, TCP buffers, NMI watchdog off, and zram swap
 #      tuning when zram is set up) + I/O scheduler and readahead for hard disks
 #   B. THP madvise (runtime + tmpfiles for the defrag setting)
-#   C. Install: lib32-gamemode, lib32-mangohud and Proton-CachyOS; load the
-#      ntsync module at boot (gamemoded needs no enabling: it's started on demand)
+#   C. Install: lib32-gamemode, lib32-mangohud, Proton-CachyOS and Heroic;
+#      load the ntsync module at boot (gamemoded needs no enabling: it's started
+#      on demand)
 #   D. fstab noatime (REBOOT required)
 #   E. systemd-boot kernel cmdline: transparent_hugepage=madvise,
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog, and
@@ -789,6 +790,24 @@ else
   ok "No preset changes; skipping UKI regeneration (images already built in stage 2)"
 fi
 
+# ---------- remove the initramfs images the presets no longer build ----------
+# Stage 2 built them before the presets switched to UKI; nothing boots them now
+section "Removing unused initramfs images"
+REMOVED_IMG=0
+for p in "${PRESETS[@]}"; do
+  uki="$(sed -nE 's/^default_uki="?([^"]+\.efi)"?.*/\1/p' "$p" | head -1)"
+  [[ -n "$uki" && -f "$uki" ]] || continue
+  while read -r img; do
+    [[ -f "$img" ]] || continue
+    if grep -rqsF "$(basename "$img")" "$ESP/loader/entries"; then
+      warn "$img is still used by a boot entry - kept"
+      continue
+    fi
+    rm -f "$img" && { ok "removed $img"; REMOVED_IMG=1; }
+  done < <(sed -nE 's/^#(default|fallback)_image="?([^"]+\.img)"?.*/\2/p' "$p")
+done
+[[ $REMOVED_IMG -eq 1 ]] || ok "no unused initramfs images"
+
 # ---------- systemd-boot default entry (again, now that every preset uses UKI) ----------
 # Stage 2 set it before this stage switched the presets to UKI, so the entry
 # name may only be final now.
@@ -1043,16 +1062,21 @@ else
   ok "All packages already installed"
 fi
 
-# Proton-CachyOS (CachyOS repo, added in stage 1): pick it per game in Steam
-# (Properties > Compatibility); Valve's Proton stays the default. Installed on
-# its own, so a problem with it doesn't block the packages above.
-if pacman -Q proton-cachyos-slr >/dev/null 2>&1; then
-  ok "proton-cachyos-slr already installed"
-elif pacman -S --noconfirm --needed proton-cachyos-slr; then
-  ok "installed proton-cachyos-slr (Proton-CachyOS)"
-else
-  fail "could not install proton-cachyos-slr"
-fi
+# From the CachyOS repo (added in stage 1), each installed on its own so a
+# problem with one doesn't block the rest:
+#   proton-cachyos-slr     Proton-CachyOS: pick it per game in Steam
+#                          (Properties > Compatibility); Valve's Proton stays the default
+#   heroic-games-launcher  Heroic (Epic/GOG/Amazon games), the CachyOS build
+# pacman -T also counts a package that provides the name (an older -bin install)
+for p in proton-cachyos-slr heroic-games-launcher; do
+  if pacman -T "$p" >/dev/null 2>&1; then
+    ok "$p already installed"
+  elif pacman -S --noconfirm --needed "$p"; then
+    ok "installed $p"
+  else
+    fail "could not install $p"
+  fi
+done
 
 # NTSync: Windows-style synchronization in the kernel (6.14+), used by
 # Proton-CachyOS, GE-Proton and Wine 10.16+ for smoother frame times. The module
@@ -1202,10 +1226,10 @@ v_selected "THP enabled"       "madvise"     "$(cat /sys/kernel/mm/transparent_h
 v_selected "THP defrag"        "$THP_DEFRAG_TARGET" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
 
 # Packages
-PKG_CHECK=(gamemode lib32-gamemode lib32-mangohud proton-cachyos-slr)
+PKG_CHECK=(gamemode lib32-gamemode lib32-mangohud proton-cachyos-slr heroic-games-launcher)
 for p in "${PKG_CHECK[@]}"; do
-  if pacman -Q "$p" >/dev/null 2>&1; then
-    ok "package: $p $(pacman -Q "$p" | awk '{print $2}')"
+  if pacman -T "$p" >/dev/null 2>&1; then
+    ok "package: $p $(pacman -Q "$p" 2>/dev/null | awk '{print $2}')"
   else
     fail "package missing: $p"
   fi
