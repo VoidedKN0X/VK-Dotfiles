@@ -137,8 +137,9 @@ Keep your YubiKey(s) at hand. Every step asks before it changes anything:
    your password as a fallback. It checks first that all of these really use the shared PAM file
    it edits.
    **The lock screen (hyprlock) accepts only the key**, not your password.
-3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`). It only adds
-   keys (e.g. your 2nd key as a backup); a key that's already enrolled stays.
+3. **Unlocks your LUKS-encrypted disk** with the key at boot (`systemd-cryptenroll`). It adds
+   keys (e.g. your 2nd key as a backup); a key that's already enrolled stays, except PIN keys on
+   the Steam Deck (see [Steam Deck](#steam-deck-tablet)).
    This needs the `sd-encrypt` boot hook (archinstall's **HSM** option, see above); with the older
    `encrypt` hook the script says so and skips this step.
 
@@ -210,9 +211,9 @@ It's based on the laptop profile.
   (like SteamOS), because the on-screen keyboard can't appear on a lock screen. You can still lock by
   hand: hyprlock only unlocks with a YubiKey touch, so no keyboard is needed.
 - **Disk unlock:** on the Deck, `yubikey-setup.sh` enrolls your YubiKey for LUKS **without a PIN**
-  (plug it in and touch it at boot), since there's no keyboard before the desktop starts. Keys that
-  were enrolled earlier with a PIN stay; the script warns about them. Desktop and laptop keep the
-  PIN.
+  (plug it in and touch it at boot), since there's no keyboard before the desktop starts. A key
+  enrolled with a PIN (for example by archinstall's HSM option) can be enrolled again without one;
+  the script then offers to remove the PIN slots. Desktop and laptop keep the PIN.
 - **Brightness:** set it with the slider in the notification center (it's pointed at the Deck's
   backlight automatically at every login).
 - **Fan:** Valve's own fan curve (`jupiter-fan-control`).

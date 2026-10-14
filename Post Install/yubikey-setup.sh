@@ -14,8 +14,9 @@
 #      YubiKey, no password. Every key registered in step 1 works. Only done
 #      after checking that sudo/greetd/logins really include system-auth.
 #   3. Unlock your LUKS disk with the YubiKey (systemd-cryptenroll) and tell the
-#      initramfs to use it at boot. A key that's already enrolled stays
-#      enrolled; this only adds keys (e.g. your 2nd key as a backup).
+#      initramfs to use it at boot. This adds keys (e.g. your 2nd key as a
+#      backup). On the Steam Deck, keys that need a PIN at boot can be enrolled
+#      again without one; the PIN slots are then removed (asked first).
 #      Needs the sd-encrypt hook (archinstall's HSM option); skipped otherwise.
 #
 # Your password (sudo, login) and your LUKS passphrase keep working as a
@@ -305,33 +306,35 @@ is_steamdeck() {
   [[ "$(cat /sys/class/dmi/id/board_vendor 2>/dev/null) $(cat /sys/class/dmi/id/board_name 2>/dev/null)" == "Valve Jupiter" ]]
 }
 
-# How many FIDO2 keys enrolled on LUKS device $1 need a PIN at boot ($2 = true)
-# or only a touch ($2 = false). Read from the token data in the LUKS header;
-# luksDump may put the value on the line after the field name, so whitespace is
-# squeezed first.
-fido2_pin_count() {
-  cryptsetup luksDump "$1" 2>/dev/null | tr -s '[:space:]' ' ' \
-    | grep -o "fido2-clientPin-required: $2" | wc -l
+# Key slots of the FIDO2 keys on LUKS device $1 that need a PIN at boot
+# ($2 = pin) or only a touch ($2 = touch), one per line. Read from each token's
+# JSON in the LUKS header; a token without the PIN field needs one (systemd's
+# default for older enrollments).
+fido2_slots() {
+  local dev="$1" want="$2" id json kind
+  for id in $(seq 0 31); do
+    json="$(cryptsetup token export --token-id "$id" "$dev" 2>/dev/null | tr -d '[:space:]')"
+    [[ $json == *'"type":"systemd-fido2"'* ]] || continue
+    if [[ $json == *'"fido2-clientPin-required":false'* ]]; then kind="touch"; else kind="pin"; fi
+    [[ $kind == "$want" ]] || continue
+    grep -o '"keyslots":\[[^]]*\]' <<<"$json" | grep -o '[0-9]\+'
+  done
 }
 
-# On the Steam Deck: report how the disk's keys unlock, and warn about any key
-# that needs a PIN (it can't be typed at boot). Nothing is removed.
+# On the Steam Deck: report how the disk's keys unlock. A key that needs a PIN
+# can't be used at boot (no keyboard yet); setup_luks offers to replace it.
 report_deck_keys() {
   local dev="$1" pin touch
-  command -v cryptsetup >/dev/null || return 0
-  pin="$(fido2_pin_count "$dev" true)"
-  touch="$(fido2_pin_count "$dev" false)"
+  pin="$(fido2_slots "$dev" pin | wc -l)"
+  touch="$(fido2_slots "$dev" touch | wc -l)"
   ok "$dev: $touch key(s) unlock with a touch only"
-  if [[ $pin -gt 0 ]]; then
-    warn "$dev: $pin key(s) need a PIN at boot, which can't be typed on the Steam Deck."
-    warn "  They stay enrolled. See them with: sudo systemd-cryptenroll $dev"
-    warn "  Remove one by hand once a touch-only key works: sudo systemd-cryptenroll --wipe-slot=<slot> $dev"
-  fi
+  [[ $pin -gt 0 ]] && warn "$dev: $pin key(s) need a PIN at boot, which can't be typed on the Steam Deck"
+  return 0
 }
 
 setup_luks() {
   local dev added existing prompt pin_opt pin_text deck=0
-  local -a devs
+  local -a devs pin_slots
 
   if is_steamdeck; then
     deck=1
@@ -364,11 +367,18 @@ setup_luks() {
     echo
     lsblk -no NAME,SIZE,FSTYPE,UUID "$dev" | head -1 | sed 's/^/  /'
     existing="$(systemd-cryptenroll "$dev" 2>/dev/null | grep -c fido2)"
-    echo "  FIDO2 keys already enrolled: $existing (they stay enrolled)"
-    [[ $deck -eq 1 && $existing -gt 0 ]] && report_deck_keys "$dev"
+    echo "  FIDO2 keys already enrolled: $existing"
+    pin_slots=()
+    if [[ $deck -eq 1 && $existing -gt 0 ]]; then
+      report_deck_keys "$dev"
+      mapfile -t pin_slots < <(fido2_slots "$dev" pin)
+    fi
 
-    # Keys are only ever added: an enrolled key is never removed or replaced.
-    if [[ $existing -eq 0 ]]; then
+    # Keys are added; the only ones ever removed are PIN keys on the Deck, and
+    # only after a touch-only key was enrolled in their place (asked first)
+    if [[ ${#pin_slots[@]} -gt 0 ]]; then
+      prompt="Enroll your key(s) again without a PIN, to replace the ${#pin_slots[@]} that need one?"
+    elif [[ $existing -eq 0 ]]; then
       prompt="Enroll a YubiKey for $dev?"
     else
       prompt="Enroll another YubiKey for $dev (e.g. your 2nd key as a backup)?"
@@ -377,7 +387,11 @@ setup_luks() {
 
     added=0   # counted per disk
     while :; do
-      echo "Plug in ONE key that isn't enrolled yet (unplug the other one). You'll be asked for $pin_text."
+      if [[ ${#pin_slots[@]} -gt 0 ]]; then
+        echo "Plug in ONE key (a key enrolled with a PIN can be enrolled again). You'll be asked for $pin_text."
+      else
+        echo "Plug in ONE key that isn't enrolled yet (unplug the other one). You'll be asked for $pin_text."
+      fi
       # a touch (user presence) is always required; a PIN only off the Deck
       if systemd-cryptenroll --fido2-device=auto --fido2-with-client-pin="$pin_opt" \
            --fido2-with-user-presence=yes "$dev"; then
@@ -390,6 +404,16 @@ setup_luks() {
     done
     # check the result: on the Deck the new key(s) must be touch-only
     [[ $deck -eq 1 && $added -gt 0 ]] && report_deck_keys "$dev"
+    # then remove the PIN keys they replace (the passphrase slot stays)
+    if [[ ${#pin_slots[@]} -gt 0 && $added -gt 0 && $(fido2_slots "$dev" touch | wc -l) -gt 0 ]]; then
+      if ask "Remove the ${#pin_slots[@]} key slot(s) that need a PIN (slot ${pin_slots[*]})? Test the new key first if you're unsure."; then
+        if systemd-cryptenroll --wipe-slot="$(IFS=,; echo "${pin_slots[*]}")" "$dev"; then
+          ok "removed slot(s) ${pin_slots[*]} from $dev"
+        else
+          fail "could not remove slot(s) ${pin_slots[*]} from $dev"
+        fi
+      fi
+    fi
     [[ $added -gt 0 ]] && enable_fido2_at_boot "$dev"
   done
 
