@@ -3,7 +3,7 @@
 ## Author : Aditya Shakya (adi1090x)
 ## Github : @adi1090x
 #
-## Rofi   : Launcher (Modi Drun, Run, File Browser, Window)
+## Rofi   : App launcher (drun mode)
 #
 ## Available Styles
 #

@@ -8,6 +8,7 @@ LAST_WALLPAPER="$HOME/.config/hypr/colors/current-wallpaper.conf"
 
 WALLPAPER="${1:-}"
 if [ -z "$WALLPAPER" ] && [ -f "$LAST_WALLPAPER" ]; then
+    # shellcheck disable=SC2016  # the $ is literal text in that file
     WALLPAPER=$(sed 's/^\$current_wallpaper = //' "$LAST_WALLPAPER")
 fi
 

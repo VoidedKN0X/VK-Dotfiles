@@ -281,6 +281,7 @@ GREETD
 # === TrueNAS share (only added if /media/TrueNAS isn't in fstab yet) ===
 TRUENAS_LINE='192.168.1.9:/mnt/Data/axel    /media/TrueNAS  nfs     noauto,user,_netdev,bg  0       0'
 if ! grep -Eq '^[^#]*[[:space:]]/media/TrueNAS[[:space:]]' /etc/fstab; then
+    # shellcheck disable=SC1003  # $a\ appends a newline if the file lacks one
     sudo sed -i -e '$a\' /etc/fstab
     printf '\n# TrueNAS\n%s\n' "$TRUENAS_LINE" | sudo tee -a /etc/fstab >/dev/null
     sudo systemctl daemon-reload
@@ -310,7 +311,7 @@ if command -v ufw >/dev/null; then
     # and 2021 (Bambu wiki, "printer network ports"); the slicer must receive
     # these to discover the printer. All other printer traffic (MQTT 8883, FTP
     # 990, camera) is opened by the slicer itself, so it needs no rule.
-    # This replaces the old bare "2021/udp" rule.
+    #
     printf '[OrcaSlicer]\ntitle=OrcaSlicer\ndescription=Bambu Lab printer discovery (SSDP)\nports=1990,2021/udp\n' \
         | sudo tee /etc/ufw/applications.d/orcaslicer >/dev/null
     sudo ufw allow OrcaSlicer

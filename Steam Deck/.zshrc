@@ -1,8 +1,10 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
-# Path to your Oh My Zsh installation.
+# OpenCode (installed in ~/.opencode/bin by Install.sh)
 export PATH="$HOME/.opencode/bin:$PATH"
+
+# Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
 # Set name of the theme to load --- if set to "random", it will

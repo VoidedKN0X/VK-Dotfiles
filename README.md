@@ -103,11 +103,12 @@ Then **reboot**. It runs these stages in order:
    swap tuning for zram when zram is set up, with zswap turned off), a hard-disk readahead rule,
    transparent huge pages, noatime, 32-bit gamemode and MangoHud, Proton-CachyOS, the `ntsync`
    module (smoother frame times with Proton-CachyOS and GE-Proton), and a lower default PipeWire
-   latency. irqbalance and the HDA audio power-save tweak are desktop-only, to save battery on the
-   laptop and the Deck.
-5. **Check:** verifies everything the CachyOS kernels need is in place.
+   latency. The HDA audio power-save tweak is desktop-only, to save battery on the laptop and the
+   Deck.
+   At the end it checks everything it set up and prints a pass/fail summary.
 
-All kernel and boot changes are made before the images are built, so they're only built once. The
+All kernel and boot changes are made before the images are built, so they normally only need
+building once (stage 3 rebuilds only if it had to switch a kernel to unified kernel images). The
 entry scripts share their logic in `run-all-common.sh`, so a fix only has to be made once.
 
 `run-all-steamdeck.sh` differs in three ways: it installs **`linux-cachyos-deckify`** (the CachyOS

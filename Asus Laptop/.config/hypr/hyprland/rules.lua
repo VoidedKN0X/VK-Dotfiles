@@ -3,7 +3,7 @@
 
 -- Small utility windows: float, sized, centered
 hl.window_rule({ match = { class = "nmtui" }, float = true, size = "60% 70%", center = true })
-hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol|yad-icon-browser" }, float = true, size = "60% 70%", center = true })
+hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol" }, float = true, size = "60% 70%", center = true })
 hl.window_rule({ match = { class = "nwg-look" }, float = true, size = "50% 60%", center = true })
 hl.window_rule({ match = { class = "blueman-manager" }, float = true })
 
@@ -28,7 +28,7 @@ hl.window_rule({ match = { class = "(steam_app_(default|[0-9]+))|gamescope" }, o
 hl.window_rule({ match = { xwayland = true, title = "win[0-9]+" }, no_dim = true, no_shadow = true, rounding = 10 })
 
 
--- General fixes (these used to live in workspaces.lua)
+-- General fixes
 hl.window_rule({
     name = "suppress-maximize-events",
     match = { class = ".*" },

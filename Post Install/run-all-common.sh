@@ -1,10 +1,7 @@
 #!/usr/bin/env bash
 # run-all-common.sh
-# SINGLE combined Post Install script. It replaces the individual scripts that
-# used to be chained by the old run-all wrapper:
-#     install-cachyos-repo.sh -> install-cachyos-kernel.sh -> fix-uki.sh
-#     -> full-tune (this file) -> cachyos-compat.sh
-# Those files no longer exist; everything lives here.
+# The shared post-install script: CachyOS repo, kernel, boot images, Secure Boot
+# and performance tuning.
 #
 # It is sourced by the three entry points (Install.sh runs the right one):
 #     run-all-desktop.sh    ->  sudo ./run-all-desktop.sh
@@ -24,28 +21,25 @@
 #      + Plymouth boot splash (cmdline params + mkinitcpio hook)
 #   3. Fix/enable UKI + Secure Boot (sbctl keys, enroll -m, sign UKIs; sbctl is
 #      installed by Install.sh)
-#   4. Performance tune (profile-specific: desktop/laptop/steamdeck)
-#   5. CachyOS-kernel compatibility check (verification only; stage 4 already
-#      applies the I/O scheduler rules, fq + bbr and transparent_hugepage=madvise)
+#   4. Performance tune (profile-specific: desktop/laptop/steamdeck), then a
+#      check of everything the script set up
 #
 # Tune groups (stage 4):
 #   A. sysctl (dirty pages, BBR, TCP buffers, NMI watchdog off, and zram swap
 #      tuning when zram is set up) + I/O scheduler and readahead for hard disks
 #   B. THP madvise (runtime + tmpfiles for the defrag setting)
-#   C. Install: lib32-gamemode, lib32-mangohud, irqbalance on the desktop, and
-#      Proton-CachyOS; load the ntsync module at boot
-#   D. Enable: irqbalance on the desktop (gamemoded needs no enabling: it's
-#      started on demand)
-#   E. fstab noatime (REBOOT required)
-#   F. systemd-boot kernel cmdline: transparent_hugepage=madvise,
+#   C. Install: lib32-gamemode, lib32-mangohud and Proton-CachyOS; load the
+#      ntsync module at boot (gamemoded needs no enabling: it's started on demand)
+#   D. fstab noatime (REBOOT required)
+#   E. systemd-boot kernel cmdline: transparent_hugepage=madvise,
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog, and
 #      zswap.enabled=0 when zram is used
 #      (REBOOT required). The cmdline is written in stage 2, before the images
 #      are built, so later stages don't have to rebuild for it. A cpufreq
 #      governor is only added when CPUFREQ_GOVERNOR is explicitly set.
-#   G. /etc/environment: removes RADV_PERFTEST and MESA_NO_ERROR if an older
+#   F. /etc/environment: removes RADV_PERFTEST and MESA_NO_ERROR if an older
 #      version of this script added them
-#   H. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
+#   G. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
 #      default PipeWire quantum
 #
 # Persistence:
@@ -91,7 +85,7 @@ FSTAB="/etc/fstab"
 ENV_FILE="/etc/environment"
 KCMDLINE="/etc/kernel/cmdline"
 
-# Kernel cmdline parameters added in stage 2 (and verified in stages 4 and 5)
+# Kernel cmdline parameters added in stage 2 (and verified in stage 4)
 NEW_PARAMS=(transparent_hugepage=madvise)
 # Plymouth: show the splash, hide boot messages, don't write a boot log
 NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
@@ -345,7 +339,7 @@ sync_kernel_images() {
     for key in default_uki fallback_uki; do
       line=$(grep -m1 -E "^${key}=" "$preset")
       [[ -z "$line" ]] && continue
-      val="${line#${key}=}"
+      val="${line#"${key}"=}"
       val="${val#\"}"; val="${val%\"}"
       if [[ ! -d "$(dirname "$val")" ]]; then
         newpath="${uki_dir}/$(basename "$val")"
@@ -374,7 +368,7 @@ if [[ $# -gt 0 ]]; then
 fi
 
 # =====================================================================
-info 1 5 "CachyOS Repository Setup"
+info 1 4 "CachyOS Repository Setup"
 
 if ! grep -qE '^\[cachyos' /etc/pacman.conf 2>/dev/null; then
   section "Adding CachyOS repos (official installer)"
@@ -410,17 +404,14 @@ fi
 [[ $OK -eq 1 ]] || die "CachyOS repository setup incomplete"
 
 # =====================================================================
-info 2 5 "CachyOS Kernel Install"
+info 2 4 "CachyOS Kernel Install"
 
-FLAVOR="$KERNEL_FLAVOR"
 PKG_BASE="linux-cachyos"
-if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
-  PKG_BASE="linux-cachyos-${FLAVOR}"
-fi
 KNOWN_FLAVORS=(bore bmq deckify eevdf lts hardened rc server rt-bore)
-if [[ -n "$FLAVOR" && "$FLAVOR" != "default" ]]; then
-  if ! printf '%s\n' "${KNOWN_FLAVORS[@]}" | grep -qx "$FLAVOR"; then
-    warn "unknown flavor '$FLAVOR' - only proceed if the package linux-cachyos-$FLAVOR exists"
+if [[ -n "$KERNEL_FLAVOR" && "$KERNEL_FLAVOR" != "default" ]]; then
+  PKG_BASE="linux-cachyos-${KERNEL_FLAVOR}"
+  if ! printf '%s\n' "${KNOWN_FLAVORS[@]}" | grep -qx "$KERNEL_FLAVOR"; then
+    warn "unknown flavor '$KERNEL_FLAVOR' - only proceed if the package $PKG_BASE exists"
   fi
 fi
 # ---------- pre-flight checks ----------
@@ -428,19 +419,6 @@ section "Pre-flight checks"
 
 [[ "$(uname -m)" == "x86_64" ]] || { fail "CachyOS kernels are x86_64 only"; exit 1; }
 command -v pacman >/dev/null || { fail "pacman not found - this script is for Arch Linux"; exit 1; }
-
-if ! grep -qE '^\[cachyos' /etc/pacman.conf 2>/dev/null; then
-  fail "CachyOS repositories not configured in /etc/pacman.conf"
-  cat <<'EOF'
-  Set them up first with the official installer:
-    curl https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz
-    tar xvf cachyos-repo.tar.xz && cd cachyos-repo
-    sudo ./cachyos-repo.sh
-  (see https://wiki.cachyos.org/features/optimized_repos/)
-EOF
-  exit 1
-fi
-ok "CachyOS repository present in /etc/pacman.conf"
 
 if ! pacman -Q cachyos-keyring >/dev/null 2>&1; then
   fail "cachyos-keyring not installed - repository setup incomplete"
@@ -529,7 +507,6 @@ ensure_plymouth_hook
 # ---------- regenerate initramfs / UKIs ----------
 section "Regenerate initramfs / UKIs"
 regenerate_images || exit 1
-NEED_REGEN=0
 
 # ---------- configure systemd-boot default entry ----------
 section "Configure systemd-boot default entry"
@@ -553,7 +530,8 @@ check_loader_default "$LOADER_CONF" "$DEFAULT_ENTRY" warn
 # itself, its config and its unit (removed, not just disabled).
 
 running_base() {
-  local d="/usr/lib/modules/$(uname -r)"
+  local d
+  d="/usr/lib/modules/$(uname -r)"
   if [[ -f "$d/pkgbase" ]]; then
     cat "$d/pkgbase"
   else
@@ -696,7 +674,7 @@ section "Old kernel removal"
 
 RUN_BASE="$(running_base)"
 TARGETS=()
-while IFS=$'\t' read -r base kver; do
+while IFS=$'\t' read -r base _; do
   [[ -z "$base" ]] && continue
   [[ "$base" == "$PKG_BASE" ]] && continue
   case " ${TARGETS[*]} " in *" $base "*) continue ;; esac
@@ -731,15 +709,10 @@ so confirm CachyOS boots before relying on fallback removal only.
 EOF
 
 # =====================================================================
-info 3 5 "Fix UKI Setup"
+info 3 4 "Fix UKI Setup"
 
-# ---------- find ESP ----------
+# (the ESP was found in stage 2)
 section "Pre-flight checks"
-ESP=""
-for _e in /boot /efi /boot/efi; do
-  if [[ -d "$_e/EFI/Linux" ]]; then ESP="$_e"; break; fi
-done
-[[ -z "$ESP" ]] && die "No UKI directory found (looked in /boot, /efi, /boot/efi)"
 UKI_DIR="$ESP/EFI/Linux"
 ok "UKI directory: $UKI_DIR"
 
@@ -754,8 +727,6 @@ SWITCHED=0
 NEED_REGEN=0
 for p in "${PRESETS[@]}"; do
   NAME="$(basename "$p" .preset)"
-  KERNEL_NAME="${NAME#linux-}"
-  KERNEL_NAME="${KERNEL_NAME#linux}"
 
   # Already using UKI?
   if grep -qE '^default_uki=' "$p" && ! grep -qE '^#default_uki=' "$p"; then
@@ -817,7 +788,6 @@ sync_kernel_images "$UKI_DIR"
 if [[ $NEED_REGEN -eq 1 ]]; then
   section "Regenerating all UKIs"
   regenerate_images || die "image regeneration failed"
-  NEED_REGEN=0
 else
   ok "No preset changes; skipping UKI regeneration (images already built in stage 2)"
 fi
@@ -827,9 +797,9 @@ fi
 # name may only be final now.
 section "systemd-boot default entry"
 DEFAULT_ENTRY="$(uki_entry_name "$PKG_BASE")"
-set_loader_default "$ESP/loader/loader.conf" "$DEFAULT_ENTRY"
+set_loader_default "$LOADER_CONF" "$DEFAULT_ENTRY"
 ok "loader.conf default entry set to '$DEFAULT_ENTRY'"
-check_loader_default "$ESP/loader/loader.conf" "$DEFAULT_ENTRY" fail
+check_loader_default "$LOADER_CONF" "$DEFAULT_ENTRY" fail
 
 # ---------- secure boot: create keys, enroll (-m), sign (sbctl installed by Install.sh) ----------
 section "Secure Boot setup (sbctl)"
@@ -942,7 +912,7 @@ else
 EOF
 fi
 # =====================================================================
-info 4 5 "Performance Tuning"
+info 4 4 "Performance Tuning"
 
 # =====================================================================
 section "A. sysctl + I/O"
@@ -983,9 +953,9 @@ else
   warn "no zram swap found - swap settings left at the kernel defaults"
 fi
 sysctl -p "$SYSCTL_FILE" >/dev/null
-# (THP has no sysctl key: it's set at runtime in B and by the kernel cmdline in F)
+# (THP has no sysctl key: it's set at runtime in B and by the kernel cmdline in E)
 
-# A.3 Hard disks: scheduler + bigger readahead (runtime + udev persistence).
+# A.2 Hard disks: scheduler + bigger readahead (runtime + udev persistence).
 # NVMe and SATA SSDs keep the kernel defaults (already the best choice for them).
 # Detect which schedulers this kernel provides, then only emit rules that
 # reference available schedulers. mq-deadline is used for rotational disks
@@ -1027,7 +997,7 @@ fi
 udevadm control --reload-rules
 udevadm trigger --action=change --subsystem-match=block >/dev/null 2>&1 || true
 
-# A.4 BBR module
+# A.3 BBR module
 if sysctl net.ipv4.tcp_available_congestion_control | grep -qw bbr; then
   echo "tcp_bbr" > "$MODPROBE_DIR/bbr.conf"
 else
@@ -1055,17 +1025,12 @@ ok "THP defrag = $THP_DEFRAG_TARGET, kept after reboots via $THP_TMPFILES"
 # =====================================================================
 section "C. Install packages (official repos)"
 
-# irqbalance only on the desktop: on the laptop and the Deck it wakes the CPU
-# for little gain. (ananicy-cpp isn't used: no measurable gain, and the BORE
-# scheduler's developer links it to stutter in games.)
-PKGS=()
-[[ "$PROFILE_NAME" == "desktop" ]] && PKGS+=(irqbalance)
-# lib32-* packages only exist on x86_64
-if [[ "$(uname -m)" == "x86_64" ]]; then
-  PKGS+=(lib32-gamemode lib32-mangohud)
-fi
-# gamemode and mangohud (native) are installed by Install.sh; only the lib32-*
-# variants are handled here.
+# gamemode and mangohud (native) are installed by Install.sh; the 32-bit
+# versions (for 32-bit games) are added here. Not used: ananicy-cpp (no
+# measurable gain, and the BORE scheduler's developer links it to stutter in
+# games) and irqbalance (on a single-CPU machine the busy devices already spread
+# their own interrupts; no measurable gain).
+PKGS=(lib32-gamemode lib32-mangohud)
 MISSING=()
 for p in "${PKGS[@]}"; do
   pacman -Q "$p" >/dev/null 2>&1 || MISSING+=("$p")
@@ -1104,30 +1069,7 @@ else
 fi
 
 # =====================================================================
-section "D. Enable services"
-
-enable_svc() {
-  local svc="$1"
-  if systemctl cat "${svc}.service" >/dev/null 2>&1; then
-    if systemctl enable --now "$svc.service" >/dev/null 2>&1; then
-      ok "$svc.service enabled + started"
-    else
-      fail "$svc.service enable/start failed"
-    fi
-  else
-    warn "$svc.service unit not found (package missing?)"
-  fi
-}
-# gamemoded needs no enabling: games start it on demand (over D-Bus) through
-# gamemoderun, so no lingering user session is kept running for it.
-if [[ "$PROFILE_NAME" == "desktop" ]]; then
-  enable_svc irqbalance
-else
-  ok "irqbalance not used on the $PROFILE_NAME (saves battery)"
-fi
-
-# =====================================================================
-section "E. fstab noatime (REBOOT required)"
+section "D. fstab noatime (REBOOT required)"
 
 # Auto-detect local filesystems from fstab (unless FILESYSTEM is set)
 if [[ -z "$FILESYSTEM" ]]; then
@@ -1156,7 +1098,7 @@ fi
 rm -f "$TMP"
 
 # =====================================================================
-section "F. Kernel cmdline (REBOOT required)"
+section "E. Kernel cmdline (REBOOT required)"
 
 # Normally already done in stage 2 (before the images were built), so this is a
 # no-op; it only rebuilds if a param is somehow still missing.
@@ -1167,7 +1109,7 @@ if [[ $CMDLINE_CHANGED -eq 1 ]]; then
 fi
 
 # =====================================================================
-section "G. /etc/environment"
+section "F. /etc/environment"
 
 # Older versions set RADV_PERFTEST=gpl (Mesa's default since 23.1) and
 # MESA_NO_ERROR=1 (no GL error checking for every app, which can turn app bugs
@@ -1180,7 +1122,7 @@ else
 fi
 
 # =====================================================================
-section "H. Audio (HDA power-save) (REBOOT required for HDA)"
+section "G. Audio (HDA power-save) (REBOOT required for HDA)"
 
 # H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume.
 # Desktop only: on the laptop and the Deck it would keep the audio chip awake
@@ -1260,14 +1202,10 @@ fi
 
 # THP
 v_selected "THP enabled"       "madvise"     "$(cat /sys/kernel/mm/transparent_hugepage/enabled)"
-v_selected "THP defrag"        "${THP_DEFRAG_TARGET:-madvise}" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
+v_selected "THP defrag"        "$THP_DEFRAG_TARGET" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
 
 # Packages
-PKG_CHECK=(gamemode proton-cachyos-slr)
-[[ "$PROFILE_NAME" == "desktop" ]] && PKG_CHECK+=(irqbalance)
-if [[ "$(uname -m)" == "x86_64" ]]; then
-  PKG_CHECK+=(lib32-gamemode lib32-mangohud)
-fi
+PKG_CHECK=(gamemode lib32-gamemode lib32-mangohud proton-cachyos-slr)
 for p in "${PKG_CHECK[@]}"; do
   if pacman -Q "$p" >/dev/null 2>&1; then
     ok "package: $p $(pacman -Q "$p" | awk '{print $2}')"
@@ -1282,17 +1220,8 @@ else
   fail "binary: gamemoderun not on PATH"
 fi
 
-# System services
-if [[ "$PROFILE_NAME" == "desktop" ]]; then
-  state=$(systemctl is-active irqbalance 2>/dev/null || echo "inactive")
-  if [[ "$state" == "active" ]]; then
-    ok "service (system): irqbalance active"
-  else
-    fail "service (system): irqbalance $state"
-  fi
-fi
 # fstab
-noatime_count=$(awk -v fs="${FS_REGEX:-}" '!/^[[:space:]]*#/ && NF>=4 && $3 ~ fs && $4 ~ /rw,noatime/' "$FSTAB" | wc -l)
+noatime_count=$(awk -v fs="$FS_REGEX" '!/^[[:space:]]*#/ && NF>=4 && $3 ~ fs && $4 ~ /rw,noatime/' "$FSTAB" | wc -l)
 if [[ "$noatime_count" -ge 1 ]]; then
   ok "fstab: $noatime_count mount(s) [${FILESYSTEM// /, }] with noatime"
 else
@@ -1351,50 +1280,6 @@ if systemctl is-active --quiet rtkit-daemon 2>/dev/null; then
   ok "audio: rtkit-daemon active"
 else
   fail "audio: rtkit-daemon not active"
-fi
-
-# =====================================================================
-info 5 5 "CachyOS Compatibility Check"
-
-# Stage 4 already writes everything the CachyOS kernels need (bfq-free udev
-# rules, fq + bbr, transparent_hugepage=madvise in the cmdline/UKI). This stage
-# used to write all of it a second time; now it only confirms it.
-
-check() { if [[ "$2" -eq 0 ]]; then ok "$1"; else fail "$1"; fi; }
-
-section "1. I/O scheduler rules (no bfq)"
-if [[ -f "$UDEV_FILE" ]] && ! grep -v '^#' "$UDEV_FILE" | grep -q bfq; then
-  ok "$UDEV_FILE present and bfq-free"
-else
-  fail "$UDEV_FILE missing or still references bfq"
-fi
-
-section "2. fq qdisc + bbr congestion control"
-if sysctl net.ipv4.tcp_available_congestion_control 2>/dev/null | grep -qw bbr; then
-  QDISC="$(sysctl -n net.core.default_qdisc 2>/dev/null)"
-  CC="$(sysctl -n net.ipv4.tcp_congestion_control 2>/dev/null)"
-  check "qdisc = fq (got '$QDISC')" "$([[ "$QDISC" == "fq" ]]; echo $?)"
-  check "tcp_congestion_control = bbr (got '$CC')" "$([[ "$CC" == "bbr" ]]; echo $?)"
-else
-  warn "bbr not available on the running kernel yet - $CONF_DIR/99-perf-tune.conf applies it on CachyOS"
-fi
-
-section "3. transparent_hugepage=madvise in cmdline and UKI"
-if [[ -f "$KCMDLINE" ]] && has_param "transparent_hugepage=madvise" "$(cat "$KCMDLINE")"; then
-  check "cmdline has transparent_hugepage=madvise" 0
-else
-  check "cmdline has transparent_hugepage=madvise" 1
-fi
-UKI="$UKI_DIR/$DEFAULT_ENTRY"
-[[ -f "$UKI" ]] || UKI="$(newest_uki "$UKI_DIR")"
-if [[ -n "$UKI" ]] && command -v objcopy >/dev/null; then
-  if has_param "transparent_hugepage=madvise" "$(uki_cmdline "$UKI")"; then
-    check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 0
-  else
-    check "UKI $(basename "$UKI") carries transparent_hugepage=madvise" 1
-  fi
-elif [[ -z "$UKI" ]]; then
-  warn "no UKIs found - the CachyOS kernel stage should have created one; check stage 2 output"
 fi
 
 # =====================================================================

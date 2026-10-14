@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
+# shellcheck source-path=SCRIPTDIR
 # run-all-desktop.sh
 # DESKTOP post-install. Runs the full combined script in order:
-#   repo -> CachyOS kernel -> fix UKI -> performance tune -> CachyOS compat
+#   CachyOS repo -> CachyOS kernel -> UKI + Secure Boot -> performance tune
 #
 # Run it directly:  sudo ./run-all-desktop.sh
-# The laptop variant is run-all-laptop.sh. All shared logic lives in
-# run-all-common.sh; this file only selects the desktop values.
+# The other profiles use run-all-laptop.sh and run-all-steamdeck.sh.
+# All shared logic lives in run-all-common.sh; this file only selects the
+# desktop values.
 
 PROFILE_NAME="desktop"
 CPUFREQ_GOVERNOR=""

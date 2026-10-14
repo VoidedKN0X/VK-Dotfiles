@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
+# shellcheck source-path=SCRIPTDIR
 # run-all-steamdeck.sh
 # STEAM DECK (LCD) post-install. Runs the full combined script in order:
-#   repo -> CachyOS kernel -> fix UKI -> performance tune -> CachyOS compat
+#   CachyOS repo -> CachyOS kernel -> UKI + Secure Boot -> performance tune
 #
 # Run it directly:  sudo ./run-all-steamdeck.sh
 # All shared logic lives in run-all-common.sh; this file only selects the Steam
@@ -52,7 +53,7 @@ device_setup() {
   #   jupiter-biosupdate         - flashes AND reboots; replaced by steamdeck-bios-update
   #   jupiter-controller-update  - updates the controller firmware; the controllers are removed
   for unit in jupiter-biosupdate.service jupiter-controller-update.service; do
-    systemctl mask "$unit" >/dev/null 2>&1 && ok "masked $unit" || warn "could not mask $unit"
+    if systemctl mask "$unit" >/dev/null 2>&1; then ok "masked $unit"; else warn "could not mask $unit"; fi
   done
 
   # BIOS updates: automatic, but never reboots (see steamdeck/steamdeck-bios-update)

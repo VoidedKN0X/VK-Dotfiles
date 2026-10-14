@@ -97,7 +97,7 @@ register_keys() {
     line="$(grep -m1 "^${REAL_USER}:" "$KEYFILE")"
     if [[ -n "$line" ]]; then
       # the registered keys are always kept; new keys are added after them
-      IFS=':' read -ra existing <<<"${line#${REAL_USER}:}"
+      IFS=':' read -ra existing <<<"${line#"${REAL_USER}":}"
       ok "${#existing[@]} key(s) already registered for $REAL_USER (they stay registered)"
       ask "Add another key (e.g. your 2nd YubiKey)?" || return 0
     elif ! ask "Register your YubiKeys for $REAL_USER now?"; then
