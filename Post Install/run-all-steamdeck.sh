@@ -15,7 +15,6 @@
 #   - Valve's fan control and BIOS updater (from the CachyOS repos)
 
 PROFILE_NAME="steamdeck"
-LAPTOP_MODE=5
 CPUFREQ_GOVERNOR=""
 TUNE_NAME="run-all-steamdeck.sh"
 KERNEL_FLAVOR="deckify"

@@ -8,7 +8,6 @@
 # run-all-common.sh; this file only selects the laptop values.
 
 PROFILE_NAME="laptop"
-LAPTOP_MODE=5
 CPUFREQ_GOVERNOR=""
 TUNE_NAME="run-all-laptop.sh"
 

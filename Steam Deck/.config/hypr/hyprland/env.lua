@@ -9,6 +9,10 @@ hl.env("QT_QPA_PLATFORM", "wayland;xcb")
 hl.env("CLUTTER_BACKEND", "wayland")
 hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 
+-- Shader cache (AMD/Intel Mesa drivers): 12 GB instead of 1 GB, so games don't
+-- have to recompile shaders that were dropped (only uses disk space as it fills)
+hl.env("MESA_SHADER_CACHE_MAX_SIZE", "12G")
+
 hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 hl.env("XDG_SESSION_TYPE", "wayland")
 hl.env("XDG_SESSION_DESKTOP", "Hyprland")

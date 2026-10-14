@@ -167,7 +167,6 @@ AUR_PKGS=(
     eid-mw
     heroic-games-launcher-bin
     jdownloader2
-    protonplus
     orca-slicer-bin
     auto-cpufreq
     mangojuice-bin

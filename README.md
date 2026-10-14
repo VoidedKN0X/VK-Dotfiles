@@ -99,10 +99,12 @@ Then **reboot**. It runs these stages in order:
    everything. Enrolling only works while your firmware's Secure Boot is in **Setup Mode**, so
    switch that on in the firmware settings *before* running `Install.sh`; after the reboot, turn
    Secure Boot on. If you skip Setup Mode, this step reports a failure and the rest still runs.
-4. **Performance tuning:** sysctl (memory, BBR networking, split-lock mitigation off), I/O
-   schedulers, transparent huge pages, noatime, ananicy-cpp with CachyOS's rules, 32-bit gamemode
-   and MangoHud, and a lower PipeWire latency. On the laptop and the Deck, `vm.laptop_mode` is 5
-   instead of 0, and irqbalance and the HDA audio power-save tweak are left out to save battery.
+4. **Performance tuning:** sysctl (smaller write batches, BBR networking, NMI watchdog off, and
+   swap tuning for zram when zram is set up, with zswap turned off), a hard-disk readahead rule,
+   transparent huge pages, noatime, 32-bit gamemode and MangoHud, Proton-CachyOS, the `ntsync`
+   module (smoother frame times with Proton-CachyOS and GE-Proton), and a lower default PipeWire
+   latency. irqbalance and the HDA audio power-save tweak are desktop-only, to save battery on the
+   laptop and the Deck.
 5. **Check:** verifies everything the CachyOS kernels need is in place.
 
 All kernel and boot changes are made before the images are built, so they're only built once. The

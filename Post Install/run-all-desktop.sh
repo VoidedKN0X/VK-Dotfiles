@@ -8,7 +8,6 @@
 # run-all-common.sh; this file only selects the desktop values.
 
 PROFILE_NAME="desktop"
-LAPTOP_MODE=0
 CPUFREQ_GOVERNOR=""
 TUNE_NAME="run-all-desktop.sh"
 
