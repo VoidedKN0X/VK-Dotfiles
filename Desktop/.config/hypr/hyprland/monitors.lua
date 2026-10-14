@@ -4,7 +4,7 @@ hl.monitor({
     position = "0x0",
     scale = 1,
     bitdepth = 10,
-    vrr = 2,
+    vrr = 3,  -- adaptive sync only for fullscreen games and video
 })
 
 hl.monitor({
@@ -14,7 +14,7 @@ hl.monitor({
     scale = 1,
     transform = 3,
     bitdepth = 10,
-    vrr = 2,
+    vrr = 3,  -- adaptive sync only for fullscreen games and video
 })
 
 hl.monitor({

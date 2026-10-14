@@ -221,6 +221,9 @@ It's based on the laptop profile.
   available, ready, installed, or needs you. Status: `cat /var/lib/steamdeck-bios-update/status`.
 - **Speakers:** work out of the box with the regular Arch audio packages. Valve's speaker tuning
   for the LCD model is already part of Arch's audio config.
+- **More FPS in heavy games:** gamescope is installed. Render a game at a lower resolution and
+  upscale it with FSR via its Steam launch options:
+  `gamescope -w 960 -h 600 -W 1280 -H 800 -F fsr -f -- %command%`.
 
 After the first boot, test the gestures once. If a swipe goes the wrong way in landscape, change
 `ROTATION=3` to `ROTATION=1` in `~/.config/hypr/scripts/touch-gestures.sh`.

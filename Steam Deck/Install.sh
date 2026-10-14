@@ -72,6 +72,7 @@ PACMAN_PKGS=(
     prismlauncher
     moonlight-qt
     steam
+    gamescope
     ttf-dejavu
     ttf-liberation
     vlc

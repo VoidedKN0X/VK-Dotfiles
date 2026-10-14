@@ -3,7 +3,7 @@ hl.monitor({
     mode = "preferred",
     position = "auto",
     scale = 1,
-    vrr = 2,
+    vrr = 3,  -- adaptive sync only for fullscreen games and video
 })
 
 hl.workspace_rule({ workspace = "1", monitor = "eDP-1", persistent = true })

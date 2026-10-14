@@ -21,8 +21,9 @@ hl.window_rule({ match = { title = "GIMP Crash Debug" }, float = true })
 hl.window_rule({ match = { title = "Save As" }, float = true })
 hl.window_rule({ match = { title = "Library" }, float = true })
 
--- Games: opaque, tearing allowed, never go idle
-hl.window_rule({ match = { class = "(steam_app_(default|[0-9]+))|gamescope" }, opaque = true, immediate = true, idle_inhibit = "always" })
+-- Games: opaque, tearing allowed, never go idle, marked as game content (VRR
+-- then ignores cursor movement instead of rendering extra frames for it)
+hl.window_rule({ match = { class = "(steam_app_(default|[0-9]+))|gamescope" }, opaque = true, immediate = true, idle_inhibit = "always", content = "game" })
 
 -- Wine/XWayland helper windows
 hl.window_rule({ match = { xwayland = true, title = "win[0-9]+" }, no_dim = true, no_shadow = true, rounding = 10 })
