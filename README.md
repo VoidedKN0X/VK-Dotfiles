@@ -25,7 +25,7 @@ stays self-contained and works on its own.
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
-| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, touchscreen gestures, on-screen keyboard, automatic brightness from the light sensor, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
+| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, touchscreen gestures, on-screen keyboard, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
 
@@ -208,9 +208,8 @@ It's based on the laptop profile.
   (plug it in and touch it at boot), since there's no keyboard before the desktop starts. Keys that
   were enrolled earlier with a PIN stay; the script warns about them. Desktop and laptop keep the
   PIN.
-- **Brightness:** [wluma](https://github.com/max-baz/wluma) sets it automatically from the light
-  sensor and learns your preference whenever you change it with the slider in the notification
-  center.
+- **Brightness:** set it with the slider in the notification center (it's pointed at the Deck's
+  backlight automatically at every login).
 - **Fan:** Valve's own fan curve (`jupiter-fan-control`).
 - **BIOS updates:** checked 2 minutes after boot and every hour. With the charger connected (and
   at least 20% battery) a new BIOS is **prepared automatically but never installed with a forced

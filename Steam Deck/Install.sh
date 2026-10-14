@@ -153,7 +153,6 @@ PACMAN_PKGS=(
 # === Packages (AUR, via yay) ===
 AUR_PKGS=(
     lisgd
-    wluma
     amethyst-mod-manager
     wallust-git
     github-desktop-bin

@@ -33,8 +33,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/scripts/app-drawer.sh start")
     -- Touchscreen gestures (edge swipes, 3-finger swipes)
     hl.exec_cmd("~/.config/hypr/scripts/touch-gestures.sh")
-    -- Automatic brightness from the light sensor
-    hl.exec_cmd("wluma")
     -- Tell me about BIOS updates (status written by steamdeck-bios-update)
     hl.exec_cmd("~/.config/hypr/scripts/bios-update-notify.sh --watch")
 
