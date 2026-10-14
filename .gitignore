@@ -1,6 +1,0 @@
-# Wallust generated files
-# The generated color files (and hyprlock's wallpaper path) are tracked on
-# purpose, with the default colors, so a fresh install works before any
-# wallpaper is set: Hyprland finds colors/colors.lua, the lock screen and foot
-# find their color files, and hyprlock shows a blurred screenshot as background.
-# wallust and wallpaper.sh overwrite them in ~/.config when you set a wallpaper.

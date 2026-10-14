@@ -10,8 +10,6 @@
 # laptop values.
 
 PROFILE_NAME="laptop"
-CPUFREQ_GOVERNOR=""
-TUNE_NAME="run-all-laptop.sh"
 
 # shellcheck source=run-all-common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/run-all-common.sh" "$@"

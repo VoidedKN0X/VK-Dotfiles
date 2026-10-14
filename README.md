@@ -147,8 +147,6 @@ Your password and LUKS passphrase keep working as a fallback, except on the lock
 out of the lock screen without a key? Switch to a text console (Ctrl+Alt+F3), log in with your
 password and run `pkill -USR1 hyprlock`.
 
-`Post Install/Post-Install.txt` repeats this run order and lists the few steps that are still manual.
-
 ## Keybinds
 
 | Keys | Action |
@@ -214,9 +212,6 @@ It's based on the laptop profile.
   (plug it in and touch it at boot), since there's no keyboard before the desktop starts. A key
   enrolled with a PIN (for example by archinstall's HSM option) can be enrolled again without one;
   the script then offers to remove the PIN slots. Desktop and laptop keep the PIN.
-  Boot still asks for a PIN? `sudo "VK-Dotfiles/Post Install/yubikey-luks-touch-only.sh"` enrolls
-  the plugged-in key touch-only and removes every other FIDO2 slot (asked first; the passphrase
-  stays).
 - **Brightness:** set it with the slider in the notification center (it's pointed at the Deck's
   backlight automatically at every login).
 - **Fan:** Valve's own fan curve (`jupiter-fan-control`).
@@ -275,13 +270,11 @@ If you're not me, look at these before running anything:
 └── Install.sh             # Apps, services, shell, login screen, printer, firewall, copies the configs
 
 Post Install/
-├── Post-Install.txt       # Run order + the few steps that are still manual
 ├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
 ├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
 ├── run-all-common.sh      # Shared logic (used by the three scripts above; don't run it directly)
-├── yubikey-luks-touch-only.sh # Re-enroll the YubiKey touch-only, remove the other FIDO2 slots (Deck)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```
 

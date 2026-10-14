@@ -7,8 +7,8 @@
 #     run-all-desktop.sh    ->  sudo ./run-all-desktop.sh
 #     run-all-laptop.sh     ->  sudo ./run-all-laptop.sh
 #     run-all-steamdeck.sh  ->  sudo ./run-all-steamdeck.sh
-# Do not run this file directly. The entry point sets PROFILE_NAME,
-# CPUFREQ_GOVERNOR and TUNE_NAME before sourcing it. Optional, per device:
+# Do not run this file directly. The entry point sets PROFILE_NAME before
+# sourcing it. Optional, per device:
 #   KERNEL_FLAVOR  CachyOS kernel flavor ("" = linux-cachyos, "deckify" = the
 #                  handheld kernel with the Steam Deck drivers)
 #   SECURE_BOOT    1 (default) = set up Secure Boot in stage 3, 0 = skip it
@@ -36,8 +36,7 @@
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog, and
 #      zswap.enabled=0 when zram is used
 #      (REBOOT required). The cmdline is written in stage 2, before the images
-#      are built, so later stages don't have to rebuild for it. A cpufreq
-#      governor is only added when CPUFREQ_GOVERNOR is explicitly set.
+#      are built, so later stages don't have to rebuild for it.
 #   F. /etc/environment: removes RADV_PERFTEST and MESA_NO_ERROR if an older
 #      version of this script added them
 #   G. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
@@ -71,10 +70,7 @@ set -uo pipefail
 FILESYSTEM=""
 
 # === PROFILE CONFIG (set by the sourcing entry point) ===
-# CPUFREQ_GOVERNOR : optional kernel-cmdline default governor. Empty by default;
-#                    auto-cpufreq manages the governor at runtime.
-# TUNE_NAME        : name stamped into generated config files
-CPUFREQ_GOVERNOR="${CPUFREQ_GOVERNOR:-}"
+# TUNE_NAME : name stamped into generated config files
 TUNE_NAME="${TUNE_NAME:-run-all-${PROFILE_NAME}.sh}"
 KERNEL_FLAVOR="${KERNEL_FLAVOR:-}"
 SECURE_BOOT="${SECURE_BOOT:-1}"
@@ -90,9 +86,6 @@ KCMDLINE="/etc/kernel/cmdline"
 NEW_PARAMS=(transparent_hugepage=madvise)
 # Plymouth: show the splash, hide boot messages, don't write a boot log
 NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
-# Only add cpufreq.default_governor= if a value is set. auto-cpufreq manages the
-# governor at runtime, so the kernel-cmdline default is usually omitted.
-[[ -n "$CPUFREQ_GOVERNOR" ]] && NEW_PARAMS+=(cpufreq.default_governor="$CPUFREQ_GOVERNOR")
 
 # Swap on zram (archinstall sets it up by default): zram is used when it's
 # active or configured. zswap must be off with zram, or it keeps zram from

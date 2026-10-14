@@ -10,8 +10,6 @@
 # desktop values.
 
 PROFILE_NAME="desktop"
-CPUFREQ_GOVERNOR=""
-TUNE_NAME="run-all-desktop.sh"
 
 # shellcheck source=run-all-common.sh
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/run-all-common.sh" "$@"
