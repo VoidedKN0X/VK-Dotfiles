@@ -600,9 +600,10 @@ CONF="/etc/remove-old-kernel.conf"
 UNIT="/etc/systemd/system/remove-old-kernel.service"
 SELF="/usr/local/bin/remove-old-kernel.sh"
 
+# only failures are logged (to the journal, via the service)
 log() { printf '[remove-old-kernel] %s\n' "$*"; }
 
-[[ -f "$CONF" ]] || { log "no $CONF; nothing to do"; exit 0; }
+[[ -f "$CONF" ]] || exit 0
 # shellcheck disable=SC1090
 source "$CONF"
 
@@ -613,8 +614,8 @@ else
   RUN_BASE="$(pacman -Qo "/usr/lib/modules/$(uname -r)" 2>/dev/null | awk '{print $5}')"
 fi
 
+# not running the new kernel yet: try again after the next boot
 if [[ -z "${RUN_BASE:-}" || "$RUN_BASE" != "${NEW_BASE:-}" ]]; then
-  log "running kernel is '${RUN_BASE:-unknown}', not '${NEW_BASE:-?}' - will retry after the next boot"
   exit 0
 fi
 
@@ -625,10 +626,8 @@ for base in "${REMOVE[@]}"; do
   for suffix in headers dbg nvidia nvidia-open zfs; do
     pacman -Q "$base-$suffix" >/dev/null 2>&1 && pkgs+=("$base-$suffix")
   done
-  log "removing: ${pkgs[*]}"
-  if pacman -Rns --noconfirm "${pkgs[@]}"; then
-    log "removed $base"
-  else
+  # only errors are kept in the journal (pacman prints them on stderr)
+  if ! pacman -Rns --noconfirm "${pkgs[@]}" >/dev/null; then
     log "failed to remove $base"
     failed=1
   fi
@@ -639,11 +638,9 @@ if [[ $failed -ne 0 ]]; then
   exit 1
 fi
 
-log "cleanup complete - removing unit, config and this script"
 systemctl disable remove-old-kernel.service >/dev/null 2>&1 || true
 rm -f "$UNIT" "$CONF" "$SELF"
 systemctl daemon-reload >/dev/null 2>&1 || true
-log "done"
 HELPER_BODY
   chmod 755 "$helper"
 

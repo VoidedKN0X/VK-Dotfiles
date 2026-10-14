@@ -23,6 +23,8 @@ chmod 755 "$DIR"
 
 current="$(cat /sys/class/dmi/id/bios_version 2>/dev/null || true)"
 
+# Only failures are logged (the "BIOS update failed" notification points to
+# journalctl -u steamdeck-bios-update); normal runs write only the status file.
 log() { echo "[steamdeck-bios-update] $*"; }
 
 # write_status <state> [target]
@@ -33,7 +35,6 @@ write_status() {
     echo "TARGET=${2:-}"
     echo "TIME=$(date -Is)"
   } > "$DIR/status.tmp" && chmod 644 "$DIR/status.tmp" && mv "$DIR/status.tmp" "$DIR/status"
-  log "state=$1 current=$current target=${2:-none}"
 }
 
 if [[ -z "$current" ]]; then
@@ -46,7 +47,6 @@ if [[ -n "$last_seen" && "$last_seen" != "$current" ]]; then
   printf 'FROM=%s\nTO=%s\nTIME=%s\n' "$last_seen" "$current" "$(date -Is)" > "$DIR/last-update"
   chmod 644 "$DIR/last-update"
   rm -f "$DIR/staged"
-  log "BIOS changed: $last_seen -> $current"
 fi
 echo "$current" > "$DIR/last-version"
 
@@ -74,9 +74,8 @@ if [[ "$(cat "$DIR/staged" 2>/dev/null)" == "$target" ]]; then
 fi
 
 # Does Valve allow this update to be installed automatically?
-auto_out="$(jupiter-biosupdate --auto check 2>&1)"; auto_rc=$?
+jupiter-biosupdate --auto check >/dev/null 2>&1; auto_rc=$?
 if [[ $auto_rc -ne 7 ]]; then
-  log "$auto_out"
   write_status manual "$target"; exit 0
 fi
 
@@ -105,7 +104,6 @@ fi
 echo "$now" > "$attempt_file"
 
 # --- 4. Prepare the update (no --auto = no reboot) ---
-log "preparing BIOS $target (installs on the next restart)"
 if jupiter-biosupdate; then
   echo "$target" > "$DIR/staged"
   write_status staged "$target"
