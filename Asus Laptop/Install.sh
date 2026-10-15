@@ -93,6 +93,8 @@ PACMAN_PKGS=(
     element-desktop
     syncthing
     unrar
+    smartmontools
+    7zip
     qt6-multimedia-ffmpeg
     jre-openjdk
     vulkan-intel
@@ -112,10 +114,15 @@ PACMAN_PKGS=(
     gvfs
     gvfs-mtp
     gvfs-smb
+    tumbler
+    ffmpegthumbnailer
+    file-roller
+    thunar-archive-plugin
     foot
     nano
     git
     base-devel
+    pacman-contrib
     zsh
     rofi
     waybar
@@ -130,6 +137,8 @@ PACMAN_PKGS=(
     papirus-icon-theme
     otf-codenewroman-nerd
     qt5ct
+    qt5-wayland
+    qt6-wayland
     breeze-icons
     breeze
     grim
@@ -137,6 +146,7 @@ PACMAN_PKGS=(
     wl-clipboard
     xdg-desktop-portal
     xdg-desktop-portal-hyprland
+    xdg-desktop-portal-gtk
     discord
     blueman
     yubikey-manager
@@ -187,6 +197,7 @@ SERVICES=(
     "syncthing@$USER.service"
     fwupd-refresh.timer
     fstrim.timer
+    paccache.timer
     avahi-daemon.service
     rtkit-daemon.service
     bluetooth.service
