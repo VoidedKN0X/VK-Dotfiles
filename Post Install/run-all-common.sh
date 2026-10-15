@@ -627,6 +627,15 @@ for base in "${REMOVE[@]}"; do
   fi
 done
 
+# Stage 3 signed the old kernel's boot files too (sbctl sign -s); now that
+# they're gone, drop them from sbctl's list so sbctl verify and its re-sign hook
+# stop looking for them ("‼ <file> does not exist")
+if command -v sbctl >/dev/null; then
+  sbctl verify 2>&1 | awk '/does not exist/ {print $2}' | while read -r f; do
+    sbctl remove-file "$f" >/dev/null 2>&1 || log "could not remove $f from sbctl's list"
+  done
+fi
+
 if [[ $failed -ne 0 ]]; then
   log "some removals failed - keeping the unit armed for another attempt"
   exit 1
