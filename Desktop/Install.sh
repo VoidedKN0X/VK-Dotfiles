@@ -110,6 +110,10 @@ PACMAN_PKGS=(
     fastfetch
     awww
     thunar
+    thunar-volman
+    gvfs
+    gvfs-mtp
+    gvfs-smb
     foot
     nano
     git
