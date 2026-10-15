@@ -77,6 +77,8 @@ It does the following:
 5. Enables the services (CUPS, Bluetooth, Syncthing, fstrim, ...) and the greetd login screen.
 6. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
    Syncthing, LocalSend, OrcaSlicer, plus WiVRn on the desktop).
+   It also turns on disk health checks (smartd): a failing disk shows up as a notification that
+   stays until you close it.
 7. Copies `.config` and `.zshrc` into your home folder.
 8. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.

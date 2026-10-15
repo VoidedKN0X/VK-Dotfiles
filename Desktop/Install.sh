@@ -346,6 +346,35 @@ if command -v ufw >/dev/null; then
     sudo systemctl enable --now ufw.service || warn "could not enable ufw.service"
 fi
 
+# === Disk health warnings (smartd) ===
+# smartd checks every disk every 30 minutes and runs a short self-test daily at
+# 12:00. On a problem (failing health check, bad sectors, self-test or error log
+# entries, over 70 °C) it runs smartd-notify, which shows a critical notification
+# in your session: by default smartd only emails root, and Arch has no mail set
+# up. "-n standby" skips disks that are spun down instead of waking them.
+sudo tee /etc/smartd.conf >/dev/null <<'SMARTD'
+# Written by Install.sh (VK-Dotfiles)
+DEVICESCAN -a -n standby,24,q -s S/../.././12 -W 0,0,70 -m <nomailer> -M exec /usr/local/bin/smartd-notify
+SMARTD
+sudo tee /usr/local/bin/smartd-notify >/dev/null <<'NOTIFY'
+#!/bin/sh
+# Run by smartd (as root), with SMARTD_DEVICE, SMARTD_FAILTYPE and SMARTD_MESSAGE
+# set. Sends the warning to every logged-in user's notification center.
+for bus in /run/user/*/bus; do
+    [ -S "$bus" ] || continue
+    uid="${bus#/run/user/}"; uid="${uid%/bus}"
+    [ "$uid" -ge 1000 ] || continue
+    user="$(id -nu "$uid" 2>/dev/null)" || continue
+    runuser -u "$user" -- env DBUS_SESSION_BUS_ADDRESS="unix:path=$bus" \
+        notify-send -u critical -a smartd -i drive-harddisk \
+        "Disk problem on $SMARTD_DEVICE" "$SMARTD_FAILTYPE: $SMARTD_MESSAGE"
+done
+NOTIFY
+sudo chmod 755 /usr/local/bin/smartd-notify
+sudo systemctl enable smartd.service || warn "could not enable smartd.service"
+# restart (not just start) so a re-run picks up the new config
+sudo systemctl restart smartd.service || warn "could not start smartd.service"
+
 # Create directories for mounting disks
 sudo mkdir -p /media/TrueNAS
 
