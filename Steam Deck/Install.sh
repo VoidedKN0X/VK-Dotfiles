@@ -124,10 +124,13 @@ PACMAN_PKGS=(
     base-devel
     pacman-contrib
     zsh
+    pkgfile
     rofi
     nwg-drawer
     waybar
     swaync
+    swayosd
+    earlyoom
     noto-fonts
     ristretto
     eza
@@ -189,6 +192,16 @@ AUR_PKGS=(
     claude-code
 )
 
+# === Memory: close the biggest app instead of freezing (earlyoom) ===
+# When free memory AND free swap (zram) both drop below 10%, earlyoom closes
+# the single process using the most memory - usually the game or app that
+# filled it - before the system locks up. The desktop itself (Hyprland, bar,
+# notifications, login) is never picked (--ignore).
+# -r 0: no memory reports in the journal. (No quotes around the regex: the
+# service passes it on word by word, quotes would become part of it.)
+echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|swayosd-server|waybar|swaync)$"' \
+    | sudo tee /etc/default/earlyoom >/dev/null
+
 # === Services (enabled AND started) ===
 SERVICES=(
     pcscd.service
@@ -198,6 +211,8 @@ SERVICES=(
     fwupd-refresh.timer
     fstrim.timer
     paccache.timer
+    pkgfile-update.timer
+    earlyoom.service
     avahi-daemon.service
     rtkit-daemon.service
     bluetooth.service
@@ -268,6 +283,9 @@ yay -Sc --noconfirm || warn "cache cleanup failed"
 for unit in "${SERVICES[@]}"; do
     sudo systemctl enable --now "$unit" || warn "could not enable $unit"
 done
+# zsh's "command not found" names the package that has the command: it needs
+# pkgfile's list of files, downloaded now and refreshed by pkgfile-update.timer
+sudo pkgfile --update >/dev/null || warn "could not download the pkgfile database"
 # greetd is only enabled, not started: starting it now would replace this session
 sudo systemctl enable greetd.service || warn "could not enable greetd.service"
 

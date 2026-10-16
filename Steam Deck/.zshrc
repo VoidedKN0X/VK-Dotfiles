@@ -73,7 +73,7 @@ ZSH_THEME="bira"
 # Custom plugins may be added to $ZSH_CUSTOM/plugins/
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git sudo archlinux)
+plugins=(git sudo archlinux command-not-found)
 
 source $ZSH/oh-my-zsh.sh
 

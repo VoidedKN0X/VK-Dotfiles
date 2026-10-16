@@ -34,6 +34,7 @@ stays self-contained and works on its own.
 | [Hyprland](https://hypr.land) | Window manager (Lua config in `.config/hypr/`) |
 | waybar | Top bar |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
+| [SwayOSD](https://github.com/ErikReider/SwayOSD) | On-screen popup for the volume, mic and brightness keys and Caps Lock |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -77,8 +78,9 @@ It does the following:
 5. Enables the services (CUPS, Bluetooth, Syncthing, fstrim, ...) and the greetd login screen.
 6. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
    Syncthing, LocalSend, OrcaSlicer, plus WiVRn on the desktop).
-   It also turns on disk health checks (smartd): a failing disk shows up as a notification that
-   stays until you close it.
+   It also sets up earlyoom (when memory runs out, the app using the most is closed instead of
+   the system freezing) and turns on disk health checks (smartd): a failing disk shows up as a
+   notification that stays until you close it.
 7. Copies `.config` and `.zshrc` into your home folder.
 8. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
@@ -172,8 +174,9 @@ password and run `pkill -USR1 hyprlock`.
 | <kbd>Super</kbd> + <kbd>R</kbd> | Restart the bar and notifications |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Log out |
 | <kbd>Print</kbd> | Screenshot (copied + saved to `~/Pictures/Screenshots`) |
+| <kbd>Shift</kbd> + <kbd>Print</kbd> | Screenshot of a selected area (draw on it, then Enter: copied + saved) |
 | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd> | Volume mixer |
-| Volume / mute keys | Volume, mute, mic mute |
+| Volume / mute keys | Volume, mute, mic mute (with an on-screen popup) |
 | Media keys, brightness keys *(laptop)* | Play/pause, next/previous, screen brightness |
 | 3-finger swipe *(laptop)* | Switch workspace |
 
@@ -235,15 +238,17 @@ After the first boot, test the gestures once. If a swipe goes the wrong way in l
 
 Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick one with
 <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. [wallust](https://codeberg.org/explosion-mental/wallust)
-then regenerates the colors for Hyprland, waybar, swaync, rofi, foot, hyprlock, btop and OpenCode.
+then regenerates the colors for Hyprland, waybar, swaync, SwayOSD, rofi, foot, hyprlock, btop and
+OpenCode.
 The last wallpaper is re-applied at every login.
 
 All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
 `hypr/colors/colors.lua`, `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
 `rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
-`foot/colors-dark.ini`, `btop/themes/wallust.theme`, `opencode/themes/wallust.json`, and on the
-Steam Deck `nwg-drawer/colors.css`. wallust overwrites them as soon as you set a wallpaper.
+`swayosd/colors/colors.css`, `foot/colors-dark.ini`, `btop/themes/wallust.theme`,
+`opencode/themes/wallust.json`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
+them as soon as you set a wallpaper.
 Until then, `hypr/colors/current-wallpaper.conf` makes the lock screen show a blurred screenshot.
 
 ## Things to change for your setup

@@ -13,6 +13,10 @@ colors-swaync.template = 'colors-swaync.template'
 colors-swaync.target = '~/.config/swaync/colors/colors.css'
 colors-swaync.pywal = true
 
+colors-swayosd.template = 'colors-swaync.template'
+colors-swayosd.target = '~/.config/swayosd/colors/colors.css'
+colors-swayosd.pywal = true
+
 foot.template = 'foot.template'
 foot.target = '~/.config/foot/colors-dark.ini'
 foot.pywal = true
