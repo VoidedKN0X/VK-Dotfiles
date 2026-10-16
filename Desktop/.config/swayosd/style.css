@@ -13,20 +13,20 @@ window#osd {
 /* A bit smaller than SwayOSD's default: less padding (default 16px), a
    smaller icon (it's drawn at 32px) and a thinner bar (default 6px) */
 window#osd #container {
-    margin: 10px 14px;
+    margin: 8px 12px;
 }
 
 window#osd image {
-    -gtk-icon-transform: scale(0.8);
+    -gtk-icon-transform: scale(0.7);
 }
 
 window#osd label {
-    font-size: 0.9em;
+    font-size: 0.85em;
 }
 
 window#osd progressbar,
 window#osd segmentedprogress {
-    min-height: 5px;
+    min-height: 4px;
 }
 
 window#osd image,

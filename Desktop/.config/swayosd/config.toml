@@ -1,8 +1,8 @@
 # SwayOSD server settings. This file replaces SwayOSD's own config.toml, so its
 # defaults (min_brightness, keyboard_backlight, duration) are repeated here.
 [server]
-# Height of the popup: 0.94 = 94% down the screen (SwayOSD's default: 0.85)
-top_margin = 0.94
+# Height of the popup: 0.96 = 96% down the screen (SwayOSD's default: 0.85)
+top_margin = 0.96
 min_brightness = 5
 keyboard_backlight = true
 duration = 1000
