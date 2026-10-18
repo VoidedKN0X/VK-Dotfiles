@@ -50,6 +50,12 @@ Changes to VK-Dotfiles, newest first.
   `Install.sh` (AUR package `claude-desktop`); only the autostart is new.
 
 ### Changed
+- **Claude Desktop autostart uses the GNOME keyring** (all profiles). The
+  (still commented-out) line in `hypr/hyprland/execs.lua` is now
+  `claude-desktop --startup --password-store=gnome-libsecret`, so the app
+  keeps its login in the GNOME keyring (gnome-keyring is installed by
+  `Install.sh`). With a YubiKey-only login the keyring isn't unlocked at
+  login, so the app may ask for the keyring password when it starts.
 - **CachyOS repos are added before your apps are installed** (all profiles),
   so a fresh install downloads and installs everything once instead of
   twice. Before, `Install.sh` installed all apps from the Arch repos and
