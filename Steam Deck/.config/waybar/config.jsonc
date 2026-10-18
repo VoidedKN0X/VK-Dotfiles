@@ -13,8 +13,6 @@
     ],
     "modules-right": [
         "temperature",
-        "cpu",
-        "memory",
         "bluetooth",
         "network",
         "pulseaudio",
@@ -138,19 +136,6 @@
         "format": "{}",
         "return-type": "json",
         "exec": "waybar-module-music --format '%icon% %title%'",
-    },
-
-    "cpu": {
-        "interval": 1,
-        "format": " {usage}%",
-        "tooltip": true,
-        "on-click": "foot btop"
-    },
-    "memory": {
-        "interval": 1,
-        "format": "󰍛 {used:0.1f}G",
-        "tooltip": true,
-        "on-click": "foot btop"
     },
     "custom/keyboard": {
         "format": "󰌌",

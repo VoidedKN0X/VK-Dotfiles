@@ -42,9 +42,14 @@ Changes to VK-Dotfiles, newest first.
 - **Bigger waybar on the Steam Deck**, so it's easier to tap: font 15px →
   20px, more padding inside the bar (7px → 10px) and around each module
   (5px → 9px), tray icons 14 → 20.
-- **Steam Deck keyboard swipe back to release mode.** The swipe up from the
-  bottom edge opens the keyboard when the finger is lifted again (`R`), as
-  before. The pressed mode (`P`) from the previous change didn't stop the
-  stray letters: lisgd can't keep the touch away from squeekboard, so the
-  keyboard is now closed with the waybar button. This replaces the earlier
-  pressed-mode change from today.
+- **Steam Deck: the swipe up from the bottom edge opens the app launcher**
+  (nwg-drawer) instead of the on-screen keyboard. Swiping over the keys typed
+  stray letters, and lisgd can't keep the touch away from squeekboard, so
+  the keyboard is now opened and closed only with the waybar button (or
+  pops up by itself in text fields). The swipe from the left edge still
+  opens the launcher too. The unused `keyboard` action is removed from
+  `hypr/scripts/touch-gestures.sh`; comments in `osk-auto.sh` and
+  `app-drawer.sh` and the README are updated. This replaces today's earlier
+  keyboard-swipe changes.
+- **Steam Deck waybar: CPU and RAM usage removed** to make room in the bigger
+  bar (`cpu` and `memory` modules and their styles). btop still shows them.

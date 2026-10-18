@@ -2,7 +2,7 @@
 # Turn squeekboard's automatic popup off while a physical keyboard is
 # connected, and back on when it's gone (like SteamOS / GNOME tablet mode).
 # Started at login; re-checks whenever an input device is added or removed.
-# The swipe-up gesture (osk-toggle.sh) still shows the keyboard on demand.
+# The keyboard button in waybar (osk-toggle.sh) still shows it on demand.
 #
 #   osk-auto.sh           watch for keyboards (done at login)
 #   osk-auto.sh --check   print which keyboard (if any) counts and exit

@@ -44,8 +44,6 @@ tooltip {
 #network:hover,
 #battery:hover,
 #temperature:hover,
-#cpu:hover,
-#memory:hover,
 #custom-music:hover,
 #pulseaudio:hover,
 #idle_inhibitor:hover,
@@ -135,9 +133,7 @@ tooltip {
     color: @color7;
 }
 
-#temperature,
-#cpu,
-#memory {
+#temperature {
     padding: 0px 9px;
     color: @color7;
 }

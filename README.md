@@ -189,7 +189,7 @@ It's based on the laptop profile.
 
 | Gesture | Action |
 | --- | --- |
-| Swipe up from the bottom edge | Open the on-screen keyboard |
+| Swipe up from the bottom edge | App menu |
 | Swipe down from the top edge | Notification center |
 | Swipe right from the left edge | App menu |
 | 3 fingers left / right | Next / previous workspace |
@@ -198,14 +198,13 @@ It's based on the laptop profile.
 
 - **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) pops up
   by itself when you tap a text field in most apps (GTK, Qt, Firefox/LibreWolf, foot). For apps
-  that don't support that (Steam and other X11 apps, some Electron apps), use the swipe-up
-  gesture or the keyboard button (󰌌) at the right end of waybar. To close it, tap that button
-  (swiping down over the keys would type letters). While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
-  swipe-up gesture still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
+  that don't support that (Steam and other X11 apps, some Electron apps), tap the keyboard
+  button (󰌌) at the right end of waybar; tap it again to close the keyboard. While a USB or
+  Bluetooth keyboard is connected it stops popping up by itself (the button still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
   keyboard it detected.
 - **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
   full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
-  still filters). Opens with the Super key or the left-edge swipe. Rofi is only used for the
+  still filters). Opens with the Super key or a swipe from the left or bottom edge. Rofi is only used for the
   clipboard history and the wallpaper picker.
 - **Screen rotation:** the rotate button in the notification center switches between landscape
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a

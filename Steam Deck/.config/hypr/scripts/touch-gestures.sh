@@ -8,9 +8,7 @@
 #   touch-gestures.sh <action>   run one action (lisgd calls this)
 #
 # Gestures:
-#   1 finger, swipe up from the bottom edge     open the on-screen keyboard
-#                                               (close it with the keyboard
-#                                               button in waybar)
+#   1 finger, swipe up from the bottom edge     app launcher
 #   1 finger, swipe down from the top edge      notification center
 #   1 finger, swipe right from the left edge    app launcher
 #   3 fingers, swipe left / right               next / previous workspace
@@ -33,7 +31,6 @@ ROTATION=$(cat "$HOME/.local/state/hypr/rotation" 2>/dev/null)
 hypr() { hyprctl dispatch "$1" >/dev/null; }
 
 case "${1:-start}" in
-    keyboard)       "$SCRIPTS/osk-toggle.sh" ;;
     notifications)  swaync-client -t -sw ;;
     launcher)       "$SCRIPTS/app-drawer.sh" ;;
     next-workspace) hypr 'hl.dsp.focus({ workspace = "e+1" })' ;;
@@ -50,7 +47,7 @@ case "${1:-start}" in
         # -g "fingers,direction,edge,distance,mode,command"
         # directions: LR = left-to-right, RL, DU = down-to-up, UD; edges: L R T B, * = anywhere
         args=(-d "$DEVICE" -o "$ROTATION"
-            -g "1,DU,B,*,R,$me keyboard"
+            -g "1,DU,B,*,R,$me launcher"
             -g "1,UD,T,*,R,$me notifications"
             -g "1,LR,L,*,R,$me launcher"
             -g "3,RL,*,*,R,$me next-workspace"

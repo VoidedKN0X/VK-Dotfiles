@@ -1,7 +1,7 @@
 #!/bin/bash
 # Touch-friendly app menu (nwg-drawer): a full-screen grid of big icons,
 # without search bar or categories. It stays in memory so it opens instantly.
-#   app-drawer.sh          open / close it (Super key, swipe from the left edge)
+#   app-drawer.sh          open / close it (Super key, swipe from the left or bottom edge)
 #   app-drawer.sh start    (re)start it in the background: at login, and after
 #                          a rotation or wallpaper change so the column count
 #                          and colors match
