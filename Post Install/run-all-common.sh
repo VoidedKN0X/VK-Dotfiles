@@ -16,7 +16,8 @@
 #                  kernel install (used by run-all-steamdeck.sh)
 #
 # Stages (in order):
-#   1. CachyOS repository setup (official installer)
+#   1. CachyOS repository setup (cachyos-repo.sh, the official installer;
+#      Install.sh already runs it before installing the apps)
 #   2. CachyOS kernel install + systemd-boot default entry (boot menu timeout 0)
 #      + Plymouth boot splash (cmdline params + mkinitcpio hook)
 #   3. Fix/enable UKI (and remove the initramfs images it replaces) + Secure
@@ -361,21 +362,10 @@ fi
 # =====================================================================
 info 1 4 "CachyOS Repository Setup"
 
-if ! grep -qE '^\[cachyos' /etc/pacman.conf 2>/dev/null; then
-  section "Adding CachyOS repos (official installer)"
-  (
-    TMP="$(mktemp -d)"
-    trap 'rm -rf "$TMP"' EXIT
-    cd "$TMP" || exit 1
-    curl -fsSL --retry 3 https://mirror.cachyos.org/cachyos-repo.tar.xz -o cachyos-repo.tar.xz \
-      || { fail "download failed"; exit 1; }
-    tar xf cachyos-repo.tar.xz || { fail "extract failed"; exit 1; }
-    cd cachyos-repo || exit 1
-    ./cachyos-repo.sh || { fail "official installer failed"; exit 1; }
-  ) || die "CachyOS repo installer failed"
-else
-  ok "CachyOS repo already present in /etc/pacman.conf"
-fi
+# Install.sh already ran cachyos-repo.sh before installing the apps, so
+# normally this only finds the repos and checks them. Run on its own, it adds
+# them.
+"$(dirname "${BASH_SOURCE[0]}")/cachyos-repo.sh" || die "CachyOS repo installer failed"
 
 section "Verification"
 OK=1

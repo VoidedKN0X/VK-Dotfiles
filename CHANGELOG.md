@@ -50,6 +50,22 @@ Changes to VK-Dotfiles, newest first.
   `Install.sh` (AUR package `claude-desktop`); only the autostart is new.
 
 ### Changed
+- **CachyOS repos are added before your apps are installed** (all profiles),
+  so a fresh install downloads and installs everything once instead of
+  twice. Before, `Install.sh` installed all apps from the Arch repos and
+  stage 1 of `run-all-<profile>.sh` added the CachyOS repos afterwards; the
+  official CachyOS installer ends with `pacman -Syu`, which then downloaded
+  and reinstalled almost every package to switch it to the CachyOS build.
+  Now `Install.sh` runs the new `Post Install/cachyos-repo.sh` right after
+  enabling multilib and before the big `pacman -Syu --needed`, so the
+  installer only switches the base system from archinstall and your apps are
+  installed as CachyOS builds straight away (AUR packages that the CachyOS
+  repo also has come prebuilt from it). `Install.sh` stops if the repo setup
+  fails. `cachyos-repo.sh` holds the code that was in stage 1 (download and
+  run the official installer, then check the repos and the keyring); stage 1
+  of `run-all-common.sh` now calls it, so when Install.sh already added the
+  repos it only checks them, and run on its own it still adds them. README
+  updated.
 - **Claude Desktop no longer starts at login, for now** (all profiles:
   Desktop, Asus Laptop, Steam Deck). The `claude-desktop --startup` line in
   `hypr/hyprland/execs.lua` is commented out so the app can be set up first;

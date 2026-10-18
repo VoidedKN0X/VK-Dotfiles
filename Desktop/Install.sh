@@ -237,6 +237,14 @@ if ! grep -qE '^\[multilib\]' /etc/pacman.conf; then
     fi
 fi
 
+# CachyOS repos first (official installer, as root), so the apps below are
+# installed as CachyOS builds right away. Added later, the installer's own
+# `pacman -Syu` would download and reinstall almost every app a second time to
+# switch it to the CachyOS build. Stop here if it fails: installing everything
+# from the Arch repos and switching later is exactly that slow path.
+POST_DIR="$PROFILE_DIR/../Post Install"
+sudo "$POST_DIR/cachyos-repo.sh" || { echo "CachyOS repo setup failed, stopping." >&2; exit 1; }
+
 # Install apps from pacman (stop here if this fails: everything below depends on it).
 # -Syu also refreshes the package lists (needed after enabling multilib) and avoids
 # installing onto an out-of-date system (a partial upgrade).
@@ -437,7 +445,6 @@ chmod +x "$HOME"/.config/hypr/scripts/*.sh \
 # Both run as root (sudo is still active from the start of this script). Each one
 # runs even if the other reports a failure, and nothing reboots on its own:
 # reboot at the end.
-POST_DIR="$PROFILE_DIR/../Post Install"
 
 echo
 echo "== Apps and configs done. Next: run-all-desktop.sh (kernel, boot, tuning) =="

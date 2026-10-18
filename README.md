@@ -72,19 +72,23 @@ don't ask again). It works from any directory.
 It does the following:
 
 1. Enables the `multilib` repo if needed (for Steam, Wine and 32-bit drivers).
-2. Installs the packages (pacman), then `yay` and the AUR packages.
-3. Installs Oh My Zsh (keeping your `.zshrc`), sets zsh as your shell and installs OpenCode.
-4. Removes leftover build dependencies and cleans the package caches.
-5. Enables the services (CUPS, Bluetooth, Syncthing, fstrim, ...) and the greetd login screen.
-6. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
+2. Adds the CachyOS repositories with the official CachyOS installer (`Post Install/cachyos-repo.sh`),
+   before any of your apps are installed, so they're installed as CachyOS builds straight away
+   instead of being downloaded and reinstalled a second time when the repos are added later.
+   The installer switches only the base system from archinstall to the CachyOS builds.
+3. Installs the packages (pacman), then `yay` and the AUR packages.
+4. Installs Oh My Zsh (keeping your `.zshrc`), sets zsh as your shell and installs OpenCode.
+5. Removes leftover build dependencies and cleans the package caches.
+6. Enables the services (CUPS, Bluetooth, Syncthing, fstrim, ...) and the greetd login screen.
+7. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
    Syncthing, LocalSend, OrcaSlicer, plus WiVRn on the desktop).
    It also sets up earlyoom (when memory runs out, the app using the most is closed instead of
    the system freezing) and turns on disk health checks (smartd): a failing disk shows up as a
    notification that stays until you close it.
-7. Copies `.config` and `.zshrc` into your home folder, and adds Documents, Downloads, Music
+8. Copies `.config` and `.zshrc` into your home folder, and adds Documents, Downloads, Music
    and Pictures to Thunar's sidebar (`~/.config/gtk-3.0/bookmarks`, built from your home
    folder, so it works for any username; bookmarks you already have are kept).
-8. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
+9. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
 
 ### 2. `run-all-<profile>.sh`: kernel, boot and tuning
@@ -97,7 +101,8 @@ sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh / ru
 
 Then **reboot**. It runs these stages in order:
 
-1. **CachyOS repositories:** added with the official CachyOS installer.
+1. **CachyOS repositories:** already added by `Install.sh`, so this only checks them. Run on its
+   own, it adds them with the official CachyOS installer (`cachyos-repo.sh`).
 2. **CachyOS kernel:** installs `linux-cachyos`, makes it the default boot entry and adds the
    Plymouth boot splash. The boot menu timeout is set to 0; hold <kbd>Space</kbd> while booting to
    see the menu.
@@ -288,6 +293,7 @@ Post Install/
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
 ├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
 ├── run-all-common.sh      # Shared logic (used by the three scripts above; don't run it directly)
+├── cachyos-repo.sh        # Adds the CachyOS repos (run by Install.sh first, and by run-all-common.sh)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```
 
