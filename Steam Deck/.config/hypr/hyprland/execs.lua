@@ -40,8 +40,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("~/.config/hypr/scripts/bios-update-notify.sh --watch")
 
     -- Claude Desktop in the tray: --startup starts it without opening its
-    -- window (click its tray icon in waybar to open it)
-    hl.exec_cmd("claude-desktop --startup")
+    -- window (click its tray icon in waybar to open it). Turned off for now,
+    -- so the app can be set up first; remove the "-- " below to turn it on.
+    -- hl.exec_cmd("claude-desktop --startup")
 
     -- Tailscale tray icon: connect/disconnect, log in, exit nodes
     hl.exec_cmd("tailscale systray")

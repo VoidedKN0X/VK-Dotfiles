@@ -50,6 +50,11 @@ Changes to VK-Dotfiles, newest first.
   `Install.sh` (AUR package `claude-desktop`); only the autostart is new.
 
 ### Changed
+- **Claude Desktop no longer starts at login, for now** (all profiles:
+  Desktop, Asus Laptop, Steam Deck). The `claude-desktop --startup` line in
+  `hypr/hyprland/execs.lua` is commented out so the app can be set up first;
+  remove the `-- ` in front of it to turn the autostart back on. The app is
+  still installed by `Install.sh`.
 - **Steam Deck: the on-screen keyboard no longer pops up by itself** in text
   fields; it's opened and closed only with the keyboard button in waybar.
   `hypr/hyprland/execs.lua` turns off squeekboard's automatic popup at login

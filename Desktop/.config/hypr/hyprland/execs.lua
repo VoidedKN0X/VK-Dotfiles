@@ -27,8 +27,9 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
 
     -- Claude Desktop in the tray: --startup starts it without opening its
-    -- window (click its tray icon in waybar to open it)
-    hl.exec_cmd("claude-desktop --startup")
+    -- window (click its tray icon in waybar to open it). Turned off for now,
+    -- so the app can be set up first; remove the "-- " below to turn it on.
+    -- hl.exec_cmd("claude-desktop --startup")
 
     -- Autostart apps
     -- hl.exec_cmd("solaar --window=hide")
