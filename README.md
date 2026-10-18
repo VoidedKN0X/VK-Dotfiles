@@ -210,6 +210,9 @@ It's based on the laptop profile.
   full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
   still filters). Opens with the Super key or a swipe up from the bottom edge. Rofi is only used for the
   clipboard history and the wallpaper picker.
+- **Thunar:** a tap opens a folder or file (single-click mode, set in
+  `xfce4/xfconf/xfce-perchannel-xml/thunar.xml`), because two taps don't count as a double-click.
+  To select files without opening them, drag a box around them from an empty spot, or use Ctrl+A.
 - **Screen rotation:** the rotate button in the notification center switches between landscape
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a
   reboot.

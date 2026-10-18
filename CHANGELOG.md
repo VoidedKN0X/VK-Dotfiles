@@ -127,6 +127,15 @@ Changes to VK-Dotfiles, newest first.
     those apps include `system-auth` stays.
 
 ### Fixed
+- **Steam Deck: Thunar couldn't be navigated with the touchscreen.** A tap
+  only selected a folder instead of opening it: Thunar opens items with a
+  double-click by default, and two taps don't count as a double-click. New
+  `.config/xfce4/xfconf/xfce-perchannel-xml/thunar.xml` (Steam Deck only)
+  turns on Thunar's single-click mode (`misc-single-click`), so a tap opens a
+  folder or file, and turns off selecting an item by hovering over it
+  (`misc-single-click-timeout` = 0). To select files without opening them,
+  drag a box around them from an empty spot, or use Ctrl+A. Install.sh
+  copies the file with the rest of `.config`. README updated.
 - **Wrong comment in the Secure Boot step** of
   `Post Install/run-all-common.sh`: it said "unfreeze and retry once", but
   the code makes the firmware's Secure Boot variables writable, enrolls once

@@ -1,0 +1,12 @@
+<?xml version="1.1" encoding="UTF-8"?>
+
+<!-- Thunar settings for the Steam Deck (touchscreen). A tap opens a folder or
+     file (single-click mode): GTK doesn't turn two taps into a double-click,
+     so the default double-click mode only selected the item. The timeout 0
+     turns off selecting an item by hovering over it. To select files instead
+     of opening them, drag a box around them (start in an empty spot) or use
+     Ctrl+A. Thunar adds its own settings to this file as you use it. -->
+<channel name="thunar" version="1.0">
+  <property name="misc-single-click" type="bool" value="true"/>
+  <property name="misc-single-click-timeout" type="uint" value="0"/>
+</channel>
