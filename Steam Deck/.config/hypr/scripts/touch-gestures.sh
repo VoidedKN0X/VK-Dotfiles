@@ -10,11 +10,10 @@
 # Gestures:
 #   1 finger, swipe up from the bottom edge     app launcher
 #   1 finger, swipe down from the top edge      notification center
-#   1 finger, swipe right from the left edge    app launcher
 #   3 fingers, swipe left / right               next / previous workspace
 #   3 fingers, swipe up                         fullscreen on/off
 #   3 fingers, swipe down                       close the window
-#   (1 finger from the right edge is still free)
+#   (1 finger from the left and right edges is still free)
 
 SCRIPTS="$HOME/.config/hypr/scripts"
 
@@ -49,7 +48,6 @@ case "${1:-start}" in
         args=(-d "$DEVICE" -o "$ROTATION"
             -g "1,DU,B,*,R,$me launcher"
             -g "1,UD,T,*,R,$me notifications"
-            -g "1,LR,L,*,R,$me launcher"
             -g "3,RL,*,*,R,$me next-workspace"
             -g "3,LR,*,*,R,$me prev-workspace"
             -g "3,DU,*,*,R,$me fullscreen"

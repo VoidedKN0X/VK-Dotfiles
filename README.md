@@ -191,7 +191,6 @@ It's based on the laptop profile.
 | --- | --- |
 | Swipe up from the bottom edge | App menu |
 | Swipe down from the top edge | Notification center |
-| Swipe right from the left edge | App menu |
 | 3 fingers left / right | Next / previous workspace |
 | 3 fingers up | Fullscreen on/off |
 | 3 fingers down | Close the window |
@@ -204,7 +203,7 @@ It's based on the laptop profile.
   keyboard it detected.
 - **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
   full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
-  still filters). Opens with the Super key or a swipe from the left or bottom edge. Rofi is only used for the
+  still filters). Opens with the Super key or a swipe up from the bottom edge. Rofi is only used for the
   clipboard history and the wallpaper picker.
 - **Screen rotation:** the rotate button in the notification center switches between landscape
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a

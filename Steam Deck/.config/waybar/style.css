@@ -1,7 +1,7 @@
 @import 'colors/colors.css';
 
 * {
-    font-size: 20px;
+    font-size: 18px;
     font-family: "CodeNewRoman Nerd Font Propo";
 }
 
@@ -10,7 +10,7 @@ window#waybar {
 }
 
 .modules-left {
-    padding: 10px;
+    padding: 8px;
     margin: 10 0 5 10;
     border-radius: 10px;
     background: rgba(40, 40, 50, 0.55);
@@ -18,7 +18,7 @@ window#waybar {
 }
 
 .modules-center {
-    padding: 10px;
+    padding: 8px;
     margin: 10 0 5 0;
     border-radius: 10px;
     background: rgba(40, 40, 50, 0.55);
@@ -26,7 +26,7 @@ window#waybar {
 }
 
 .modules-right {
-    padding: 10px;
+    padding: 8px;
     margin: 10 10 5 0;
     border-radius: 10px;
     background: rgba(40, 40, 50, 0.55);
@@ -53,30 +53,30 @@ tooltip {
 }
 
 #custom-notification {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 }
 
 #custom-music {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 }
 
 #clock {
-    padding: 0px 0px 0px 9px;
+    padding: 0px 0px 0px 7px;
     color: @color7;
     transition: all .3s ease;
 }
 
 #workspaces {
-    padding: 0px 9px;
+    padding: 0px 7px;
 }
 
 #workspaces button {
     all: unset;
-    padding: 0px 9px;
+    padding: 0px 7px;
     color: alpha(@color13, .6);
     transition: all .2s ease;
 }
@@ -114,27 +114,27 @@ tooltip {
 }
 
 #bluetooth {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 
 }
 
 #network {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 
 }
 
 #battery {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 }
 
 #temperature {
-    padding: 0px 9px;
+    padding: 0px 7px;
     color: @color7;
 }
 
@@ -162,36 +162,36 @@ tooltip {
 }
 
 #tray {
-    padding: 0px 9px 0px 0px;
+    padding: 0px 7px 0px 0px;
     transition: all .3s ease;
 
 }
 
 #tray menu * {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
 }
 
 #tray menu separator {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
 }
 
 #pulseaudio {
-    padding: 0px 9px;
+    padding: 0px 7px;
     color: @color7;
     transition: all .3s ease;
 }
 
 #idle_inhibitor {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 
 }
 
 #custom-keyboard {
-    padding: 0px 9px;
+    padding: 0px 7px;
     transition: all .3s ease;
     color: @color7;
 }

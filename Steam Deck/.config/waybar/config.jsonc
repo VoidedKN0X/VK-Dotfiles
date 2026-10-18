@@ -106,7 +106,7 @@
         "format": " {temperatureC}°C"
     },
     "tray": {
-        "icon-size": 20,
+        "icon-size": 17,
         "spacing": 10
     },
     "pulseaudio": {
