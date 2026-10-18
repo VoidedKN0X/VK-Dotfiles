@@ -125,6 +125,7 @@ PACMAN_PKGS=(
     pacman-contrib
     zsh
     pkgfile
+    tailscale
     rofi
     nwg-drawer
     waybar
@@ -204,6 +205,7 @@ echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd
 
 # === Services (enabled AND started) ===
 SERVICES=(
+    tailscaled.service
     pcscd.service
     cups.service
     auto-cpufreq.service
@@ -283,6 +285,9 @@ yay -Sc --noconfirm || warn "cache cleanup failed"
 for unit in "${SERVICES[@]}"; do
     sudo systemctl enable --now "$unit" || warn "could not enable $unit"
 done
+# Tailscale: lets you control it (and its tray icon) without sudo. Log in once
+# from the tray icon, or with: tailscale up
+sudo tailscale set --operator="$USER" || warn "could not make $USER the Tailscale operator"
 # zsh's "command not found" names the package that has the command: it needs
 # pkgfile's list of files, downloaded now and refreshed by pkgfile-update.timer
 sudo pkgfile --update >/dev/null || warn "could not download the pkgfile database"
@@ -369,6 +374,10 @@ if command -v ufw >/dev/null; then
     printf '[LocalSend]\ntitle=LocalSend\ndescription=LocalSend file sharing\nports=53317\n' \
         | sudo tee /etc/ufw/applications.d/localsend >/dev/null
     sudo ufw allow LocalSend
+    # Tailscale: everything that comes in over the tailnet (your own devices) is
+    # allowed; 41641/udp lets devices connect directly instead of via a relay
+    sudo ufw allow in on tailscale0
+    sudo ufw allow 41641/udp
     # Turn the firewall on now and at every boot (--force skips the
     # "may disrupt SSH connections" prompt). Safe to run when already enabled.
     sudo ufw --force enable || warn "could not enable ufw"

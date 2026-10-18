@@ -43,6 +43,9 @@ hl.on("hyprland.start", function()
     -- window (click its tray icon in waybar to open it)
     hl.exec_cmd("claude-desktop --startup")
 
+    -- Tailscale tray icon: connect/disconnect, log in, exit nodes
+    hl.exec_cmd("tailscale systray")
+
     -- Autostart apps
     -- hl.exec_cmd("solaar --window=hide")
     -- hl.exec_cmd("element-desktop --hidden")

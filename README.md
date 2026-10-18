@@ -210,9 +210,13 @@ It's based on the laptop profile.
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a
   reboot.
 - **Power button:** a short press puts the Deck to sleep, like SteamOS.
-- **Login and lock:** logs in automatically at boot. The screen is **not locked automatically**
-  (like SteamOS), because the on-screen keyboard can't appear on a lock screen. You can still lock by
-  hand: hyprlock only unlocks with a YubiKey touch, so no keyboard is needed.
+- **Login and lock:** logs in automatically at boot. The screen locks when the Deck goes to sleep,
+  so the lock screen is there when it wakes up; it isn't locked while you're just idle. hyprlock
+  only unlocks with a YubiKey touch, so no keyboard is needed (the same key the Deck already needs
+  to boot).
+- **Tailscale:** installed and running, with a tray icon in waybar to log in, connect/disconnect
+  and pick an exit node. The first time, log in from the tray icon (or run `tailscale up`). The
+  firewall allows everything that comes in over your tailnet.
 - **Disk unlock:** on the Deck, `yubikey-setup.sh` enrolls your YubiKey for LUKS **without a PIN**
   (plug it in and touch it at boot), since there's no keyboard before the desktop starts. A key
   enrolled with a PIN (for example by archinstall's HSM option) can be enrolled again without one;
