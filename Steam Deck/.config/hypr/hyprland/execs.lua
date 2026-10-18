@@ -39,6 +39,10 @@ hl.on("hyprland.start", function()
     -- Tell me about BIOS updates (status written by steamdeck-bios-update)
     hl.exec_cmd("~/.config/hypr/scripts/bios-update-notify.sh --watch")
 
+    -- Claude Desktop in the tray: --startup starts it without opening its
+    -- window (click its tray icon in waybar to open it)
+    hl.exec_cmd("claude-desktop --startup")
+
     -- Autostart apps
     -- hl.exec_cmd("solaar --window=hide")
     -- hl.exec_cmd("element-desktop --hidden")
