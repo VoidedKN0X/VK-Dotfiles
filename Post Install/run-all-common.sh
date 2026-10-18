@@ -37,9 +37,7 @@
 #      zswap.enabled=0 when zram is used
 #      (REBOOT required). The cmdline is written in stage 2, before the images
 #      are built, so later stages don't have to rebuild for it.
-#   F. /etc/environment: removes RADV_PERFTEST and MESA_NO_ERROR if an older
-#      version of this script added them
-#   G. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
+#   F. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
 #      default PipeWire quantum
 #
 # Persistence:
@@ -79,7 +77,6 @@ CONF_DIR="/etc/sysctl.d"
 UDEV_DIR="/etc/udev/rules.d"
 MODPROBE_DIR="/etc/modules-load.d"
 FSTAB="/etc/fstab"
-ENV_FILE="/etc/environment"
 KCMDLINE="/etc/kernel/cmdline"
 
 # Kernel cmdline parameters added in stage 2 (and verified in stage 4)
@@ -850,7 +847,8 @@ else
     fi
   else
     section "Enrolling Secure Boot keys (Microsoft keys included via -m)"
-    # Try to enroll; if immutable vars block, unfreeze and retry once
+    # The firmware's Secure Boot variables can be read-only (immutable); make
+    # them writable for the enroll, then read-only again
     for f in /sys/firmware/efi/efivars/PK* /sys/firmware/efi/efivars/KEK* /sys/firmware/efi/efivars/db*; do
       [[ -e "$f" ]] && chattr -i "$f" 2>/dev/null || true
     done
@@ -1132,22 +1130,9 @@ if [[ $CMDLINE_CHANGED -eq 1 ]]; then
 fi
 
 # =====================================================================
-section "F. /etc/environment"
+section "F. Audio (HDA power-save) (REBOOT required for HDA)"
 
-# Older versions set RADV_PERFTEST=gpl (Mesa's default since 23.1) and
-# MESA_NO_ERROR=1 (no GL error checking for every app, which can turn app bugs
-# into crashes) here. Neither is set anymore; remove them if they're present.
-if [[ -f "$ENV_FILE" ]] && grep -qE '^(RADV_PERFTEST|MESA_NO_ERROR)=' "$ENV_FILE"; then
-  sed -i -E '/^(RADV_PERFTEST|MESA_NO_ERROR)=/d' "$ENV_FILE"
-  ok "removed RADV_PERFTEST / MESA_NO_ERROR from $ENV_FILE"
-else
-  ok "$ENV_FILE has no RADV_PERFTEST / MESA_NO_ERROR"
-fi
-
-# =====================================================================
-section "G. Audio (HDA power-save) (REBOOT required for HDA)"
-
-# H.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume.
+# F.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume.
 # Desktop only: on the laptop and the Deck it would keep the audio chip awake
 # and cost battery.
 HDA_CONF="/etc/modprobe.d/audio-disable-power-save.conf"
@@ -1167,7 +1152,7 @@ EOF
   ok "Wrote $HDA_CONF (requires reboot to apply to snd_hda_intel)"
 fi
 
-# H.2 PipeWire: lower default quantum from 1024 to 512 (~21ms -> ~10ms latency)
+# F.2 PipeWire: lower default quantum from 1024 to 512 (~21ms -> ~10ms latency)
 # for apps that don't ask for their own buffer size. The min/max limits keep
 # PipeWire's defaults, so low-latency apps and power-saving players still work.
 # No impact on audio quality, only buffer size. Negligible CPU cost on modern hw.

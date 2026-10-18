@@ -83,19 +83,6 @@ register_keys() {
   section "1. Register YubiKeys for login / sudo / lock screen"
 
   if [[ -s "$KEYFILE" ]]; then
-    # Older setups added the 2nd key as a second "user:..." line; merge those.
-    if [[ "$(grep -c "^${REAL_USER}:" "$KEYFILE")" -gt 1 ]]; then
-      warn "$KEYFILE has several lines for $REAL_USER - pam_u2f expects all keys on one line"
-      if ask "Merge them into one line? (no need to touch the keys again)"; then
-        awk -v u="$REAL_USER" '
-          index($0, u ":") == 1 { k = substr($0, length(u) + 2); keys = (keys == "" ? k : keys ":" k); next }
-          { print }
-          END { if (keys != "") print u ":" keys }' "$KEYFILE" > "$KEYFILE.tmp" && mv "$KEYFILE.tmp" "$KEYFILE"
-        # the new file is root's: give it back to the user right away
-        chown "$REAL_USER:$REAL_GROUP" "$KEYFILE"; chmod 600 "$KEYFILE"
-        ok "merged into one line"
-      fi
-    fi
     line="$(grep -m1 "^${REAL_USER}:" "$KEYFILE")"
     if [[ -n "$line" ]]; then
       # the registered keys are always kept; new keys are added after them
@@ -209,12 +196,6 @@ setup_pam() {
   echo
   echo "Plan:"
   [[ -n "${ins_line:-}" ]] && echo "  - add to $f (line $ins_line):  $PAM_LINE"
-  for svc in "${PAM_SERVICES[@]}"; do
-    if grep -qE '^[[:space:]]*auth[[:space:]].*pam_u2f\.so' "/etc/pam.d/$svc"; then
-      echo "  - remove the old pam_u2f line(s) from /etc/pam.d/$svc (system-auth covers it now):"
-      grep -nE '^[[:space:]]*auth[[:space:]].*pam_u2f\.so' "/etc/pam.d/$svc" | sed 's/^/        /'
-    fi
-  done
   echo "Everything that uses system-auth (also su, polkit) will accept the key, with your password as a fallback."
   if [[ "$(cat "$HYPRLOCK_PAM_FILE" 2>/dev/null)" == "$HYPRLOCK_PAM" ]]; then
     ok "$HYPRLOCK_PAM_FILE already accepts only the YubiKey"
@@ -229,12 +210,6 @@ setup_pam() {
     sed -i "${ins_line}${ins_mode}\\${PAM_LINE}" "$f"
     ok "added pam_u2f to $f"
   fi
-  for svc in "${PAM_SERVICES[@]}"; do
-    if grep -qE '^[[:space:]]*auth[[:space:]].*pam_u2f\.so' "/etc/pam.d/$svc"; then
-      sed -i -E '/^[[:space:]]*auth[[:space:]].*pam_u2f\.so/d' "/etc/pam.d/$svc"
-      ok "removed old pam_u2f line from /etc/pam.d/$svc"
-    fi
-  done
   if [[ $hyprlock_change -eq 1 ]]; then
     printf '%s\n' "$HYPRLOCK_PAM" > "$HYPRLOCK_PAM_FILE"
     chmod 644 "$HYPRLOCK_PAM_FILE"

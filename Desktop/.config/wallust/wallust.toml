@@ -1,10 +1,6 @@
 check_contrast = true
 
 [templates]
-colors-lua.template = 'colors-lua.template'
-colors-lua.target = '~/.config/hypr/colors/colors.lua'
-colors-lua.pywal = true
-
 colors-waybar.template = 'colors-waybar.template'
 colors-waybar.target = '~/.config/waybar/colors/colors.css'
 colors-waybar.pywal = true

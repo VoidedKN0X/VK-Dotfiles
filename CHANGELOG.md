@@ -78,3 +78,34 @@ Changes to VK-Dotfiles, newest first.
   keyboard-swipe changes.
 - **Steam Deck waybar: CPU and RAM usage removed** to make room in the bigger
   bar (`cpu` and `memory` modules and their styles). btop still shows them.
+
+### Removed
+- **Unused Hyprland color file** (all profiles). `hypr/colors/colors.lua`
+  defined `color0`…`color15`, `background` and `foreground` for Hyprland, but
+  no setting used them (the window borders come from
+  `hypr/hyprland/border-colors.lua`, which wallust writes separately). Removed
+  together: the file, `require("colors/colors")` in `hypr/hyprland.lua`
+  (deleting only the file made Hyprland fail with "module 'colors/colors' not
+  found"), `wallust/templates/colors-lua.template` and its `colors-lua` entry
+  in `wallust/wallust.toml`. Hyprland gets exactly the same settings as
+  before, border colors included; the other wallust colors (hyprlock, waybar,
+  swaync, SwayOSD, rofi, foot, btop, OpenCode, nwg-drawer) are unchanged.
+  README updated.
+- **Cleanup steps for older versions of the setup**, which a fresh install
+  never needs:
+  - `Post Install/run-all-common.sh`: step F, which removed `RADV_PERFTEST`
+    and `MESA_NO_ERROR` from `/etc/environment` (only an older version of the
+    script added them), and its unused `ENV_FILE` variable. The audio step
+    is now F (was G), and its parts F.1 / F.2 (were labelled H.1 / H.2).
+  - `Post Install/yubikey-setup.sh`: merging several `user:...` lines in the
+    YubiKey key file into one (older setups added the 2nd key as a second
+    line; the script always writes one line), and removing `pam_u2f` lines
+    from `/etc/pam.d/sudo`, `greetd` and `system-login` (older setups put
+    them there; the key is now added once, to `system-auth`). The check that
+    those apps include `system-auth` stays.
+
+### Fixed
+- **Wrong comment in the Secure Boot step** of
+  `Post Install/run-all-common.sh`: it said "unfreeze and retry once", but
+  the code makes the firmware's Secure Boot variables writable, enrolls once
+  and makes them read-only again; there is no retry. Comment only.

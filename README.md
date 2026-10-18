@@ -247,7 +247,7 @@ The last wallpaper is re-applied at every login.
 
 All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
-`hypr/colors/colors.lua`, `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
+`hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
 `rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
 `swayosd/colors/colors.css`, `foot/colors-dark.ini`, `btop/themes/wallust.theme`,
 `opencode/themes/wallust.json`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
