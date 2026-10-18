@@ -5,6 +5,17 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-18
 
 ### Added
+- **Battery on the lock screen** (Asus Laptop and Steam Deck). hyprlock shows
+  the battery icon and percentage in the bottom-left corner, in the same
+  color and font as the date, updated every 30 seconds. New script
+  `hypr/scripts/lock-battery.sh` reads `/sys/class/power_supply/BAT*`: the
+  icon follows the charge in 10% steps (same Nerd Font icons as waybar), and
+  shows the charging icon (󰂄) while charging or full. Without a battery it
+  shows nothing.
+- **Keyboard button in the Steam Deck's waybar.** A new `custom/keyboard`
+  button (󰌌) at the right end of the bar shows or hides the on-screen
+  keyboard (`osk-toggle.sh`). Tap it to close the keyboard, instead of
+  swiping over the keys, which typed stray letters. README updated.
 - **Tailscale on the Steam Deck.** `Install.sh` installs `tailscale`, enables
   `tailscaled.service` and makes your user the Tailscale operator
   (`tailscale set --operator=$USER`), so it can be controlled without sudo.
@@ -28,9 +39,12 @@ Changes to VK-Dotfiles, newest first.
   `Install.sh` (AUR package `claude-desktop`); only the autostart is new.
 
 ### Changed
-- **Steam Deck: closing the on-screen keyboard with the swipe no longer types
-  letters.** In `hypr/scripts/touch-gestures.sh` the keyboard gesture (1 finger
-  up from the bottom edge) now runs in lisgd's pressed mode (`P`): it fires as
-  soon as the swipe is recognised, while the finger is still down, so the
-  keyboard hides before the finger is lifted over its keys. The other gestures
-  are unchanged.
+- **Bigger waybar on the Steam Deck**, so it's easier to tap: font 15px →
+  20px, more padding inside the bar (7px → 10px) and around each module
+  (5px → 9px), tray icons 14 → 20.
+- **Steam Deck keyboard swipe back to release mode.** The swipe up from the
+  bottom edge opens the keyboard when the finger is lifted again (`R`), as
+  before. The pressed mode (`P`) from the previous change didn't stop the
+  stray letters: lisgd can't keep the touch away from squeekboard, so the
+  keyboard is now closed with the waybar button. This replaces the earlier
+  pressed-mode change from today.

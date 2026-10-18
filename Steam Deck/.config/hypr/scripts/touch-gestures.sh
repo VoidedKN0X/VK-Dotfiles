@@ -8,7 +8,9 @@
 #   touch-gestures.sh <action>   run one action (lisgd calls this)
 #
 # Gestures:
-#   1 finger, swipe up from the bottom edge     on-screen keyboard
+#   1 finger, swipe up from the bottom edge     open the on-screen keyboard
+#                                               (close it with the keyboard
+#                                               button in waybar)
 #   1 finger, swipe down from the top edge      notification center
 #   1 finger, swipe right from the left edge    app launcher
 #   3 fingers, swipe left / right               next / previous workspace
@@ -47,12 +49,8 @@ case "${1:-start}" in
         me="$SCRIPTS/touch-gestures.sh"
         # -g "fingers,direction,edge,distance,mode,command"
         # directions: LR = left-to-right, RL, DU = down-to-up, UD; edges: L R T B, * = anywhere
-        # mode: R = when the finger is lifted, P = as soon as the swipe is
-        # recognised, finger still down. The keyboard gesture uses P: the
-        # keyboard hides while the finger is still on it, so the swipe over
-        # the keys doesn't type letters when it's lifted.
         args=(-d "$DEVICE" -o "$ROTATION"
-            -g "1,DU,B,*,P,$me keyboard"
+            -g "1,DU,B,*,R,$me keyboard"
             -g "1,UD,T,*,R,$me notifications"
             -g "1,LR,L,*,R,$me launcher"
             -g "3,RL,*,*,R,$me next-workspace"

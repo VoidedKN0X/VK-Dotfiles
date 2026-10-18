@@ -24,8 +24,8 @@ stays self-contained and works on its own.
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
-| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
-| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, touchscreen gestures, on-screen keyboard, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
+| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
+| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
 
@@ -189,7 +189,7 @@ It's based on the laptop profile.
 
 | Gesture | Action |
 | --- | --- |
-| Swipe up from the bottom edge | On-screen keyboard |
+| Swipe up from the bottom edge | Open the on-screen keyboard |
 | Swipe down from the top edge | Notification center |
 | Swipe right from the left edge | App menu |
 | 3 fingers left / right | Next / previous workspace |
@@ -199,7 +199,8 @@ It's based on the laptop profile.
 - **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) pops up
   by itself when you tap a text field in most apps (GTK, Qt, Firefox/LibreWolf, foot). For apps
   that don't support that (Steam and other X11 apps, some Electron apps), use the swipe-up
-  gesture. While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
+  gesture or the keyboard button (󰌌) at the right end of waybar. To close it, tap that button
+  (swiping down over the keys would type letters). While a USB or Bluetooth keyboard is connected it stops popping up by itself (the
   swipe-up gesture still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
   keyboard it detected.
 - **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
