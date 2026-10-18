@@ -81,7 +81,9 @@ It does the following:
    It also sets up earlyoom (when memory runs out, the app using the most is closed instead of
    the system freezing) and turns on disk health checks (smartd): a failing disk shows up as a
    notification that stays until you close it.
-7. Copies `.config` and `.zshrc` into your home folder.
+7. Copies `.config` and `.zshrc` into your home folder, and adds Documents, Downloads, Music
+   and Pictures to Thunar's sidebar (`~/.config/gtk-3.0/bookmarks`, built from your home
+   folder, so it works for any username; bookmarks you already have are kept).
 8. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
 
@@ -195,12 +197,10 @@ It's based on the laptop profile.
 | 3 fingers up | Fullscreen on/off |
 | 3 fingers down | Close the window |
 
-- **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard) pops up
-  by itself when you tap a text field in most apps (GTK, Qt, Firefox/LibreWolf, foot). For apps
-  that don't support that (Steam and other X11 apps, some Electron apps), tap the keyboard
-  button (󰌌) at the right end of waybar; tap it again to close the keyboard. While a USB or
-  Bluetooth keyboard is connected it stops popping up by itself (the button still works); run `~/.config/hypr/scripts/osk-auto.sh --check` to see which
-  keyboard it detected.
+- **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard),
+  opened and closed only with the keyboard button (󰌌) at the right end of waybar. It doesn't pop
+  up by itself when you tap a text field, so it never covers the screen unasked (and a USB or
+  Bluetooth keyboard needs no special handling).
 - **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
   full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
   still filters). Opens with the Super key or a swipe up from the bottom edge. Rofi is only used for the

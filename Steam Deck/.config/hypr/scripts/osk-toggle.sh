@@ -1,7 +1,7 @@
 #!/bin/bash
-# Show or hide the on-screen keyboard (squeekboard), e.g. from a touch gesture.
-# squeekboard already pops up by itself in text fields; this is for apps that
-# don't tell it (X11 apps like Steam, some Electron apps) or to hide it again.
+# Show or hide the on-screen keyboard (squeekboard), from the keyboard button
+# in waybar. squeekboard doesn't pop up by itself in text fields (turned off
+# in hypr/hyprland/execs.lua), so this is the only way to open it.
 #   osk-toggle.sh          toggle
 #   osk-toggle.sh show     show
 #   osk-toggle.sh hide     hide

@@ -5,6 +5,17 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-18
 
 ### Added
+- **Thunar sidebar bookmarks** (all profiles: Desktop, Asus Laptop, Steam
+  Deck). After copying the configs, `Install.sh` creates
+  `~/.config/gtk-3.0/bookmarks` with Documents, Downloads, Music and
+  Pictures, in that order, built from `$HOME` at install time
+  (`file://$HOME/<Folder>`), so it works for any username; no bookmarks file
+  is kept in the repo. Missing folders are created first. An existing
+  bookmarks file is kept: only missing lines are added (also lines that
+  carry a label count as present), so running the script twice gives the
+  same result. Failures go through `warn()`. README updated. A search of
+  the repo found no other hardcoded home paths or usernames (the TrueNAS
+  share `192.168.1.9:/mnt/Data/axel` is a path on the server and stays).
 - **Battery on the lock screen** (Asus Laptop and Steam Deck). hyprlock shows
   the battery icon and percentage in the bottom-left corner, in the same
   color and font as the date, updated every 30 seconds. New script
@@ -39,6 +50,14 @@ Changes to VK-Dotfiles, newest first.
   `Install.sh` (AUR package `claude-desktop`); only the autostart is new.
 
 ### Changed
+- **Steam Deck: the on-screen keyboard no longer pops up by itself** in text
+  fields; it's opened and closed only with the keyboard button in waybar.
+  `hypr/hyprland/execs.lua` turns off squeekboard's automatic popup at login
+  (`gsettings set org.gnome.desktop.a11y.applications
+  screen-keyboard-enabled false`) instead of starting `osk-auto.sh`, which is
+  removed: it only turned the popup off while a USB or Bluetooth keyboard was
+  connected, and with the popup always off it has nothing left to do.
+  `osk-toggle.sh` comments and README updated.
 - **Bigger waybar on the Steam Deck**, so it's easier to tap: font 15px →
   18px, more padding inside the bar (7px → 8px) and around each module
   (5px → 7px), tray icons 14 → 17. (First tried at 20px, which was too big.)

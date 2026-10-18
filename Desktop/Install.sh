@@ -410,6 +410,24 @@ mkdir -p "$HOME/.config"
 cp -r "$PROFILE_DIR/.config/." "$HOME/.config/"
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 
+# Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so
+# they work for any username. The folders are created if missing. An existing
+# bookmarks file is kept: only missing lines are added, so running this again
+# changes nothing.
+BOOKMARKS="$HOME/.config/gtk-3.0/bookmarks"
+if mkdir -p "$HOME/.config/gtk-3.0" && touch "$BOOKMARKS"; then
+    # make sure an existing file ends with a newline before adding lines
+    [[ -s $BOOKMARKS && -n $(tail -c1 "$BOOKMARKS") ]] && echo >>"$BOOKMARKS"
+    for dir in Documents Downloads Music Pictures; do
+        mkdir -p "$HOME/$dir" || warn "could not create $HOME/$dir"
+        # a line can also carry a label ("file:///home/me/Music My music")
+        awk -v u="file://$HOME/$dir" '$1 == u { found = 1 } END { exit !found }' "$BOOKMARKS" ||
+            echo "file://$HOME/$dir" >>"$BOOKMARKS" || warn "could not add $dir to $BOOKMARKS"
+    done
+else
+    warn "could not create $BOOKMARKS (Thunar bookmarks)"
+fi
+
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/swaync/scripts/*.sh \

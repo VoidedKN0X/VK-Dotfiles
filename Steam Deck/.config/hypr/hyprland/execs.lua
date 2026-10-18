@@ -27,10 +27,10 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
 
     -- ===== Steam Deck / tablet =====
-    -- On-screen keyboard: squeekboard pops up by itself when a text field is
-    -- focused (only while this GNOME accessibility setting is on). osk-auto.sh
-    -- turns that setting off while a physical keyboard is connected.
-    hl.exec_cmd("~/.config/hypr/scripts/osk-auto.sh")
+    -- On-screen keyboard: squeekboard never pops up by itself in text fields
+    -- (this GNOME accessibility setting is turned off); it's shown and hidden
+    -- with the keyboard button in waybar (osk-toggle.sh).
+    hl.exec_cmd("gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled false")
     hl.exec_cmd("squeekboard")
     -- Touch-friendly app menu, kept in memory so it opens instantly
     hl.exec_cmd("~/.config/hypr/scripts/app-drawer.sh start")
