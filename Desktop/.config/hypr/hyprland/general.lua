@@ -12,4 +12,14 @@ hl.config({
         smart_split = false,
         smart_resizing = true,
     },
+    misc = {
+        -- plain dark background instead of the Hyprland logo + splash text
+        -- until the wallpaper is drawn
+        disable_hyprland_logo = true,
+        disable_splash_rendering = true,
+    },
+    ecosystem = {
+        -- no "what's new" window after each Hyprland update
+        no_update_news = true,
+    },
 })

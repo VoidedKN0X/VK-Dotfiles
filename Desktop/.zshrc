@@ -4,6 +4,10 @@
 # OpenCode (installed in ~/.opencode/bin by Install.sh)
 export PATH="$HOME/.opencode/bin:$PATH"
 
+# Text editor for git commit, sudoedit, yay, ... (Arch has no vi by default)
+export EDITOR=nano
+export VISUAL=nano
+
 # Path to your Oh My Zsh installation.
 export ZSH="$HOME/.oh-my-zsh"
 
@@ -104,7 +108,23 @@ source $ZSH/oh-my-zsh.sh
 #
 # Example aliases
 alias ls="eza -la"
-alias clean='pacman -Qdtq | xargs -r sudo pacman -Rns --noconfirm && yes | sudo pacman -Scc && yes | yay -Scc && yay -Yc --noconfirm && sudo journalctl --vacuum-time=2weeks && rm -rf ~/.cache/thumbnails/*(N) ~/.local/share/Trash/*(N) ~/.local/share/recently-used.xbel'
+# clean: remove everything that isn't needed
+clean() {
+  local -a orphans
+  # unused dependencies, repeated until none are left (removing one can free
+  # another; -s also removes their own unused dependencies, -n their configs)
+  while orphans=(${(f)"$(pacman -Qdtq)"}); (( ${#orphans} )); do
+    sudo pacman -Rns --noconfirm "${orphans[@]}" || return 1
+  done
+  # package cache: keep the installed and the previous version of each package
+  # (to roll back a bad update with pacman -U), drop packages no longer installed
+  sudo paccache -rk2
+  sudo paccache -ruk0
+  # AUR build files (yay -Scc would also empty pacman's cache)
+  rm -rf ~/.cache/yay/*(N)
+  sudo journalctl --vacuum-time=2weeks
+  rm -rf ~/.cache/thumbnails/*(N) ~/.local/share/Trash/*(N) ~/.local/share/recently-used.xbel
+}
 alias download="yt-dlp --no-part --no-continue --sleep-interval 5 --max-sleep-interval 10 --embed-thumbnail --embed-metadata -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0"
 
 fastfetch
