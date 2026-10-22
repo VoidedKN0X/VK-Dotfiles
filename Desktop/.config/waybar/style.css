@@ -45,7 +45,8 @@ tooltip {
 #temperature:hover,
 #cpu:hover,
 #memory:hover,
-#custom-music:hover,
+#mpris:hover,
+#custom-playpause:hover,
 #pulseaudio:hover,
 #idle_inhibitor:hover {
     transition: all .3s ease;
@@ -58,7 +59,13 @@ tooltip {
     color: @color7;
 }
 
-#custom-music {
+#custom-playpause {
+    padding: 0px 0px 0px 5px;
+    transition: all .3s ease;
+    color: @color7;
+}
+
+#mpris {
     padding: 0px 5px;
     transition: all .3s ease;
     color: @color7;

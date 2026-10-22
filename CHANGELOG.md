@@ -2,6 +2,22 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-10-22
+
+### Changed
+- **Desktop waybar music module uses the built-in `mpris` module.** The
+  `custom/music` module (`waybar-module-music`) is replaced by Waybar's own
+  `mpris` module, which shows the track title (max 20 characters) and hides
+  itself when nothing is playing. A new `custom/playpause` button to its left
+  shows the pause icon while playing and the play icon while paused, and
+  toggles playback on click (`playerctl --follow status` / `playerctl
+  play-pause`). `style.css` styles `#mpris` and `#custom-playpause` like the
+  old `#custom-music`.
+
+### Removed
+- **`waybar-module-music-git`** from the Desktop AUR packages; `playerctl` is
+  added to the Desktop packages instead.
+
 ## 2026-10-18
 
 ### Added
