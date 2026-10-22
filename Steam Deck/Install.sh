@@ -129,6 +129,7 @@ PACMAN_PKGS=(
     rofi
     nwg-drawer
     waybar
+    playerctl
     swaync
     swayosd
     earlyoom
@@ -185,7 +186,6 @@ AUR_PKGS=(
     vscodium-bin
     vscodium-bin-marketplace
     bibata-cursor-theme-bin
-    waybar-module-music-git
     qt6ct-kde
     yubico-authenticator-bin
     bedrock-on-linux-bin

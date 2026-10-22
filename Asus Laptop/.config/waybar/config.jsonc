@@ -6,7 +6,8 @@
         "custom/notification",
         "clock",
         "tray",
-        "custom/music"
+        "custom/playpause",
+        "mpris"
     ],
     "modules-center": [
         "hyprland/workspaces"
@@ -136,10 +137,15 @@
             "Easy Effects Sink"
         ]
     },
-    "custom/music": {
-        "format": "{}",
-        "return-type": "json",
-        "exec": "waybar-module-music --format '%icon% %title%'",
+    "custom/playpause": {
+        "exec": "playerctl --follow status 2>/dev/null | sed -u -e 's/^Playing$/\uf04c/' -e 's/^Paused$/\uf04b/' -e 's/^Stopped$//'",
+        "on-click": "playerctl play-pause",
+        "tooltip": false
+    },
+    "mpris": {
+        "format": "{title}",
+        "format-stopped": "",
+        "title-len": 20
     },
 
     "cpu": {

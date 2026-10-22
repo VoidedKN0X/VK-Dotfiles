@@ -5,7 +5,8 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-22
 
 ### Changed
-- **Desktop waybar music module uses the built-in `mpris` module.** The
+- **Waybar music module uses the built-in `mpris` module** (all profiles:
+  Desktop, Asus Laptop, Steam Deck). The
   `custom/music` module (`waybar-module-music`) is replaced by Waybar's own
   `mpris` module, which shows the track title (max 20 characters) and hides
   itself when nothing is playing. A new `custom/playpause` button to its left
@@ -15,8 +16,9 @@ Changes to VK-Dotfiles, newest first.
   old `#custom-music`.
 
 ### Removed
-- **`waybar-module-music-git`** from the Desktop AUR packages; `playerctl` is
-  added to the Desktop packages instead.
+- **`waybar-module-music-git`** from the AUR packages of all profiles;
+  `playerctl` is added to the Desktop and Steam Deck packages instead (the
+  Asus Laptop already had it).
 
 ## 2026-10-18
 
