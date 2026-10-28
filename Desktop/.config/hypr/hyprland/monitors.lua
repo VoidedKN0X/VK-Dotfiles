@@ -1,16 +1,23 @@
 hl.monitor({
     output = "DP-1",
-    mode = "3440x1440@165",
+    mode = "3440x1440@280",
     position = "0x0",
     scale = 1,
     bitdepth = 10,
+    cm = "hdr",
+    -- MSI MAG 341CQ X28; luminance values from EDID HDR static metadata
+    max_luminance = 519,
+    max_avg_luminance = 308,
+    min_luminance = 0,
+    sdr_max_luminance = 300,  -- SDR white level; panel's rated SDR brightness
+    sdr_eotf = "gamma22",  -- decode SDR as gamma 2.2 (fixes washed-out look)
     vrr = 3,  -- adaptive sync only for fullscreen games and video
 })
 
 hl.monitor({
     output = "DP-2",
     mode = "2560x1440@165",
-    position = "3440x-730",
+    position = "3440x-415",
     scale = 1,
     transform = 3,
     bitdepth = 10,
