@@ -168,6 +168,8 @@ PACMAN_PKGS=(
     bluez-utils
     libnotify
     playerctl
+    # wpctl: the volume keys (hypr/scripts/osd.sh)
+    wireplumber
     cava
     # calendar, music and volume popups of the bar (waybar/scripts/*.py)
     python-gobject

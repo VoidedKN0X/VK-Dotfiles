@@ -30,6 +30,12 @@ Changes to VK-Dotfiles, newest first.
     Notification popups use the position the panel last had.
 
 ### Fixed
+- **`Install.sh` installs `wireplumber`** (all profiles). The volume keys'
+  popup (`hypr/scripts/osd.sh`, since SwayOSD was replaced) uses its `wpctl`
+  to change and read the volume, but no script installed it: it only came
+  with archinstall's PipeWire audio option (which installs `wireplumber`
+  with PipeWire). Nothing changes on a PipeWire system (`--needed` skips it);
+  it makes sure the volume keys work on any fresh install.
 - Each running visualizer (`cava.sh`) uses its own config and title files in
   `$XDG_RUNTIME_DIR` (by process ID) and removes them when it stops. Two bars
   shared one set before, so one restarting could clear the other's title for

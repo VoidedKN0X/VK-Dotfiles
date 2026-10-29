@@ -130,6 +130,8 @@ PACMAN_PKGS=(
     rofi
     waybar
     playerctl
+    # wpctl: the volume keys (hypr/scripts/osd.sh)
+    wireplumber
     cava
     # calendar popup of the bar (waybar/scripts/calendar.py)
     python-gobject
