@@ -192,9 +192,11 @@
         "escape": true
     },
 
+    // power menu popup (scripts/power.py): lock, suspend, log out, restart,
+    // shut down
     "custom/power": {
         "format": "󰐥",
         "tooltip": false,
-        "on-click": "~/.config/waybar/scripts/power-menu.sh"
+        "on-click": "~/.config/waybar/scripts/power.py"
     }
 }

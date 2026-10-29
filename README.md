@@ -34,7 +34,7 @@ stays self-contained and works on its own.
 | [Hyprland](https://hypr.land) | Window manager (Lua config in `.config/hypr/`) |
 | waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
-| Bar popups (`waybar/scripts/*.py`) | Calendar and music popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
+| Bar popups (`waybar/scripts/*.py`) | Calendar, music and power menu popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -164,12 +164,14 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
 
 - **Islands:** workspaces (dots; the active one is a pill), music, clock, CPU / temperature / RAM,
   tray + Bluetooth + network + volume (+ battery, and on the Steam Deck the on-screen keyboard
-  button), idle inhibitor, notifications, power menu.
+  button), idle inhibitor, notifications, power.
 - **Music:** a visualizer ([cava](https://github.com/karlstav/cava)) and the track title; it
   shows while a player has a title. Hovering slides out the artist and previous / play-pause /
   next. Clicking opens the **music popup** (cover, progress bar you can drag, controls).
 - **Clock:** click for the **calendar popup**. Click outside it or press <kbd>Esc</kbd> to close.
 - **CPU, temperature, RAM:** click for btop.
+- **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the
+  last three need a second click to confirm).
 - **Notifications:** click for the notification panel (it opens under or next to the bell),
   right-click for do not disturb. Popups appear in the same spot.
 - **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> moves the bar between the top and the
@@ -187,7 +189,7 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
   `layouts/current.jsonc` (the main bar's edge, written by `scripts/bar-position.sh`) and
   `modules.jsonc` (everything else). `scripts/notifications.sh` opens the notification panel
   next to the bell of the bar you're on. The popups are
-  `waybar/scripts/calendar.py`, `music.py` and `osd.py`; `popup_common.py` holds their shared
+  `waybar/scripts/calendar.py`, `music.py`, `power.py` and `osd.py`; `popup_common.py` holds their shared
   look and the gap between them and the bar (`GAP`, in px).
 - **Fonts:** text in Ubuntu, icons from Symbols Nerd Font, so the icons line up with the numbers.
 

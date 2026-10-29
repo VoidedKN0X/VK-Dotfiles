@@ -72,15 +72,19 @@ hl.layer_rule({ match = { namespace = notifications }, blur = true, ignore_alpha
 pcall(hl.layer_rule, { match = { namespace = notifications }, xray = false })
 pcall(hl.layer_rule, { match = { namespace = "swaync-control-center" }, animation = "slide left" })
 
--- the bar's popups (waybar/scripts/calendar.py, osd.py) blur themselves
--- (GTK4, like swaync). The calendar and music popups slide in and out from
--- the top with the bar on top, from the side with a side bar (left or right)
+-- the bar's popups (waybar/scripts/calendar.py, music.py, power.py, osd.py)
+-- blur themselves (GTK4, like swaync). The calendar, music and power popups
+-- slide in and out from the top with the bar on top, from the side with a
+-- side bar (left or right)
 pcall(hl.layer_rule, { match = { namespace = "vk-calendar-top" }, animation = "slide top" })
 pcall(hl.layer_rule, { match = { namespace = "vk-calendar-left" }, animation = "slide left" })
 pcall(hl.layer_rule, { match = { namespace = "vk-music-top" }, animation = "slide top" })
 pcall(hl.layer_rule, { match = { namespace = "vk-music-left" }, animation = "slide left" })
 pcall(hl.layer_rule, { match = { namespace = "vk-calendar-right" }, animation = "slide right" })
 pcall(hl.layer_rule, { match = { namespace = "vk-music-right" }, animation = "slide right" })
+pcall(hl.layer_rule, { match = { namespace = "vk-power-top" }, animation = "slide top" })
+pcall(hl.layer_rule, { match = { namespace = "vk-power-left" }, animation = "slide left" })
+pcall(hl.layer_rule, { match = { namespace = "vk-power-right" }, animation = "slide right" })
 
 hl.layer_rule({ match = { namespace = "rofi" }, blur = true, ignore_alpha = 0 })
 pcall(hl.layer_rule, { match = { namespace = "rofi" }, animation = "slide bottom" })

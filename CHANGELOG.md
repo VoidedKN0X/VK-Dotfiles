@@ -5,6 +5,17 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-30
 
 ### Added
+- **Power menu popup** (all profiles): the bar's power button opens
+  `waybar/scripts/power.py` instead of a plain rofi list. Same blurred glass
+  as the calendar and music popups, right next to the power button (top
+  right with the bar on top, the bottom corner with a side bar), sliding in
+  from the bar's edge (`vk-power-top` / `-left` / `-right` in `rules.lua`).
+  Rows with icons: Lock and Suspend, a divider, then Log out, Restart and
+  Shut down (red icons for the last two). Log out, Restart and Shut down
+  need a second click: the first turns the row red ("Click again to
+  restart"), and it resets after 3 seconds. Lock goes through
+  `loginctl lock-session` (hypridle's `lock_cmd`, so hyprlock never starts
+  twice). A click outside, a second click on the button or Esc closes it.
 - **DP-2 always has its bar on the right edge** (Desktop). The rotated
   monitor is too narrow for a top bar with the clock in the middle (the
   islands pushed it off-center), so it gets the vertical layout on its right
@@ -28,6 +39,11 @@ Changes to VK-Dotfiles, newest first.
     `swaync-client -R`; swaync reads its position each time the panel opens),
     then opens it. On DP-2 the panel opens bottom right, next to the bell.
     Notification popups use the position the panel last had.
+
+### Removed
+- `waybar/scripts/power-menu.sh`, the rofi power menu (replaced by the power
+  menu popup above). The notification panel's restart / shut down buttons
+  still confirm through `swaync/scripts/power.sh`.
 
 ### Fixed
 - **`Install.sh` installs `wireplumber`** (all profiles). The volume keys'
