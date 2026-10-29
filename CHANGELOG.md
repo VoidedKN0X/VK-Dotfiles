@@ -5,6 +5,39 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-30
 
 ### Added
+- **Clean profile** (`Clean/`): the desktop of this repo for anyone's
+  machine, without my personal apps and settings. It's based on the Asus
+  Laptop profile (any monitor, battery shown when there is one), with:
+  - `Install.sh` installing only what the config uses (Hyprland and its
+    tools, waybar + popups, swaync, rofi, foot, wallust, Thunar, btop,
+    pavucontrol, blueman, NetworkManager, zsh, themes, cursor, fonts, Firefox
+    for Super + W) plus greetd/tuigreet, earlyoom, smartd notifications and
+    ufw (no extra rules). No graphics drivers: archinstall picks those.
+    An existing `.zshrc` is saved as `.zshrc.bak` before it's replaced.
+  - Hardware left on auto: every monitor at its preferred mode with no
+    workspace pinning, the network interface, the temperature sensor (first
+    thermal zone, with the Intel/AMD sensor paths in a comment), keyboard
+    backlight dimming for any `*::kbd_backlight` device, US keyboard layout.
+  - Left out: my apps and their launcher entries, file associations (only
+    folders -> Thunar and links -> Firefox), autostart apps, Super + D
+    (Discord), app-specific window rules (Moonlight, GIMP), OpenCode and its
+    wallust template, EasyEffects, the `download` alias, the swaync brightness
+    slider (its default device only exists on some laptops), Syncthing, the
+    NAS share, the printer, my firewall rules, the `/media` folders, Secure
+    Boot (off by default, `SECURE_BOOT=1` in `run-all-clean.sh` turns it on)
+    and the YubiKey setup.
+  - Gaming extras are the user's choice: `Install.sh` asks once at its start
+    (so the rest runs unattended). Yes adds Steam, gamemode and MangoHud, and
+    passes `--gaming` to `run-all-clean.sh` for the 32-bit gamemode/MangoHud,
+    Proton-CachyOS, Heroic and ntsync. Run on its own, `run-all-clean.sh`
+    asks too (or takes `--gaming` / `--no-gaming`; no terminal: no extras).
+    The 12 GB Mesa shader cache (`env.lua`) is kept either way.
+  - `Post Install/run-all-clean.sh`: CachyOS repo, kernel, boot splash,
+    unified kernel images and the performance tuning, Secure Boot off.
+- **`GAMING` switch in `run-all-common.sh`**: tune group C (32-bit
+  gamemode/MangoHud, Proton-CachyOS, Heroic, ntsync) and its checks run only
+  with `GAMING=1`, the default, so the Desktop, Laptop and Steam Deck
+  profiles are unchanged.
 - **Power menu popup** (all profiles): the bar's power button opens
   `waybar/scripts/power.py` instead of a plain rofi list. Same blurred glass
   as the calendar and music popups, right next to the power button (top

@@ -1,0 +1,203 @@
+// Module settings shared by both bar positions. Per-position formats are in
+// layouts/top.jsonc and layouts/left.jsonc (those win over what's here).
+{
+    // ── islands (groups) ────────────────────────────────────────────────
+    "group/music-island": {
+        "orientation": "inherit",
+        "modules": ["custom/cava", "group/music"]
+    },
+    "group/system": {
+        "orientation": "inherit",
+        "modules": ["cpu", "temperature", "memory"]
+    },
+    "group/status": {
+        "orientation": "inherit",
+        "modules": ["tray", "bluetooth", "network", "pulseaudio", "battery"]
+    },
+
+    // ── workspaces ──────────────────────────────────────────────────────
+    "hyprland/workspaces": {
+        // each workspace is a dot drawn by style.css (the active one stretches
+        // into a pill). The label is an invisible zero-width space: an empty
+        // format would make waybar fall back to the workspace number
+        "format": "{icon}",
+        "format-icons": {
+            "default": "\u200b",
+            "active": "\u200b",
+            "empty": "\u200b",
+            "urgent": "\u200b"
+        },
+        "persistent-workspaces": {
+            "*": [1, 2, 3, 4, 5]
+        }
+    },
+
+    // ── music ───────────────────────────────────────────────────────────
+    // All music modules run playerctl as their own process (waybar's built-in
+    // mpris module crashed waybar, see CHANGELOG 2026-10-29). Each one is
+    // empty, and so hidden, while no player is running.
+    // click the visualizer, title or artist: music popup (scripts/music.py)
+    "custom/cava": {
+        // visualizer; hidden when cava isn't installed or nothing is playing
+        "exec-if": "command -v cava",
+        "format": "{}",
+        "tooltip": false,
+        "restart-interval": 5,
+        "on-click": "~/.config/waybar/scripts/music.py"
+    },
+    "custom/mpris": {
+        "exec": "playerctl --follow metadata --format '{{ markup_escape(trunc(title, 28)) }}' 2>/dev/null",
+        "on-click": "~/.config/waybar/scripts/music.py",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "custom/artist": {
+        "exec": "playerctl --follow metadata --format '{{ markup_escape(trunc(artist, 24)) }}' 2>/dev/null",
+        "on-click": "~/.config/waybar/scripts/music.py",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "custom/prev": {
+        "exec": "playerctl --follow status 2>/dev/null | sed -u -e 's/^\\(Playing\\|Paused\\)$/󰒮/' -e 's/^Stopped$//'",
+        "on-click": "playerctl previous",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "custom/playpause": {
+        "exec": "playerctl --follow status 2>/dev/null | sed -u -e 's/^Playing$/󰏤/' -e 's/^Paused$/󰐊/' -e 's/^Stopped$//'",
+        "on-click": "playerctl play-pause",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+    "custom/next": {
+        "exec": "playerctl --follow status 2>/dev/null | sed -u -e 's/^\\(Playing\\|Paused\\)$/󰒭/' -e 's/^Stopped$//'",
+        "on-click": "playerctl next",
+        "restart-interval": 5,
+        "tooltip": false
+    },
+
+    // ── clock: click for the calendar popup ─────────────────────────────
+    // (waybar's own calendar is only a hover tooltip; scripts/calendar.py is
+    // a blurred popup in the notification panel's style, opened and closed
+    // by clicking the clock)
+    "clock": {
+        "tooltip": false,
+        "on-click": "~/.config/waybar/scripts/calendar.py"
+    },
+
+    // ── system: click any of them for btop ──────────────────────────────
+    "cpu": {
+        "interval": 2,
+        "on-click": "foot btop"
+    },
+    "temperature": {
+        // waybar reads the first thermal zone. For the CPU package itself, point
+        // it at your sensor (see `ls /sys/class/hwmon/*/name`), for example
+        // Intel: "hwmon-path-abs": "/sys/devices/platform/coretemp.0/hwmon",
+        // AMD:   "hwmon-path-abs": "/sys/devices/pci0000:00/0000:00:18.3/hwmon",
+        //        with "input-filename": "temp1_input"
+        "critical-threshold": 80,
+        "interval": 2,
+        "tooltip-format": "CPU {temperatureC}°C",
+        "on-click": "foot btop"
+    },
+    "memory": {
+        "interval": 2,
+        "tooltip-format": "{used:0.1f} / {total:0.1f} GiB used",
+        "on-click": "foot btop"
+    },
+
+    // ── status ──────────────────────────────────────────────────────────
+    "tray": {
+        "icon-size": 16,
+        "spacing": 8
+    },
+    "idle_inhibitor": {
+        "format": "{icon}",
+        "format-icons": {
+            "activated": "󰅶",
+            "deactivated": "󰛊"
+        },
+        "tooltip-format-activated": "Staying awake (idle inhibitor on)",
+        "tooltip-format-deactivated": "Idle inhibitor off"
+    },
+    "bluetooth": {
+        "format-on": "󰂯",
+        "format-off": "󰂲",
+        "format-disabled": "󰂲",
+        "format-connected": "󰂱",
+        "tooltip-format": "{controller_alias}\t{controller_address}\n\n{num_connections} connected",
+        "tooltip-format-connected": "{controller_alias}\t{controller_address}\n\n{num_connections} connected\n\n{device_enumerate}",
+        "tooltip-format-enumerate-connected": "{device_alias}\n{device_address}",
+        "tooltip-format-enumerate-connected-battery": "{device_alias}\n{device_address}\n{device_battery_percentage}%",
+        "on-click": "blueman-manager"
+    },
+    "network": {
+        "format": "{ifname}",
+        "format-wifi": "󰖩 {essid}",
+        "format-ethernet": "󰈀",
+        "format-disconnected": "󰖪",
+        "tooltip-format": "{ifname} via {gwaddr}",
+        "tooltip-format-wifi": "{essid} ({signalStrength}%)",
+        "tooltip-format-ethernet": "{ifname}  {ipaddr}",
+        "tooltip-format-disconnected": "Disconnected",
+        "on-click": "foot --app-id=nmtui nmtui",
+        "max-length": 30
+    },
+    "pulseaudio": {
+        "format-muted": "󰝟",
+        "format-icons": {
+            "headphone": "󰋋",
+            "hands-free": "󰋎",
+            "headset": "󰋎",
+            "default": ["󰕿", "󰖀", "󰕾"]
+        },
+        "scroll-step": 1,
+        "on-click": "pavucontrol",
+        "ignored-sinks": ["Easy Effects Sink"]
+    },
+
+    "battery": {
+        // formats (one line / stacked) are in layouts/top.jsonc and left.jsonc
+        "interval": 30,
+        "states": {
+            "good": 95,
+            "warning": 30,
+            "critical": 20
+        },
+        "format-alt": "{time}",
+        "format-icons": ["󰁻", "󰁼", "󰁾", "󰂀", "󰂂", "󰁹"]
+    },
+
+    // ── notifications (swaync) ──────────────────────────────────────────
+    // click: open the notification panel (next to this bar's bell, also on
+    // another monitor: scripts/notifications.sh); right-click: do not disturb
+    "custom/notification": {
+        "tooltip": false,
+        "format": "{icon}",
+        "format-icons": {
+            "notification": "󱅫",
+            "none": "󰂜",
+            "dnd-notification": "󰂛",
+            "dnd-none": "󰂛",
+            "inhibited-notification": "󱅫",
+            "inhibited-none": "󰂜",
+            "dnd-inhibited-notification": "󰂛",
+            "dnd-inhibited-none": "󰂛"
+        },
+        "return-type": "json",
+        "exec-if": "command -v swaync-client",
+        "exec": "swaync-client -swb",
+        "on-click": "~/.config/waybar/scripts/notifications.sh",
+        "on-click-right": "swaync-client -d -sw",
+        "escape": true
+    },
+
+    // power menu popup (scripts/power.py): lock, suspend, log out, restart,
+    // shut down
+    "custom/power": {
+        "format": "󰐥",
+        "tooltip": false,
+        "on-click": "~/.config/waybar/scripts/power.py"
+    }
+}

@@ -11,20 +11,22 @@ and YubiKey login.
 > scripts, the bug fixes and cleanup in the configs, and this README. I decided what went in and
 > reviewed the changes, but as with any dotfiles: **read the scripts before you run them.**
 
-> ⚠️ **These are my personal settings.** The install scripts install *my* apps, enable *my*
-> services and contain values for *my* network and hardware (see
+> ⚠️ **These are my personal settings.** The Desktop, Asus Laptop and Steam Deck install scripts
+> install *my* apps, enable *my* services and contain values for *my* network and hardware (see
 > [Things to change for your setup](#things-to-change-for-your-setup)). Don't run them blindly on
-> a machine you care about.
+> a machine you care about. **Want the desktop without my stuff? Use the
+> [Clean profile](#clean-profile).**
 
-## Three profiles
+## Four profiles
 
-The repo has **three independent profiles**. Everything is duplicated on purpose, so each profile
+The repo has **four independent profiles**. Everything is duplicated on purpose, so each profile
 stays self-contained and works on its own.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
+| `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
@@ -96,7 +98,7 @@ It does the following:
 `Install.sh` runs this for you. To run it again on its own:
 
 ```sh
-sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh / run-all-steamdeck.sh
+sudo "VK-Dotfiles/Post Install/run-all-desktop.sh"   # or run-all-laptop.sh / run-all-steamdeck.sh / run-all-clean.sh
 ```
 
 Then **reboot**. It runs these stages in order:
@@ -157,6 +159,51 @@ Keep your YubiKey(s) at hand. Every step asks before it changes anything:
 Your password and LUKS passphrase keep working as a fallback, except on the lock screen. Locked
 out of the lock screen without a key? Switch to a text console (Ctrl+Alt+F3), log in with your
 password and run `pkill -USR1 hyprlock`.
+
+## Clean profile
+
+`Clean/` is the same desktop (Hyprland, the bar and its popups, swaync, rofi, foot, hyprlock,
+wallust colors) for anyone's machine, without my personal apps and settings. It's based on the
+laptop profile, so it works with any monitor and shows the battery when there is one.
+
+```sh
+git clone https://github.com/VoidedKN0X/VK-Dotfiles
+"VK-Dotfiles/Clean/Install.sh"
+```
+
+Start from a fresh Arch install with **systemd-boot** and **PipeWire** (archinstall's defaults
+for both), and pick your graphics driver in archinstall: the Clean profile doesn't install any.
+
+**What it installs and sets up:**
+
+- **Programs:** only what the config uses: Hyprland, hyprlock, hypridle, waybar, swaync, rofi,
+  foot, awww (wallpaper), wallust, cava, playerctl, cliphist, flameshot, Thunar, btop,
+  pavucontrol, blueman, NetworkManager, zsh + Oh My Zsh, fastfetch, the GTK/Qt themes, icons,
+  cursor and fonts, and Firefox (for <kbd>Super</kbd> + <kbd>W</kbd>; change `browser` in
+  `hypr/variables.lua` to use another).
+- **Login:** greetd + tuigreet.
+- **Gaming extras (you choose):** `Install.sh` asks once at the start. Answer **y** for Steam,
+  gamemode and MangoHud (with their 32-bit versions), Proton-CachyOS, Heroic and the `ntsync`
+  module (smoother frame times with Proton). The Mesa shader cache is 12 GB either way
+  (`hypr/hyprland/env.lua`), so games don't have to recompile dropped shaders.
+- **Tuning:** the CachyOS repos and kernel, unified kernel images, the Plymouth boot splash,
+  and the performance tuning of step 2 (sysctl, zram swap, THP, noatime, hard-disk readahead,
+  lower PipeWire latency), earlyoom, disk health notifications (smartd) and the ufw firewall
+  (everything incoming blocked, no extra rules).
+- **Configs:** `.config` and `.zshrc` (an existing `.zshrc` is saved as `.zshrc.bak` first).
+  Settings that depend on your hardware are left on auto: every monitor at its preferred mode,
+  the network interface, the CPU temperature sensor (the first thermal zone; see the comment in
+  `waybar/modules.jsonc` to pick your CPU sensor), US keyboard layout (`hypr/hyprland/input.lua`).
+
+**Not included** (compared to my profiles): my apps, Syncthing, the NAS share, the printer,
+firewall rules for my apps, OpenCode, EasyEffects, the `/media` folders, Secure Boot and the
+YubiKey setup. Secure Boot is off by default; to use it, set `SECURE_BOOT=1` in
+`Post Install/run-all-clean.sh` (read [step 2](#2-run-all-profilesh-kernel-boot-and-tuning)
+first). Run on its own, `sudo "Post Install/run-all-clean.sh"` asks about the gaming extras
+(or takes `--gaming` / `--no-gaming`). The YubiKey setup can be run on its own: `sudo "Post Install/yubikey-setup.sh"`.
+
+When it's done: put wallpapers in `~/Pictures/Wallpapers`, reboot, log in and pick one with
+<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. Everything takes its colors from it.
 
 ## The bar
 
@@ -323,7 +370,7 @@ If you're not me, look at these before running anything:
 ## Structure
 
 ```
-<profile>/                 # Desktop/, Asus Laptop/ or Steam Deck/
+<profile>/                 # Desktop/, Asus Laptop/, Steam Deck/ or Clean/
 ├── .config/               # Hyprland, waybar, swaync, rofi, wallust, foot, btop, fastfetch, ...
 ├── .zshrc                 # Shell config
 └── Install.sh             # Apps, services, shell, login screen, printer, firewall, copies the configs
@@ -332,8 +379,9 @@ Post Install/
 ├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
+├── run-all-clean.sh       # Kernel, boot and tuning for the Clean profile (no Secure Boot, gaming extras optional)
 ├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
-├── run-all-common.sh      # Shared logic (used by the three scripts above; don't run it directly)
+├── run-all-common.sh      # Shared logic (used by the four scripts above; don't run it directly)
 ├── cachyos-repo.sh        # Adds the CachyOS repos (run by Install.sh first, and by run-all-common.sh)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```

@@ -12,6 +12,8 @@
 #   KERNEL_FLAVOR  CachyOS kernel flavor ("" = linux-cachyos, "deckify" = the
 #                  handheld kernel with the Steam Deck drivers)
 #   SECURE_BOOT    1 (default) = set up Secure Boot in stage 3, 0 = skip it
+#   GAMING         1 (default) = install the gaming extras in stage 4 (tune
+#                  group C), 0 = skip them (run-all-clean.sh)
 #   device_setup() a function; if defined, it runs in stage 2 right after the
 #                  kernel install (used by run-all-steamdeck.sh)
 #
@@ -56,7 +58,7 @@
 
 # === PROFILE (must be set by the sourcing entry point) ===
 if [[ -z "${PROFILE_NAME:-}" ]]; then
-  echo "Error: run run-all-desktop.sh, run-all-laptop.sh or run-all-steamdeck.sh, not this file." >&2
+  echo "Error: run run-all-desktop.sh, run-all-laptop.sh, run-all-steamdeck.sh or run-all-clean.sh, not this file." >&2
   exit 2
 fi
 
@@ -73,6 +75,7 @@ FILESYSTEM=""
 TUNE_NAME="${TUNE_NAME:-run-all-${PROFILE_NAME}.sh}"
 KERNEL_FLAVOR="${KERNEL_FLAVOR:-}"
 SECURE_BOOT="${SECURE_BOOT:-1}"
+GAMING="${GAMING:-1}"
 
 CONF_DIR="/etc/sysctl.d"
 UDEV_DIR="/etc/udev/rules.d"
@@ -1036,47 +1039,51 @@ section "C. Install packages (official repos)"
 # measurable gain, and the BORE scheduler's developer links it to stutter in
 # games) and irqbalance (on a single-CPU machine the busy devices already spread
 # their own interrupts; no measurable gain).
-PKGS=(lib32-gamemode lib32-mangohud)
-MISSING=()
-for p in "${PKGS[@]}"; do
-  pacman -Q "$p" >/dev/null 2>&1 || MISSING+=("$p")
-done
-if [[ ${#MISSING[@]} -gt 0 ]]; then
-  warn "Installing: ${MISSING[*]}"
-  if pacman -S --noconfirm --needed "${MISSING[@]}"; then
-    ok "pacman install completed"
-  else
-    fail "pacman install had errors (see above)"
-  fi
+if [[ "$GAMING" != "1" ]]; then
+  ok "gaming extras skipped for this profile ($PROFILE_NAME)"
 else
-  ok "All packages already installed"
-fi
-
-# From the CachyOS repo (added in stage 1), each installed on its own so a
-# problem with one doesn't block the rest:
-#   proton-cachyos-slr     Proton-CachyOS: pick it per game in Steam
-#                          (Properties > Compatibility); Valve's Proton stays the default
-#   heroic-games-launcher  Heroic (Epic/GOG/Amazon games), the CachyOS build
-# pacman -T also counts a package that provides the name (an older -bin install)
-for p in proton-cachyos-slr heroic-games-launcher; do
-  if pacman -T "$p" >/dev/null 2>&1; then
-    ok "$p already installed"
-  elif pacman -S --noconfirm --needed "$p"; then
-    ok "installed $p"
+  PKGS=(lib32-gamemode lib32-mangohud)
+  MISSING=()
+  for p in "${PKGS[@]}"; do
+    pacman -Q "$p" >/dev/null 2>&1 || MISSING+=("$p")
+  done
+  if [[ ${#MISSING[@]} -gt 0 ]]; then
+    warn "Installing: ${MISSING[*]}"
+    if pacman -S --noconfirm --needed "${MISSING[@]}"; then
+      ok "pacman install completed"
+    else
+      fail "pacman install had errors (see above)"
+    fi
   else
-    fail "could not install $p"
+    ok "All packages already installed"
   fi
-done
 
-# NTSync: Windows-style synchronization in the kernel (6.14+), used by
-# Proton-CachyOS, GE-Proton and Wine 10.16+ for smoother frame times. The module
-# isn't loaded automatically, so load it at every boot (and now).
-NTSYNC_CONF="$MODPROBE_DIR/ntsync.conf"
-echo "ntsync" > "$NTSYNC_CONF"
-if modprobe ntsync 2>/dev/null; then
-  ok "ntsync loaded, and loaded at every boot via $NTSYNC_CONF"
-else
-  warn "ntsync can't be loaded on the running kernel - it loads at boot on the CachyOS kernel ($NTSYNC_CONF)"
+  # From the CachyOS repo (added in stage 1), each installed on its own so a
+  # problem with one doesn't block the rest:
+  #   proton-cachyos-slr     Proton-CachyOS: pick it per game in Steam
+  #                          (Properties > Compatibility); Valve's Proton stays the default
+  #   heroic-games-launcher  Heroic (Epic/GOG/Amazon games), the CachyOS build
+  # pacman -T also counts a package that provides the name (an older -bin install)
+  for p in proton-cachyos-slr heroic-games-launcher; do
+    if pacman -T "$p" >/dev/null 2>&1; then
+      ok "$p already installed"
+    elif pacman -S --noconfirm --needed "$p"; then
+      ok "installed $p"
+    else
+      fail "could not install $p"
+    fi
+  done
+
+  # NTSync: Windows-style synchronization in the kernel (6.14+), used by
+  # Proton-CachyOS, GE-Proton and Wine 10.16+ for smoother frame times. The module
+  # isn't loaded automatically, so load it at every boot (and now).
+  NTSYNC_CONF="$MODPROBE_DIR/ntsync.conf"
+  echo "ntsync" > "$NTSYNC_CONF"
+  if modprobe ntsync 2>/dev/null; then
+    ok "ntsync loaded, and loaded at every boot via $NTSYNC_CONF"
+  else
+    warn "ntsync can't be loaded on the running kernel - it loads at boot on the CachyOS kernel ($NTSYNC_CONF)"
+  fi
 fi
 
 # =====================================================================
@@ -1202,20 +1209,22 @@ fi
 v_selected "THP enabled"       "madvise"     "$(cat /sys/kernel/mm/transparent_hugepage/enabled)"
 v_selected "THP defrag"        "$THP_DEFRAG_TARGET" "$(cat /sys/kernel/mm/transparent_hugepage/defrag)"
 
-# Packages
-PKG_CHECK=(gamemode lib32-gamemode lib32-mangohud proton-cachyos-slr heroic-games-launcher)
-for p in "${PKG_CHECK[@]}"; do
-  if pacman -T "$p" >/dev/null 2>&1; then
-    ok "package: $p $(pacman -Q "$p" 2>/dev/null | awk '{print $2}')"
+if [[ "$GAMING" == "1" ]]; then
+  # Packages
+  PKG_CHECK=(gamemode lib32-gamemode lib32-mangohud proton-cachyos-slr heroic-games-launcher)
+  for p in "${PKG_CHECK[@]}"; do
+    if pacman -T "$p" >/dev/null 2>&1; then
+      ok "package: $p $(pacman -Q "$p" 2>/dev/null | awk '{print $2}')"
+    else
+      fail "package missing: $p"
+    fi
+  done
+  # gamemoderun binary present?
+  if command -v gamemoderun >/dev/null; then
+    ok "binary: gamemoderun at $(command -v gamemoderun)"
   else
-    fail "package missing: $p"
+    fail "binary: gamemoderun not on PATH"
   fi
-done
-# gamemoderun binary present?
-if command -v gamemoderun >/dev/null; then
-  ok "binary: gamemoderun at $(command -v gamemoderun)"
-else
-  fail "binary: gamemoderun not on PATH"
 fi
 
 # fstab
@@ -1259,7 +1268,9 @@ fi
 [[ -f "$UDEV_FILE" ]] && ok "persist: $UDEV_FILE"     || fail "persist: $UDEV_FILE missing"
 [[ -f "$MODPROBE_DIR/bbr.conf" ]] && ok "persist: $MODPROBE_DIR/bbr.conf" || fail "persist: bbr.conf missing"
 [[ -f "$THP_TMPFILES" ]] && ok "persist: $THP_TMPFILES" || fail "persist: $THP_TMPFILES missing"
-[[ -f "$NTSYNC_CONF" ]] && ok "persist: $NTSYNC_CONF" || fail "persist: $NTSYNC_CONF missing"
+if [[ "$GAMING" == "1" ]]; then
+  [[ -f "$NTSYNC_CONF" ]] && ok "persist: $NTSYNC_CONF" || fail "persist: $NTSYNC_CONF missing"
+fi
 
 # Section H - audio
 if [[ "$PROFILE_NAME" == "desktop" ]]; then
@@ -1297,11 +1308,11 @@ Persistence files:
   $UDEV_FILE
   $MODPROBE_DIR/bbr.conf
   $THP_TMPFILES
-  $NTSYNC_CONF
   $PIPEWIRE_CONF
   $KCMDLINE   (modified, systemd-boot)
   $FSTAB      (modified)
 EOF
+[[ "$GAMING" == "1" ]] && echo "  $NTSYNC_CONF"
 [[ "$PROFILE_NAME" == "desktop" ]] && echo "  $HDA_CONF"
 cat <<EOF
 

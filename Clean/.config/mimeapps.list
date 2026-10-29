@@ -1,0 +1,7 @@
+[Default Applications]
+# Folders open in Thunar, links in Firefox. Add your own defaults here (or let
+# your apps set them).
+inode/directory=thunar.desktop
+x-scheme-handler/http=firefox.desktop
+x-scheme-handler/https=firefox.desktop
+text/html=firefox.desktop

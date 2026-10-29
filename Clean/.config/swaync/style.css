@@ -1,0 +1,476 @@
+/* ============================================================
+   swaync style.css — pywal-aware, GTK4-compatible
+   ============================================================
+   IMPORTANT CONFIG NOTES (config.json):
+   - Set "cssPriority": "user" — without this, GTK4 system
+     themes override your CSS and cause solid/wrong backgrounds.
+   - Set "ignore-gtk-theme": true — prevents GTK_THEME from
+     bleeding its own widget colors into swaync.
+
+   THE STACKED-FRAME BUG (what you saw in the screenshot):
+   The GTK widget tree for a notification is:
+     .notification-row              ← ListBoxRow, needs transparent bg
+       └ .notification-background   ← EventBox/wrapper, needs transparent bg
+           └ .notification          ← THIS is the card you want to style
+               └ .notification-content
+
+   If .notification-row or .notification-background have any
+   background set (even by GTK theme inheritance), they stack
+   visually on top of each other creating the ugly double/triple
+   frame artifact. Every ancestor must be explicitly cleared.
+
+   TOGGLE BUTTONS: GTK4 uses `.active` class. GTK3 used `:checked`.
+   Both selectors are included below for compatibility.
+   ============================================================ */
+
+@import 'colors/colors.css';
+/* where the popups sit next to the bar's bell button; written by
+   waybar/scripts/bar-position.sh */
+@import 'position.css';
+
+/* Same glass as the bar's islands (waybar/style.css): dark see-through
+   panels with a thin light edge; Hyprland blurs what's behind them. */
+@define-color glass alpha(#15171d, 0.58);
+@define-color edge alpha(#ffffff, 0.13);
+@define-color card alpha(#ffffff, 0.05);
+
+/* ── Slide-in for floating notifications ─────────────────── */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        margin-top: -6px;
+    }
+
+    to {
+        opacity: 1;
+        margin-top: 0;
+    }
+}
+
+/* ── Global ──────────────────────────────────────────────── */
+* {
+    outline: none;
+}
+
+/* ============================================================
+   Fix grey border around notification card.
+   ============================================================ */
+
+list,
+listview,
+row,
+listview row,
+listview row:selected,
+listview row:hover,
+listview row:focus,
+listview row:active {
+    background-color: transparent;
+    background-image: none;
+    box-shadow: none;
+    outline: none;
+}
+
+/* ============================================================
+   THE CRITICAL FIX — STRIP ALL BACKGROUNDS FROM ANCESTORS
+   Every wrapper above .notification must be transparent or
+   the stacked-frame artifact appears (as seen in screenshot).
+   ============================================================ */
+
+/* Row container (GTK ListBoxRow) */
+.notification-row {
+    background: transparent;
+    padding: 0;
+    margin: 0;
+}
+
+/* EventBox wrapper — this is the one most GTK themes paint */
+.notification-background {
+    background: transparent;
+}
+
+/* Floating window background layer */
+.floating-notifications.background {
+    background: transparent;
+}
+
+/* ============================================================
+   FLOATING NOTIFICATIONS — the actual card
+   ============================================================ */
+
+.floating-notifications .notification-row .notification-background .notification {
+    background: alpha(#15171d, 0.58);
+    border: 1px solid @edge;
+    border-radius: 20px;
+    margin: 0px;
+    animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    box-shadow: none;
+}
+
+/* ============================================================
+   CONTROL CENTER NOTIFICATIONS — the actual card
+   ============================================================ */
+
+/* cards in the panel can't get a blur of their own (animated list, see the
+   popups above), so they are darker and more solid to stay readable */
+.control-center .notification-row .notification-background .notification {
+    background: alpha(#0d0e12, 0.72);
+    border: 1px solid alpha(#ffffff, 0.06);
+    border-radius: 14px;
+    margin: 4px 8px;
+    box-shadow: none;
+}
+
+/* All inner widgets inherit border-radius so nothing pokes out */
+.notification box,
+.notification widget,
+.notification .notification-content {
+    border-radius: 14px;
+}
+
+.notification-default-action:hover,
+.notification-action:hover {
+    background: alpha(@color0, 0.3);
+}
+
+/* Hover on action widgets */
+.notification widget:hover {
+    background: alpha(@color5, 0.8);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+/* ── Notification content padding ────────────────────────── */
+.notification-content {
+    padding: 8px 10px;
+}
+
+/* ── Labels — low/normal urgency ─────────────────────────── */
+.notification.low .notification-content label,
+.notification.normal .notification-content label {
+    padding: 4px 8px 2px 8px;
+}
+
+/* ── App icons — always transparent bg ───────────────────── */
+.notification .notification-content image {
+    background-color: transparent;
+    border-radius: 6px;
+}
+
+/* ── Body text color ─────────────────────────────────────── */
+.notification.low .notification-content .body,
+.notification.normal .notification-content .body {
+    color: @text;
+}
+
+/* ── Critical urgency ────────────────────────────────────── */
+.notification.critical .notification-content {
+    background: rgba(200, 50, 40, 0.20);
+    border-radius: 12px;
+}
+
+.notification.critical .notification-content image {
+    background-color: transparent;
+}
+
+.notification.critical .notification-content label {
+    color: #ffb4a9;
+}
+
+/* ── Typography ──────────────────────────────────────────── */
+.notification-content .summary {
+    font-family: 'CodeNewRoman Nerd Font Propo', monospace;
+    font-size: 0.94rem;
+    font-weight: 600;
+    color: @text;
+}
+
+.notification-content .time {
+    font-size: 0.78rem;
+    font-weight: 400;
+    margin-right: 0.6rem;
+    color: alpha(@text, 0.55);
+}
+
+.notification-content .body {
+    font-family: 'CodeNewRoman Nerd Font Propo', monospace;
+    font-size: 0.875rem;
+    font-weight: 400;
+    margin-top: 0.2rem;
+    color: alpha(@text, 0.82);
+}
+
+/* ── Close button ────────────────────────────────────────── */
+.close-button {
+    all: unset;
+    background: transparent;
+    border-radius: 50%;
+    color: alpha(@text, 0.45);
+    min-height: 20px;
+    min-width: 20px;
+    margin: 8px 2px 0px 0px;
+    /* transition intentionally NOT using `all` — avoids GTK
+       flash when `all: unset` is re-applied on hover state   */
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+.close-button:hover {
+    background: alpha(@color5, 0.5);
+    color: @text;
+    border-radius: 50%;
+}
+
+/* ============================================================
+   CONTROL CENTER PANEL WINDOW
+   ============================================================ */
+
+.control-center {
+    background: @glass;
+    border: 1px solid @edge;
+    color: @text;
+    border-radius: 20px;
+    box-shadow: none;
+    padding: 4px;
+}
+
+/* BLUR: swaync is GTK4, and on Hyprland 0.56 a GTK4 app tells the compositor
+   itself which parts to blur (ext-background-effect-v1). That replaces the
+   layer rules in hypr/hyprland/rules.lua, and GTK only marks an area for blur
+   when its CSS has a backdrop-filter. Without these lines nothing is blurred.
+   The amount here doesn't matter: Hyprland blurs with its own settings
+   (decoration.blur in hypr/hyprland/decoration.lua). */
+.control-center {
+    backdrop-filter: blur(20px);
+}
+
+/* Pop-ups: the cards are drawn by an animated list (moved and faded with
+   transforms), and GTK doesn't report blur for anything drawn that way. So the
+   blur goes on the popup's scroll area, which holds the cards and isn't
+   animated. Its margin (where the popups sit next to the bell) is in
+   position.css; the cards get no extra padding, so the blurred area is the
+   card itself, plus 6 px between stacked cards. */
+.floating-notifications > scrolledwindow {
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+}
+
+.floating-notifications .notification-row .notification-background {
+    padding: 0 0 6px 0;
+}
+
+/* ── Panel title bar ─────────────────────────────────────── */
+.widget-title {
+    color: @text;
+    padding: 14px 16px 6px 16px;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+/* "Clear all" / dismiss button */
+.widget-title>button {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: @text;
+    text-shadow: none;
+    background: alpha(#ffffff, 0.08);
+    border: none;
+    border-radius: 999px;
+    padding: 2px 12px;
+    margin-top: 2px;
+    transition: background 0.25s ease;
+    box-shadow: none;
+}
+
+.widget-title>button:hover {
+    background: alpha(#ff5555, 0.38);
+}
+
+/* ── Do not disturb row ──────────────────────────────────── */
+.widget-dnd {
+    padding: 2px 16px 8px 16px;
+    font-size: 0.85rem;
+    color: alpha(@text, 0.7);
+}
+
+.widget-dnd>switch {
+    background: alpha(#ffffff, 0.08);
+    border: none;
+    border-radius: 999px;
+    box-shadow: none;
+}
+
+.widget-dnd>switch:checked {
+    background: @color5;
+}
+
+.widget-dnd>switch slider {
+    background: @text;
+    border-radius: 999px;
+    border: none;
+    box-shadow: none;
+}
+
+/* ============================================================
+   BUTTONS GRID WIDGET
+   Selector path per swaync docs:
+   .widget-buttons-grid > flowbox > flowboxchild > button
+   ============================================================ */
+.widget-buttons-grid {
+    font-family: 'CodeNewRoman Nerd Font Propo', monospace;
+    padding: 4px 8px 8px 8px;
+    margin: 2px 4px 4px 4px;
+    background: transparent;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild {
+    all: unset;
+    padding: 3px;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild:focus,
+.widget-buttons-grid>flowbox>flowboxchild:focus-within,
+.widget-buttons-grid>flowbox>flowboxchild:selected {
+    all: unset;
+    padding: 3px;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button {
+    all: unset;
+    background: @card;
+    border-radius: 14px;
+    min-width: 82px;
+    min-height: 44px;
+    padding: 0;
+    color: alpha(@text, 0.65);
+    font-size: 16px;
+    transition: background 0.22s ease, color 0.22s ease, border-color 0.22s ease;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button label {
+    color: inherit;
+    font-size: 18px;
+    margin: 0;
+    padding: 0;
+    transition: color 0.22s ease;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button:hover {
+    background: alpha(@color5, 0.18);
+    color: @text;
+    box-shadow: inset 0 0 10px alpha(@color0, 0.18);
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle:checked,
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle.active {
+    background: alpha(@color0, 0.48);
+    color: @grey3;
+    box-shadow: inset 0 0 14px alpha(@grey1, 0.35), 0 0 8px alpha(@grey1, 0.20);
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle:checked label,
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle.active label {
+    color: inherit;
+}
+
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle:checked:hover,
+.widget-buttons-grid>flowbox>flowboxchild>button.toggle.active:hover {
+    background: alpha(@color5, 0.58);
+    box-shadow: inset 0 0 16px alpha(@grey2, 0.40), 0 0 10px alpha(@grey2, 0.28);
+}
+
+/* ============================================================
+   SLIDERS — volume & backlight
+   GTK widget hierarchy: scale > trough > highlight
+                                        > slider
+   ============================================================ */
+
+scale trough {
+    border-radius: 20px;
+    background: alpha(@color13, 0.10);
+    border: 1px solid alpha(@color13, 0.08);
+    min-height: 4px;
+}
+
+scale trough highlight {
+    background: @color5;
+    border-radius: 20px;
+    min-height: 4px;
+    /* Soft glow on the filled portion */
+    box-shadow: 0 0 5px alpha(@color0, 0.40);
+    transition: box-shadow 0.25s ease;
+}
+
+scale trough highlight:hover {
+    box-shadow: 0 0 10px alpha(@color5, 0.65);
+}
+
+/* Knob hidden — renders as clean pill */
+scale trough slider {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    min-width: 0;
+    min-height: 0;
+}
+
+/* ── Volume widget ───────────────────────────────────────── */
+.widget-volume {
+    background: transparent;
+    padding: 6px 12px;
+    margin: 2px 8px;
+    border-radius: 10px;
+}
+
+/* ── Backlight widget ────────────────────────────────────── */
+.widget-backlight {
+    background: transparent;
+    padding: 6px 12px;
+    margin: 2px 8px;
+    border-radius: 10px;
+}
+
+/* ============================================================
+   MPRIS WIDGET
+   ============================================================ */
+
+.widget-mpris .widget-mpris-player {
+    background: alpha(#0d0e12, 0.6);
+    border-radius: 14px;
+    box-shadow: none;
+    border: none;
+}
+
+.widget-mpris .widget-mpris-album-art {
+    background: transparent;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.42);
+    border-radius: 10px;
+}
+
+.widget-mpris .widget-mpris-player button {
+    background: transparent;
+    box-shadow: none;
+    border: none;
+    color: alpha(@text, 0.65);
+    border-radius: 10px;
+    padding: 5px 8px;
+    margin: 2px;
+    transition: background 0.18s ease, color 0.18s ease;
+}
+
+.widget-mpris .widget-mpris-player button:hover {
+    background: alpha(@color0, 0.18);
+    color: @text;
+}
+
+.widget-mpris .widget-mpris-player .widget-mpris-title {
+    font-family: 'CodeNewRoman Nerd Font Propo', sans-serif;
+    font-weight: 700;
+    font-size: 0.98rem;
+    color: @text;
+}
+
+.widget-mpris .widget-mpris-player .widget-mpris-subtitle {
+    font-size: 0.82rem;
+    color: alpha(@text, 0.60);
+    margin-top: 2px;
+}

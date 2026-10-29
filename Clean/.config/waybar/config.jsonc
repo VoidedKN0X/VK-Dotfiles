@@ -1,0 +1,14 @@
+// Waybar entry point: only includes, nothing to change here.
+//   layouts/current.jsonc  -> which layout is in use (top or left); written by
+//                             scripts/bar-position.sh (Super + B switches it)
+//   layouts/top.jsonc,
+//   layouts/left.jsonc     -> what differs per position (modules order, sizes,
+//                             one-line or stacked formats)
+//   modules.jsonc          -> the module settings both positions share
+// When a setting is in more than one file, the file listed first wins.
+{
+    "include": [
+        "~/.config/waybar/layouts/current.jsonc",
+        "~/.config/waybar/modules.jsonc"
+    ]
+}
