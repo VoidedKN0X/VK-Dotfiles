@@ -57,3 +57,6 @@ hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen({ mode = 1 }))
 hl.bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
 
 hl.bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
+
+-- switch DP-1 between SDR and HDR (function defined in monitors.lua)
+hl.bind("SUPER + SHIFT + D", toggle_dp1_hdr)

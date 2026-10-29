@@ -1,13 +1,17 @@
-hl.monitor({
+-- DP-1 runs SDR by default (accurate for photo editing). HDR turns on by
+-- itself for fullscreen HDR games/video (render.cm_auto_hdr), or manually
+-- with SUPER + SHIFT + D (needed for YouTube in Chromium, which only offers
+-- HDR when the screen is already in HDR mode when the page loads)
+local dp1 = {
     output = "DP-1",
     mode = "3440x1440@280",
     position = "0x0",
     scale = 1,
     bitdepth = 10,
-    -- stays SDR on the desktop; render.cm_auto_hdr switches it to HDR only
-    -- while a fullscreen app is showing HDR content
+    cm = "srgb",
     supports_hdr = 1,
     -- MSI MAG 341CQ X28; luminance values from EDID HDR static metadata
+    -- (only used while in HDR mode)
     max_luminance = 519,
     max_avg_luminance = 308,
     min_luminance = 0,
@@ -15,7 +19,22 @@ hl.monitor({
     sdr_min_luminance = 0,  -- true black for SDR content in HDR mode (default 0.2 lifts shadows)
     sdr_eotf = "gamma22",  -- decode SDR as gamma 2.2 (fixes washed-out look)
     vrr = 3,  -- adaptive sync only for fullscreen games and video
-})
+}
+
+hl.monitor(dp1)
+
+-- manual HDR switch for DP-1, bound in keybinds.lua; a config reload
+-- puts it back to SDR
+local dp1_hdr = false
+function toggle_dp1_hdr()
+    dp1_hdr = not dp1_hdr
+    dp1.cm = dp1_hdr and "hdr" or "srgb"
+    hl.monitor(dp1)
+    hl.notification.create({
+        text = dp1_hdr and "DP-1: HDR on" or "DP-1: HDR off (SDR)",
+        timeout = 2000,
+    })
+end
 
 hl.monitor({
     output = "DP-2",
