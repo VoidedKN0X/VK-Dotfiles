@@ -72,6 +72,23 @@ Changes to VK-Dotfiles, newest first.
     links: qBittorrent; certificates and keys: the certificate viewer
   - app links (Steam, Discord, Element, Heroic, GitHub Desktop, Claude,
     nxm, ...) go to their own app; Kdenlive and Audacity projects to their apps.
+- **Asus Laptop and Steam Deck get the same file associations** as the
+  Desktop, built from the apps their `Install.sh` installs. RapidRAW is now
+  installed there too (AUR `rapidraw-bin`), so RAW photos open in it as on
+  the Desktop. Windows programs (`.exe`, `.msi`, shortcuts), Wine help files,
+  BSManager and OpenDeck links have no default there, since Faugus, Wine,
+  BSManager and OpenDeck are Desktop-only.
+- **Helper apps are hidden from the app launcher** (all profiles). The new
+  `.local/share/applications/` folder holds copies of their entries with
+  `NoDisplay=true`: Qt tools (Assistant, Designer, Linguist, QDBusViewer),
+  qt5ct/qt6ct, nwg-look, Breeze style settings, Blueman, pavucontrol, CUPS,
+  btop, foot client/server, Flameshot, G'MIC, lstopo, qv4l2/qvidcap,
+  xgps/xgpsspeed, rofi and its theme selector, Thunar's bulk rename and
+  settings, thunar-volman, File Roller, Papers, Ristretto, the VSCodium URL
+  handler, and LibreOffice Base, Draw, Math and the start center (the apps
+  still open their files). Claude Desktop's entry keeps its login in the
+  GNOME keyring (`--password-store=gnome-libsecret`), and RapidRAW's entry is
+  there too. `Install.sh` copies the folder in every profile.
 - **Logging in is lighter** (all profiles). `wallpaper.sh` at login only shows
   the saved wallpaper; wallust, the waybar/swaync reload and the swayosd
   restart now run only for a new wallpaper, or when a wallust template

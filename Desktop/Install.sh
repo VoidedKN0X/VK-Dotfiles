@@ -465,8 +465,8 @@ cp -r "$PROFILE_DIR/.config/." "$HOME/.config/"
 cp -a "$KEEP_TMP/." "$HOME/.config/"
 rm -rf "$KEEP_TMP"
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
-# App entries that override the installed ones (RapidRAW: opens RAW photos
-# passed to it, for the file associations in mimeapps.list)
+# App entries that override the installed ones: hide helper apps from the
+# launcher, and RapidRAW opens RAW photos passed to it (for mimeapps.list)
 mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
