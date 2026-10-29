@@ -4,12 +4,15 @@ hl.monitor({
     position = "0x0",
     scale = 1,
     bitdepth = 10,
-    cm = "hdr",
+    -- stays SDR on the desktop; render.cm_auto_hdr switches it to HDR only
+    -- while a fullscreen app is showing HDR content
+    supports_hdr = 1,
     -- MSI MAG 341CQ X28; luminance values from EDID HDR static metadata
     max_luminance = 519,
     max_avg_luminance = 308,
     min_luminance = 0,
     sdr_max_luminance = 300,  -- SDR white level; panel's rated SDR brightness
+    sdr_min_luminance = 0,  -- true black for SDR content in HDR mode (default 0.2 lifts shadows)
     sdr_eotf = "gamma22",  -- decode SDR as gamma 2.2 (fixes washed-out look)
     vrr = 3,  -- adaptive sync only for fullscreen games and video
 })
@@ -21,7 +24,14 @@ hl.monitor({
     scale = 1,
     transform = 3,
     bitdepth = 10,
+    supports_hdr = -1,  -- never auto-switch this one to HDR
     vrr = 3,  -- adaptive sync only for fullscreen games and video
+})
+
+hl.config({
+    render = {
+        cm_auto_hdr = 1,  -- HDR only while fullscreen HDR content is on screen
+    },
 })
 
 hl.monitor({
