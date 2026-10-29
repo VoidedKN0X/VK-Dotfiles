@@ -47,6 +47,7 @@ tooltip {
 #cpu:hover,
 #memory:hover,
 #mpris:hover,
+#custom-mpris:hover,
 #custom-playpause:hover,
 #pulseaudio:hover,
 #idle_inhibitor:hover {
@@ -66,7 +67,8 @@ tooltip {
     color: @color7;
 }
 
-#mpris {
+#mpris,
+#custom-mpris {
     padding: 0px 5px;
     transition: all .3s ease;
     color: @color7;

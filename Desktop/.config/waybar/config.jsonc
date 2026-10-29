@@ -7,7 +7,7 @@
         "clock",
         "tray",
         "custom/playpause",
-        "mpris"
+        "custom/mpris"
     ],
     "modules-center": [
         "hyprland/workspaces"
@@ -121,10 +121,10 @@
         "on-click": "playerctl play-pause",
         "tooltip": false
     },
-    "mpris": {
-        "format": "{title}",
-        "format-stopped": "",
-        "title-len": 20
+    "custom/mpris": {
+        "exec": "playerctl --follow metadata --format '{{ trunc(title, 20) }}' 2>/dev/null",
+        "on-click": "playerctl play-pause",
+        "tooltip": false
     },
 
     "cpu": {
