@@ -1,8 +1,6 @@
 hl.on("hyprland.start", function()
     hl.exec_cmd("awww-daemon")
     hl.exec_cmd("waybar")
-    -- on-screen display for the volume/brightness keys (swayosd-client talks to it)
-    hl.exec_cmd("swayosd-server")
     -- swaync runs as a systemd user service, so D-Bus activation can't start a
     -- second copy
     hl.exec_cmd("systemctl --user start swaync")

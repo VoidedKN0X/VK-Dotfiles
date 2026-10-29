@@ -16,6 +16,8 @@ killall -q -9 waybar
 # The music modules' playerctl processes don't exit with waybar: stop them
 # too, or every restart leaves another set running
 pkill -f '^playerctl --follow (status|metadata)'
+# same for the music visualizer's cava
+pkill -f '^cava -p .*/waybar-cava-'
 
 # a swaync started outside systemd (older login) would block the service
 pkill -x -f '^swaync$' && sleep 0.5

@@ -24,6 +24,15 @@
    ============================================================ */
 
 @import 'colors/colors.css';
+/* where the popups sit next to the bar's bell button; written by
+   waybar/scripts/bar-position.sh */
+@import 'position.css';
+
+/* Same glass as the bar's islands (waybar/style.css): dark see-through
+   panels with a thin light edge; Hyprland blurs what's behind them. */
+@define-color glass alpha(#15171d, 0.58);
+@define-color edge alpha(#ffffff, 0.13);
+@define-color card alpha(#ffffff, 0.05);
 
 /* ── Slide-in for floating notifications ─────────────────── */
 @keyframes slideIn {
@@ -89,8 +98,9 @@ listview row:active {
    ============================================================ */
 
 .floating-notifications .notification-row .notification-background .notification {
-    background: alpha(@color0, 0.95);
-    border-radius: 14px;
+    background: alpha(#15171d, 0.58);
+    border: 1px solid @edge;
+    border-radius: 20px;
     margin: 0px;
     animation: slideIn 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     box-shadow: none;
@@ -100,19 +110,21 @@ listview row:active {
    CONTROL CENTER NOTIFICATIONS — the actual card
    ============================================================ */
 
+/* cards in the panel can't get a blur of their own (animated list, see the
+   popups above), so they are darker and more solid to stay readable */
 .control-center .notification-row .notification-background .notification {
-    background: transparent;
-    border-radius: 12px;
-    margin-top: 5px;
-    margin-bottom: 2px;
-    box-shadow: 0px 0px 2px rgba(0, 0, 0, .6);
+    background: alpha(#0d0e12, 0.72);
+    border: 1px solid alpha(#ffffff, 0.06);
+    border-radius: 14px;
+    margin: 4px 8px;
+    box-shadow: none;
 }
 
 /* All inner widgets inherit border-radius so nothing pokes out */
 .notification box,
 .notification widget,
 .notification .notification-content {
-    border-radius: 12px;
+    border-radius: 14px;
 }
 
 .notification-default-action:hover,
@@ -212,42 +224,90 @@ listview row:active {
    ============================================================ */
 
 .control-center {
-    background: alpha(@color0, 0.95);
+    background: @glass;
+    border: 1px solid @edge;
     color: @text;
-    border-radius: 14px;
-    box-shadow: 0px 0px 10px rgba(0, 0, 0, .4);
+    border-radius: 20px;
+    box-shadow: none;
+    padding: 4px;
+}
+
+/* BLUR: swaync is GTK4, and on Hyprland 0.56 a GTK4 app tells the compositor
+   itself which parts to blur (ext-background-effect-v1). That replaces the
+   layer rules in hypr/hyprland/rules.lua, and GTK only marks an area for blur
+   when its CSS has a backdrop-filter. Without these lines nothing is blurred.
+   The amount here doesn't matter: Hyprland blurs with its own settings
+   (decoration.blur in hypr/hyprland/decoration.lua). */
+.control-center {
+    backdrop-filter: blur(20px);
+}
+
+/* Pop-ups: the cards are drawn by an animated list (moved and faded with
+   transforms), and GTK doesn't report blur for anything drawn that way. So the
+   blur goes on the popup's scroll area, which holds the cards and isn't
+   animated. Its margin (where the popups sit next to the bell) is in
+   position.css; the cards get no extra padding, so the blurred area is the
+   card itself, plus 6 px between stacked cards. */
+.floating-notifications > scrolledwindow {
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+}
+
+.floating-notifications .notification-row .notification-background {
+    padding: 0 0 6px 0;
 }
 
 /* ── Panel title bar ─────────────────────────────────────── */
 .widget-title {
-    color: alpha(@color5, 0.50);
-    padding: 14px 20px 6px 20px;
+    color: @text;
+    padding: 14px 16px 6px 16px;
     margin: 0;
-    font-size: 0.78rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
+    font-size: 1rem;
+    font-weight: 700;
 }
 
 /* "Clear all" / dismiss button */
 .widget-title>button {
-    font-size: 0.85rem;
-    font-weight: 500;
+    font-size: 0.78rem;
+    font-weight: 600;
     color: @text;
     text-shadow: none;
-    background: alpha(#ff5555, 0.20);
-    border: 1px solid alpha(#ff5555, 0.28);
-    border-radius: 8px;
-    padding: 1px 10px;
-    margin-right: 14px;
+    background: alpha(#ffffff, 0.08);
+    border: none;
+    border-radius: 999px;
+    padding: 2px 12px;
     margin-top: 2px;
-    transition: background 0.25s ease, border-color 0.25s ease;
+    transition: background 0.25s ease;
     box-shadow: none;
 }
 
 .widget-title>button:hover {
     background: alpha(#ff5555, 0.38);
-    border-color: alpha(#ff5555, 0.50);
+}
+
+/* ── Do not disturb row ──────────────────────────────────── */
+.widget-dnd {
+    padding: 2px 16px 8px 16px;
+    font-size: 0.85rem;
+    color: alpha(@text, 0.7);
+}
+
+.widget-dnd>switch {
+    background: alpha(#ffffff, 0.08);
+    border: none;
+    border-radius: 999px;
+    box-shadow: none;
+}
+
+.widget-dnd>switch:checked {
+    background: @color5;
+}
+
+.widget-dnd>switch slider {
+    background: @text;
+    border-radius: 999px;
+    border: none;
+    box-shadow: none;
 }
 
 /* ============================================================
@@ -276,9 +336,9 @@ listview row:active {
 
 .widget-buttons-grid>flowbox>flowboxchild>button {
     all: unset;
-    background: alpha(@color13, 0.18);
-    border-radius: 12px;
-    min-width: 88px;
+    background: @card;
+    border-radius: 14px;
+    min-width: 82px;
     min-height: 44px;
     padding: 0;
     color: alpha(@text, 0.65);
@@ -366,7 +426,8 @@ scale trough slider {
    ============================================================ */
 
 .widget-mpris .widget-mpris-player {
-    background: alpha(@color0, 0.5);
+    background: alpha(#0d0e12, 0.6);
+    border-radius: 14px;
     box-shadow: none;
     border: none;
 }

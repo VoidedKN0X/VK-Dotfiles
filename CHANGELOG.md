@@ -4,6 +4,93 @@ Changes to VK-Dotfiles, newest first.
 
 ## 2026-10-29
 
+### Added
+- **New bar: blurred "dynamic island" layout** (all profiles: Desktop, Asus
+  Laptop, Steam Deck). Waybar is now a row of separate islands of dark,
+  blurred glass with the wallpaper's accent color (wallust `color5`):
+  workspaces, music, clock, CPU / temperature / RAM, tray + Bluetooth +
+  network + volume (+ battery on the laptop and Deck, + the on-screen keyboard
+  button on the Deck), idle inhibitor, notifications and power.
+  - Workspaces are dots; the active one stretches into a pill.
+  - Music island: a [cava](https://github.com/karlstav/cava) visualizer
+    (`waybar/scripts/cava.sh`) next to the track title. It shows exactly while
+    a player has a title (flat bars when paused or silent) and hides with the
+    title. Hovering the title slides out the artist and previous /
+    play-pause / next (a waybar group "drawer"). Clicking the title, artist or
+    visualizer opens the music popup (below).
+  - CPU usage, CPU temperature and RAM sit in one island; clicking any of them
+    opens btop. Volume shows a `%`.
+  - Notification bell (swaync): click opens the panel, right-click toggles do
+    not disturb; unread notifications turn the bell into an accent pill.
+  - Idle inhibitor is its own island, left of the bell.
+  - Power button: a rofi menu (lock, suspend, log out, reboot, shut down;
+    reboot and shut down still ask for confirmation via `power.sh`).
+  - Text in Ubuntu and icons from Symbols Nerd Font, with icons one size
+    larger than the text: the icon font's glyphs sit lower than a
+    Nerd-patched text font's, so the enlarged icons line up with the numbers.
+  - The config is split: `waybar/config.jsonc` only includes
+    `layouts/current.jsonc` (the edge in use), `layouts/top.jsonc` /
+    `layouts/left.jsonc` (sizes and one-line or stacked formats) and
+    `modules.jsonc` (everything else, per profile).
+- **The bar can sit on the top or the left edge**: <kbd>Super</kbd> +
+  <kbd>B</kbd> (`waybar/scripts/bar-position.sh`) switches it, for an OLED
+  screen. The notification panel and popups move with it (top right under the
+  bell / bottom left next to it), and so do the calendar, music and volume
+  popups. The chosen edge is kept when `Install.sh` runs again.
+- **Calendar popup**: clicking the clock opens a calendar
+  (`waybar/scripts/calendar.py`, GTK4 + gtk4-layer-shell) in the same blurred
+  glass, with week numbers and today in the accent color. A click outside it,
+  a second click on the clock or <kbd>Esc</kbd> closes it; it slides in and
+  out from the bar's edge. Replaces waybar's hover calendar.
+- **Music popup**: clicking the music island opens a popup
+  (`waybar/scripts/music.py`) with the cover, title, artist, album, a progress
+  bar you can drag to seek, and previous / play-pause / next. It uses
+  playerctl as its own process (like the bar's music modules) and caches web
+  covers in `$XDG_RUNTIME_DIR`.
+- **Own volume / brightness / Caps Lock popup** (`waybar/scripts/osd.py`,
+  called by `hypr/scripts/osd.sh`), replacing SwayOSD (see Removed). Same
+  glass as the other popups, on the focused monitor, at the same pixel
+  distance from the bar on every monitor (SwayOSD could only use one fraction
+  of the screen height, so it sat much lower on the rotated, taller DP-2).
+  Holding a key updates one popup. `osd.sh` now changes the levels itself
+  (`wpctl`, `brightnessctl`).
+- All popups share `waybar/scripts/popup_common.py`: the glass style, the
+  monitor they open on, and their distance from the bar (`GAP`, read together
+  with the bar's size from each profile's layout files).
+- Packages: `cava`, `python-gobject`, `gtk4-layer-shell`,
+  `ttf-ubuntu-font-family`, `ttf-nerd-fonts-symbols`.
+
+### Changed
+- **Blur works on swaync, and everything is blurred the same.** swaync is a
+  GTK4 app, and on Hyprland 0.56 a GTK4 app tells the compositor which areas to
+  blur (ext-background-effect); that replaces the layer rules, and GTK only
+  marks areas whose CSS has a `backdrop-filter`. swaync's style had none, so
+  it was never blurred. `swaync/style.css` now marks the panel and the
+  notification popups; the popup cards themselves can't be marked (swaync
+  draws them in an animated list), so the popups' scroll area is.
+  - Hyprland blur (`decoration.lua`): size 2, 2 passes (smooth, lighter than
+    before), with a little noise and vibrancy for a frosted look, and `xray`
+    off, so blurred layers and windows show what's really behind them instead
+    of only the wallpaper.
+  - Layer rules (`rules.lua`): the bar is matched by its layer name
+    (`vk-top` / `vk-left`: waybar uses the config's `name` as namespace).
+    Blur rules hold only `blur` / `ignore_alpha`; extras (popup blur, xray,
+    animations) are separate and in `pcall`, so an option Hyprland doesn't
+    accept can't drop the blur. Rofi's rule is split the same way.
+- **swaync restyled** to match the bar: dark glass panel, darker solid cards
+  inside it (readable on any background), a "Do not disturb" switch under the
+  title, "Clear all" button. The panel opens under the bell (top right) and is
+  380 px wide; popups are 360 px wide. Laptop and Deck keep their brightness
+  slider (and the Deck its rotate button).
+- **Steam Deck**: the new bar is bigger for the touchscreen (36 px tall,
+  larger text, icons and dots); it now also shows CPU, temperature and RAM.
+
+### Removed
+- **SwayOSD** (all profiles): replaced by the bar's own popup (see Added). Its
+  config folder, package, autostart and wallust colors are gone. On the
+  laptop, keyboard backlight changes no longer show a popup (SwayOSD showed
+  those by itself).
+
 ### Fixed
 - **Waybar no longer crashes when music starts** (all profiles: Desktop,
   Asus Laptop, Steam Deck). Waybar's built-in `mpris` module crashed waybar

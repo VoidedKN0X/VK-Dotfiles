@@ -130,13 +130,18 @@ PACMAN_PKGS=(
     rofi
     waybar
     playerctl
+    cava
+    # calendar popup of the bar (waybar/scripts/calendar.py)
+    python-gobject
+    gtk4-layer-shell
     swaync
-    swayosd
     earlyoom
     noto-fonts
     ristretto
     eza
     ttf-jetbrains-mono-nerd
+    ttf-ubuntu-font-family
+    ttf-nerd-fonts-symbols
     pavucontrol
     nwg-look
     orchis-theme
@@ -257,7 +262,7 @@ sudo pacman -Syu --needed "${PACMAN_PKGS[@]}" || { echo "pacman install failed, 
 # notifications, login) is never picked (--ignore).
 # -r 0: no memory reports in the journal. (No quotes around the regex: the
 # service passes it on word by word, quotes would become part of it.)
-echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|swayosd-server|waybar|swaync)$"' \
+echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|waybar|swaync)$"' \
     | sudo tee /etc/default/earlyoom >/dev/null
 
 # Install yay (skipped if it's already installed), built in a temp dir
@@ -444,8 +449,8 @@ done
 KEEP_IF_EXISTS=(
     hypr/colors/current-wallpaper.conf
     waybar/colors/colors.css
+    waybar/layouts/current.jsonc
     swaync/colors/colors.css
-    swayosd/colors/colors.css
     foot/colors-dark.ini
     rofi/colors/colors.rasi
     hypr/hyprland/border-colors.lua
@@ -464,6 +469,9 @@ done
 cp -r "$PROFILE_DIR/.config/." "$HOME/.config/"
 cp -a "$KEEP_TMP/." "$HOME/.config/"
 rm -rf "$KEEP_TMP"
+# the kept bar position (top/left) also sets where the notification panel and
+# the volume popup go: write those files to match it
+"$HOME/.config/waybar/scripts/bar-position.sh" --files-only
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 # App entries that override the installed ones: hide helper apps from the
 # launcher, and RapidRAW opens RAW photos passed to it (for mimeapps.list)

@@ -128,12 +128,13 @@ PACMAN_PKGS=(
     rofi
     waybar
     swaync
-    swayosd
     earlyoom
     noto-fonts
     ristretto
     eza
     ttf-jetbrains-mono-nerd
+    ttf-ubuntu-font-family
+    ttf-nerd-fonts-symbols
     pavucontrol
     nwg-look
     orchis-theme
@@ -167,6 +168,10 @@ PACMAN_PKGS=(
     bluez-utils
     libnotify
     playerctl
+    cava
+    # calendar, music and volume popups of the bar (waybar/scripts/*.py)
+    python-gobject
+    gtk4-layer-shell
     # in the CachyOS repo (were installed through yay before)
     jdownloader2
     auto-cpufreq
@@ -174,8 +179,7 @@ PACMAN_PKGS=(
     claude-code
     # Wi-Fi/network tools used by the swaync Wi-Fi button and waybar (nmcli, nmtui)
     networkmanager
-    # battery: critical-charge action (CriticalPowerAction) and the keyboard
-    # backlight in swayosd
+    # battery: critical-charge action (CriticalPowerAction)
     upower
     # hardware video decoding (VA-API) on Intel graphics, saves battery
     intel-media-driver
@@ -253,7 +257,7 @@ sudo pacman -Syu --needed "${PACMAN_PKGS[@]}" || { echo "pacman install failed, 
 # notifications, login) is never picked (--ignore).
 # -r 0: no memory reports in the journal. (No quotes around the regex: the
 # service passes it on word by word, quotes would become part of it.)
-echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|swayosd-server|waybar|swaync)$"' \
+echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|waybar|swaync)$"' \
     | sudo tee /etc/default/earlyoom >/dev/null
 
 # Install yay (skipped if it's already installed), built in a temp dir
@@ -428,8 +432,8 @@ xdg-user-dirs-update
 KEEP_IF_EXISTS=(
     hypr/colors/current-wallpaper.conf
     waybar/colors/colors.css
+    waybar/layouts/current.jsonc
     swaync/colors/colors.css
-    swayosd/colors/colors.css
     foot/colors-dark.ini
     rofi/colors/colors.rasi
     hypr/hyprland/border-colors.lua
@@ -448,6 +452,9 @@ done
 cp -r "$PROFILE_DIR/.config/." "$HOME/.config/"
 cp -a "$KEEP_TMP/." "$HOME/.config/"
 rm -rf "$KEEP_TMP"
+# the kept bar position (top/left) also sets where the notification panel
+# goes: write swaync's files to match it
+"$HOME/.config/waybar/scripts/bar-position.sh" --files-only
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 # App entries that override the installed ones: hide helper apps from the
 # launcher, and RapidRAW opens RAW photos passed to it (for mimeapps.list)

@@ -24,8 +24,8 @@ hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- osd.sh (swayosd-client) changes the level and shows it on the focused
--- monitor (5% steps, max 100%)
+-- osd.sh changes the level and shows it in the bar's popup
+-- (waybar/scripts/osd.py) on the focused monitor (5% steps, max 100%)
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume raise"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume lower"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume mute-toggle"), { locked = true })
@@ -52,6 +52,8 @@ hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager))
 hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(menu), { release = true })
 hl.bind("SUPER + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/restart-waybar-swaync.sh"))
+-- move the bar between the top and the left edge (OLED: no static bar)
+hl.bind("SUPER + B", hl.dsp.exec_cmd("~/.config/waybar/scripts/bar-position.sh"))
 
 hl.bind("CTRL + SUPER + left", hl.dsp.focus({ workspace = "-1" }))
 hl.bind("CTRL + SUPER + right", hl.dsp.focus({ workspace = "+1" }))

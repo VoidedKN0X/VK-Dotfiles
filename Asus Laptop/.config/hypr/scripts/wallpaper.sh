@@ -55,9 +55,6 @@ swaync-client --reload-css >/dev/null 2>&1 || true
 # Reload waybar
 killall -SIGUSR2 waybar >/dev/null 2>&1 || true
 
-# Restart the on-screen display: it only reads its colors when it starts
-if pgrep -x swayosd-server >/dev/null; then
-    pkill -x swayosd-server
-    for _ in $(seq 20); do pgrep -x swayosd-server >/dev/null || break; sleep 0.1; done
-    setsid -f swayosd-server >/dev/null 2>&1
-fi
+# The volume popup only reads its colors when it starts: stop it, the next
+# volume key starts it again with the new ones
+pkill -f 'waybar/scripts/osd.py' >/dev/null 2>&1 || true

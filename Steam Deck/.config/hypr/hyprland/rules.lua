@@ -49,8 +49,38 @@ hl.window_rule({
     float = true,
 })
 
--- Layer rules (blur + animations for swaync, rofi and the app menu)
-hl.layer_rule({ match = { namespace = "swaync-control-center" }, blur = true, ignore_alpha = 0.45, animation = "slide left" })
-hl.layer_rule({ match = { namespace = "swaync-notification-window" }, blur = true, ignore_alpha = 0 })
-hl.layer_rule({ match = { namespace = "rofi" }, blur = true, ignore_alpha = 0, animation = "slide bottom" })
-hl.layer_rule({ match = { namespace = "nwg-drawer" }, blur = true, ignore_alpha = 0, animation = "fade" })
+-- Layer rules (blur + animations for waybar, swaync, the bar's popups, rofi and the app menu)
+-- waybar: the bar is transparent, only its islands are see-through glass, so
+-- ignore_alpha keeps the empty gaps between islands unblurred. Waybar uses its
+-- config's "name" as the layer namespace: vk-top / vk-left (waybar/layouts)
+local bar = "^(waybar|vk-top|vk-left)$"
+hl.layer_rule({ match = { namespace = bar }, blur = true, ignore_alpha = 0.2 })
+-- also blur waybar's tooltips (calendar, track info) and tray menus. In pcall,
+-- so a Hyprland version without this option skips it instead of stopping here
+pcall(hl.layer_rule, { match = { namespace = bar }, blur_popups = true })
+pcall(hl.layer_rule, { match = { namespace = bar }, xray = false })
+-- swaync draws its panel inside an invisible full-screen layer: ignore_alpha
+-- 0.1 leaves that empty part alone and blurs everything that's visible (the
+-- glass panel is 50% opaque).
+-- Blur gets a rule of its own, like the bar's: a rule with a setting Hyprland
+-- doesn't accept (the animation) is dropped whole, without a config error,
+-- which is why swaync and rofi weren't blurred before. The extras (xray off,
+-- animations) are separate and in pcall.
+local notifications = "^swaync-(control-center|notification-window)$"
+hl.layer_rule({ match = { namespace = notifications }, blur = true, ignore_alpha = 0.1 })
+pcall(hl.layer_rule, { match = { namespace = notifications }, xray = false })
+pcall(hl.layer_rule, { match = { namespace = "swaync-control-center" }, animation = "slide left" })
+
+-- the bar's popups (waybar/scripts/calendar.py, osd.py) blur themselves
+-- (GTK4, like swaync). The calendar and music popups slide in and out from
+-- the top with the bar on top, from the side with the bar on the left
+pcall(hl.layer_rule, { match = { namespace = "vk-calendar-top" }, animation = "slide top" })
+pcall(hl.layer_rule, { match = { namespace = "vk-calendar-left" }, animation = "slide left" })
+pcall(hl.layer_rule, { match = { namespace = "vk-music-top" }, animation = "slide top" })
+pcall(hl.layer_rule, { match = { namespace = "vk-music-left" }, animation = "slide left" })
+
+hl.layer_rule({ match = { namespace = "rofi" }, blur = true, ignore_alpha = 0 })
+pcall(hl.layer_rule, { match = { namespace = "rofi" }, animation = "slide bottom" })
+
+hl.layer_rule({ match = { namespace = "nwg-drawer" }, blur = true, ignore_alpha = 0 })
+pcall(hl.layer_rule, { match = { namespace = "nwg-drawer" }, animation = "fade" })

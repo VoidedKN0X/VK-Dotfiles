@@ -1,0 +1,59 @@
+// Bar along the left edge: a column of islands, values stacked under their icons
+{
+    "name": "vk-left",
+    "layer": "top",
+    "position": "left",
+    "width": 38,
+    "margin-top": 10,
+    "margin-bottom": 10,
+    "margin-left": 8,
+    "spacing": 6,
+    "reload_style_on_change": true,
+
+    // in a side bar, "left" is the top, "center" the middle, "right" the bottom
+    "modules-left": ["hyprland/workspaces", "group/music-island"],
+    "modules-center": ["clock"],
+    "modules-right": ["group/system", "group/status", "idle_inhibitor", "custom/notification", "custom/power"],
+
+    // music island: visualizer and a note icon (hover it for the track);
+    // hovering slides out the previous / play-pause / next buttons below it
+    "group/music": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 350,
+            "transition-left-to-right": true,
+            "children-class": "music-child"
+        },
+        "modules": ["custom/mpris", "custom/prev", "custom/playpause", "custom/next"]
+    },
+
+    "custom/cava": {
+        "exec": "~/.config/waybar/scripts/cava.sh 4"
+    },
+    "custom/mpris": {
+        "format": "󰝚",
+        "tooltip": true,
+        "tooltip-format": "{}",
+        "exec": "playerctl --follow metadata --format '{{ markup_escape(title) }}  ·  {{ markup_escape(artist) }}' 2>/dev/null"
+    },
+
+    "clock": {
+        "format": "<b>{0:%H}</b>\n<b>{0:%M}</b>\n<span alpha='55%' size='small'>{0:%a}</span>\n<span alpha='55%'>{0:%d}</span>",
+        "justify": "center"
+    },
+
+    // icons one size up from the text (<span size='large'>)
+    "cpu": { "format": "<span size='large'>󰻠</span>\n{usage}%", "justify": "center" },
+    "temperature": { "format": "<span size='large'>󰔏</span>\n{temperatureC}°", "format-critical": "<span size='large'>󰸁</span>\n{temperatureC}°", "justify": "center" },
+    "memory": { "format": "<span size='large'>󰍛</span>\n{percentage}%", "justify": "center" },
+    "pulseaudio": { "format": "<span size='large'>{icon}</span>\n{volume}%", "format-bluetooth": "<span size='large'>{icon}</span>\n{volume}%", "justify": "center" },
+    "network": { "format-wifi": "󰖩" },
+    "bluetooth": { "format-connected-battery": "<span size='large'>󰂱</span>\n{device_battery_percentage}%", "justify": "center" },
+    "tray": { "icon-size": 16, "spacing": 10 },
+    "battery": {
+        "format": "<span size='large'>{icon}</span>\n{capacity}%",
+        "format-charging": "<span size='large'>󰂄</span>\n{capacity}%",
+        "format-plugged": "<span size='large'>󰂄</span>\n{capacity}%",
+        "justify": "center"
+    }
+}

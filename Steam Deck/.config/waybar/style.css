@@ -1,204 +1,326 @@
+/* Waybar: blurred "dynamic island" bar.
+   The bar itself is transparent; every group of modules is its own rounded
+   island of dark glass. Hyprland blurs what's behind the islands and the
+   tooltips (layer rule for "waybar" in hypr/hyprland/rules.lua).
+   Colors come from wallust (colors/colors.css): @accent is the wallpaper's
+   accent color, the glass and text stay neutral so they work on any wallpaper.
+   Steam Deck: bigger text, icons and workspace dots for the touchscreen
+   (and a taller bar: layouts/top.jsonc, layouts/left.jsonc).
+   window#waybar.vk-top / .vk-left: the bar's position ("name" in layouts/top.jsonc and
+   layouts/left.jsonc). The name is also the bar's layer namespace in Hyprland. */
+
 @import 'colors/colors.css';
 
+@define-color accent @color5;
+@define-color fg #d3d6de;
+@define-color dim alpha(#d3d6de, 0.55);
+@define-color faint alpha(#d3d6de, 0.28);
+/* frosted glass: a dark gray tint with a light edge */
+@define-color glass alpha(#15171d, 0.48);
+@define-color edge alpha(#ffffff, 0.11);
+/* fixed red for power / warnings: wallust's color1 isn't always red */
+@define-color warn #e07a6c;
+
 * {
-    font-size: 18px;
-    font-family: "CodeNewRoman Nerd Font Propo";
+    /* Text and icons come from two fonts: Ubuntu (rounded sans, plain, no
+       icons) for text, and Symbols Nerd Font for every icon, which GTK uses
+       for the glyphs Ubuntu doesn't have. A Nerd-patched text font draws its
+       icons around the letters' center, so icons shown a size larger (the
+       <span size='large'> in the formats) sit ~1.5 px too high; Symbols Nerd
+       Font's icons sit lower, and at that size line up with the numbers. */
+    font-family: "Ubuntu", "Symbols Nerd Font", "Ubuntu Nerd Font Propo";
+    font-size: 17px;
+    font-weight: 500;
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-shadow: none;
 }
 
 window#waybar {
-    all: unset;
+    background: transparent;
+    color: @fg;
 }
 
-.modules-left {
-    padding: 8px;
-    margin: 10 0 5 10;
-    border-radius: 10px;
-    background: rgba(40, 40, 50, 0.55);
-    border: 0;
+/* ── islands ───────────────────────────────────────────────────────── */
+#workspaces,
+#music-island,
+#clock,
+#system,
+#status,
+#idle_inhibitor,
+#custom-notification,
+#custom-power {
+    background: @glass;
+    border: 1px solid @edge;
+    border-radius: 999px;
+    padding: 0 14px;
+    /* soft highlight along the top edge, like light on frosted glass */
+    box-shadow: inset 0 1px alpha(#ffffff, 0.07);
+    transition: border-color 0.3s ease, background 0.3s ease;
 }
 
-.modules-center {
-    padding: 8px;
-    margin: 10 0 5 0;
-    border-radius: 10px;
-    background: rgba(40, 40, 50, 0.55);
-    border: 0;
-}
-
-.modules-right {
-    padding: 8px;
-    margin: 10 10 5 0;
-    border-radius: 10px;
-    background: rgba(40, 40, 50, 0.55);
-    border: 0;
-}
-
-tooltip {
-    background: @color0;
-    color: @color7;
-}
-
+#music-island:hover,
 #clock:hover,
-#custom-notification:hover,
-#bluetooth:hover,
-#network:hover,
-#battery:hover,
-#temperature:hover,
-#custom-mpris:hover,
-#custom-playpause:hover,
-#pulseaudio:hover,
-#idle_inhibitor:hover,
-#custom-keyboard:hover {
-    transition: all .3s ease;
-    color: @color5;
+#system:hover,
+#status:hover {
+    border-color: alpha(#ffffff, 0.16);
 }
 
-#custom-notification {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
+/* side bar: islands are columns, so padding goes top/bottom */
+window#waybar.vk-left #workspaces,
+window#waybar.vk-left #music-island,
+window#waybar.vk-left #clock,
+window#waybar.vk-left #system,
+window#waybar.vk-left #status,
+window#waybar.vk-left #idle_inhibitor,
+window#waybar.vk-left #custom-notification,
+window#waybar.vk-left #custom-power {
+    border-radius: 19px;
+    padding: 10px 0;
 }
 
-#custom-playpause {
-    padding: 0px 0px 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
+/* modules inside an island: spacing between them */
+#cpu, #temperature, #memory,
+#tray, #bluetooth, #network, #pulseaudio, #battery, #custom-keyboard,
+#custom-cava, #custom-mpris, #custom-artist,
+#custom-prev, #custom-playpause, #custom-next {
+    padding: 0 5px;
+    color: @fg;
+    transition: color 0.2s ease;
 }
 
-#custom-mpris {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
+window#waybar.vk-left #cpu, window#waybar.vk-left #temperature, window#waybar.vk-left #memory,
+window#waybar.vk-left #tray, window#waybar.vk-left #bluetooth,
+window#waybar.vk-left #network, window#waybar.vk-left #pulseaudio,
+window#waybar.vk-left #battery, window#waybar.vk-left #custom-keyboard,
+window#waybar.vk-left #custom-cava, window#waybar.vk-left #custom-mpris,
+window#waybar.vk-left #custom-prev, window#waybar.vk-left #custom-playpause, window#waybar.vk-left #custom-next {
+    padding: 5px 0;
 }
 
-#clock {
-    padding: 0px 0px 0px 7px;
-    color: @color7;
-    transition: all .3s ease;
+/* everything you can click lights up in the accent color */
+#cpu:hover, #temperature:hover, #memory:hover,
+#idle_inhibitor:hover, #bluetooth:hover, #network:hover, #pulseaudio:hover,
+#battery:hover, #custom-keyboard:hover,
+#custom-mpris:hover, #custom-artist:hover,
+#custom-prev:hover, #custom-playpause:hover, #custom-next:hover,
+#custom-notification:hover {
+    color: @accent;
 }
 
+/* ── workspaces ────────────────────────────────────────────────────── */
+/* every workspace is a dot; the active one stretches into a pill. The
+   margins center the 10 px dot in the 36 px bar (46 px wide on the left). */
 #workspaces {
-    padding: 0px 7px;
+    padding: 0 9px;
+}
+
+window#waybar.vk-left #workspaces {
+    padding: 9px 0;
 }
 
 #workspaces button {
     all: unset;
-    padding: 0px 7px;
-    color: alpha(@color13, .6);
-    transition: all .2s ease;
+    /* the label is invisible; a tiny font keeps it from making the dot taller */
+    font-size: 1px;
+    min-width: 10px;
+    min-height: 10px;
+    margin: 12px 4px;
+    border-radius: 999px;
+    background: @dim;
+    transition: min-width 0.25s ease, min-height 0.25s ease, background 0.25s ease;
 }
 
-#workspaces button:hover {
-    color: rgba(0, 0, 0, 0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
+window#waybar.vk-left #workspaces button {
+    margin: 4px 17px;
 }
 
-#workspaces button.active {
-    color: @color5;
-    border: none;
-    text-shadow: 0px 0px 2px rgba(0, 0, 0, .5);
+#workspaces button label {
+    font-size: 1px;
+    color: transparent;
+    padding: 0;
+    margin: 0;
 }
 
 #workspaces button.empty {
-    color: rgba(0, 0, 0, 0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .2);
+    background: @faint;
 }
 
-#workspaces button.empty:hover {
-    color: rgba(0, 0, 0, 0);
-    border: none;
-    text-shadow: 0px 0px 1.5px rgba(0, 0, 0, .5);
-    transition: all 1s ease;
+#workspaces button.active {
+    min-width: 30px;
+    background: @accent;
 }
 
-#workspaces button.empty.active {
-    color: @color5;
-    border: none;
-    text-shadow: 0px 0px 2px rgba(0, 0, 0, .5);
+window#waybar.vk-left #workspaces button.active {
+    min-width: 10px;
+    min-height: 30px;
 }
 
-#bluetooth {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
-
+#workspaces button.urgent {
+    background: @warn;
 }
 
-#network {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
-
+#workspaces button:hover {
+    background: @fg;
 }
 
-#battery {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
+/* ── music ─────────────────────────────────────────────────────────── */
+/* visualizer: small bars with a gap between them (the block characters
+   touch each other by default) */
+#custom-cava {
+    color: @accent;
+    font-size: 11px;
+    letter-spacing: 1px;
+    padding: 0 4px 0 0;
 }
 
-#temperature {
-    padding: 0px 7px;
-    color: @color7;
+#custom-artist {
+    color: @dim;
 }
 
-#battery.charging {
-    color: #26A65B;
+#custom-playpause {
+    color: @accent;
+}
+
+#custom-prev, #custom-playpause, #custom-next {
+    font-size: 20px;
+}
+
+/* ── clock ─────────────────────────────────────────────────────────── */
+#clock {
+    padding: 0 14px;
+}
+
+window#waybar.vk-left #clock {
+    padding: 12px 0;
+    font-size: 17px;
+}
+
+/* ── system / status ───────────────────────────────────────────────── */
+/* icon-only modules a size up (the others enlarge their icon in the format) */
+#bluetooth,
+#network,
+#custom-keyboard {
+    font-size: 20px;
+}
+
+/* battery (laptop / Deck) */
+#battery.charging,
+#battery.plugged {
+    color: #7ee0a0;
 }
 
 #battery.warning:not(.charging) {
     color: #ffbe61;
 }
 
-@keyframes blink {
+@keyframes battery-blink {
     to {
-        color: @color7;
+        color: @fg;
     }
 }
 
 #battery.critical:not(.charging) {
-    color: #f53c3c;
-    animation-name: blink;
-    animation-duration: 0.5s;
-    animation-timing-function: linear;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
+    color: @warn;
+    animation: battery-blink 0.5s linear infinite alternate;
+}
+#temperature.critical {
+    color: @warn;
 }
 
-#tray {
-    padding: 0px 7px 0px 0px;
-    transition: all .3s ease;
-
-}
-
-#tray menu * {
-    padding: 0px 7px;
-    transition: all .3s ease;
-}
-
-#tray menu separator {
-    padding: 0px 7px;
-    transition: all .3s ease;
-}
-
-#pulseaudio {
-    padding: 0px 7px;
-    color: @color7;
-    transition: all .3s ease;
-}
-
+/* idle inhibitor: its own island, left of the notification bell */
 #idle_inhibitor {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
-
+    padding: 0 12px;
+    color: @dim;
+    font-size: 20px;
 }
 
-#custom-keyboard {
-    padding: 0px 7px;
-    transition: all .3s ease;
-    color: @color7;
+window#waybar.vk-left #idle_inhibitor {
+    padding: 8px 0;
+}
+
+#idle_inhibitor.activated {
+    color: @accent;
+}
+
+#pulseaudio.muted,
+#network.disconnected,
+#bluetooth.off,
+#bluetooth.disabled {
+    color: @faint;
+}
+
+#tray > .needs-attention {
+    -gtk-icon-effect: highlight;
+}
+
+/* ── notification button ───────────────────────────────────────────── */
+#custom-notification {
+    padding: 0 12px;
+    font-size: 20px;
+}
+
+window#waybar.vk-left #custom-notification {
+    padding: 9px 0;
+}
+
+/* unread notifications: the bell turns into an accent-colored pill */
+#custom-notification.notification,
+#custom-notification.inhibited-notification {
+    background: @accent;
+    border-color: transparent;
+    color: @color0;
+}
+
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification,
+#custom-notification.dnd-inhibited-none,
+#custom-notification.dnd-inhibited-notification {
+    color: @faint;
+}
+
+/* ── power ─────────────────────────────────────────────────────────── */
+#custom-power {
+    padding: 0 12px;
+    color: @warn;
+    font-size: 20px;
+}
+
+window#waybar.vk-left #custom-power {
+    padding: 9px 0;
+}
+
+#custom-power:hover {
+    background: alpha(@warn, 0.25);
+}
+
+/* ── tooltips (calendar, track info, ...) and tray menus ────────────── */
+tooltip {
+    background: alpha(#15171d, 0.6);
+    border: 1px solid @edge;
+    border-radius: 16px;
+}
+
+tooltip label {
+    color: @fg;
+    padding: 6px 8px;
+}
+
+menu {
+    background: alpha(#0a0b0f, 0.85);
+    border: 1px solid @edge;
+    border-radius: 12px;
+    padding: 4px;
+}
+
+menu menuitem {
+    color: @fg;
+    padding: 4px 8px;
+    border-radius: 8px;
+}
+
+menu menuitem:hover {
+    background: alpha(@accent, 0.25);
 }

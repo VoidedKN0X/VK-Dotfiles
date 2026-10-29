@@ -1,0 +1,2 @@
+// Written by scripts/bar-position.sh: the bar position in use (top or left)
+{ "include": ["~/.config/waybar/layouts/top.jsonc"] }

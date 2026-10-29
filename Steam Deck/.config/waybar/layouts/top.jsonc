@@ -1,0 +1,50 @@
+// Bar along the top edge: one row of islands (Steam Deck: taller, for touch)
+{
+    "name": "vk-top",
+    "layer": "top",
+    "position": "top",
+    "height": 36,
+    "margin-top": 8,
+    "margin-left": 10,
+    "margin-right": 10,
+    "spacing": 6,
+    "reload_style_on_change": true,
+
+    "modules-left": ["hyprland/workspaces", "group/music-island"],
+    "modules-center": ["clock"],
+    "modules-right": ["group/system", "group/status", "idle_inhibitor", "custom/notification", "custom/power"],
+
+    // music island: the visualizer and title always show; hovering the title
+    // slides out the artist and the previous / play-pause / next buttons
+    "group/music": {
+        "orientation": "inherit",
+        "drawer": {
+            "transition-duration": 350,
+            "transition-left-to-right": true,
+            "children-class": "music-child"
+        },
+        "modules": ["custom/mpris", "custom/artist", "custom/prev", "custom/playpause", "custom/next"]
+    },
+
+    "custom/cava": {
+        "exec": "~/.config/waybar/scripts/cava.sh 6"
+    },
+
+    "clock": {
+        // {0:...}: every field reads the same time (a bare {:...} would ask
+        // waybar for a second value it doesn't have, and the clock stays empty)
+        "format": "<span alpha='60%'>{0:%a %d %b}</span>  <span alpha='45%'>·</span>  <b>{0:%H:%M}</b>"
+    },
+
+    // icons one size up from the text (<span size='large'>)
+    "cpu": { "format": "<span size='large'>󰻠</span> {usage}%" },
+    "temperature": { "format": "<span size='large'>󰔏</span> {temperatureC}°", "format-critical": "<span size='large'>󰸁</span> {temperatureC}°" },
+    "memory": { "format": "<span size='large'>󰍛</span> {percentage}%" },
+    "pulseaudio": { "format": "<span size='large'>{icon}</span>  {volume}%", "format-bluetooth": "<span size='large'>{icon}</span>  {volume}%" },
+    "bluetooth": { "format-connected-battery": "<span size='large'>󰂱</span> {device_battery_percentage}%" },
+    "battery": {
+        "format": "<span size='large'>{icon}</span> {capacity}%",
+        "format-charging": "<span size='large'>󰂄</span> {capacity}%",
+        "format-plugged": "<span size='large'>󰂄</span> {capacity}%"
+    }
+}

@@ -1,0 +1,2 @@
+/* Written by waybar/scripts/bar-position.sh: popups next to the bell button */
+.floating-notifications > scrolledwindow { margin: 0 46px 0 0; }

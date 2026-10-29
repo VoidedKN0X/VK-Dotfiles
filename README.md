@@ -32,9 +32,9 @@ stays self-contained and works on its own.
 | Part | Used for |
 | --- | --- |
 | [Hyprland](https://hypr.land) | Window manager (Lua config in `.config/hypr/`) |
-| waybar | Top bar |
+| waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
-| [SwayOSD](https://github.com/ErikReider/SwayOSD) | On-screen popup for the volume, mic and brightness keys and Caps Lock |
+| Bar popups (`waybar/scripts/*.py`) | Calendar and music popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -158,6 +158,34 @@ Your password and LUKS passphrase keep working as a fallback, except on the lock
 out of the lock screen without a key? Switch to a text console (Ctrl+Alt+F3), log in with your
 password and run `pkill -USR1 hyprlock`.
 
+## The bar
+
+Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent color:
+
+- **Islands:** workspaces (dots; the active one is a pill), music, clock, CPU / temperature / RAM,
+  tray + Bluetooth + network + volume (+ battery, and on the Steam Deck the on-screen keyboard
+  button), idle inhibitor, notifications, power menu.
+- **Music:** a visualizer ([cava](https://github.com/karlstav/cava)) and the track title; it
+  shows while a player has a title. Hovering slides out the artist and previous / play-pause /
+  next. Clicking opens the **music popup** (cover, progress bar you can drag, controls).
+- **Clock:** click for the **calendar popup**. Click outside it or press <kbd>Esc</kbd> to close.
+- **CPU, temperature, RAM:** click for btop.
+- **Notifications:** click for the notification panel (it opens under or next to the bell),
+  right-click for do not disturb. Popups appear in the same spot.
+- **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> moves the bar between the top and the
+  left edge (on an OLED screen, so it doesn't stay in one place). The notification panel,
+  calendar, music and volume popups move with it. The choice survives a reinstall.
+- **Blur:** Hyprland's layer rules blur the bar (`hypr/hyprland/rules.lua`). swaync and the popups
+  are GTK4 apps: they mark the areas to blur themselves with `backdrop-filter` in their CSS
+  (Hyprland 0.56 follows the app, not the layer rules). The strength is `decoration.blur` in
+  `hypr/hyprland/decoration.lua`, the same for everything.
+- **Files:** `waybar/config.jsonc` only includes the others: `layouts/top.jsonc` /
+  `layouts/left.jsonc` (what differs per edge), `layouts/current.jsonc` (the edge in use, written
+  by `scripts/bar-position.sh`) and `modules.jsonc` (everything else). The popups are
+  `waybar/scripts/calendar.py`, `music.py` and `osd.py`; `popup_common.py` holds their shared
+  look and the gap between them and the bar (`GAP`, in px).
+- **Fonts:** text in Ubuntu, icons from Symbols Nerd Font, so the icons line up with the numbers.
+
 ## Keybinds
 
 | Keys | Action |
@@ -179,13 +207,14 @@ password and run `pkill -USR1 hyprlock`.
 | <kbd>Super</kbd> + <kbd>N</kbd> | Notification center |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>R</kbd> | Restart the bar and notifications |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Move the bar between the top and the left edge |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> *(desktop)* | HDR on/off on the main monitor (needed for HDR on YouTube in Chromium: turn it on, then reload the video) |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Log out |
 | <kbd>Print</kbd> | Screenshot (copied + saved to `~/Pictures/Screenshots`) |
 | <kbd>Shift</kbd> + <kbd>Print</kbd> | Screenshot of a selected area (draw on it, then Enter: copied + saved) |
 | <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd> | Volume mixer |
 | Volume / mute keys | Volume, mute, mic mute (with an on-screen popup) |
-| Media keys, brightness keys *(laptop)* | Play/pause, next/previous, screen brightness |
+| Media keys, brightness keys *(laptop)* | Play/pause, next/previous, screen brightness (with an on-screen popup) |
 | 3-finger swipe *(laptop)* | Switch workspace |
 
 ## Steam Deck (tablet)
@@ -204,7 +233,7 @@ It's based on the laptop profile.
 | 3 fingers down | Close the window |
 
 - **On-screen keyboard:** [squeekboard](https://gitlab.gnome.org/World/Phosh/squeekboard),
-  opened and closed only with the keyboard button (󰌌) at the right end of waybar. It doesn't pop
+  opened and closed only with the keyboard button (󰌌) in the bar. It doesn't pop
   up by itself when you tap a text field, so it never covers the screen unasked (and a USB or
   Bluetooth keyboard needs no special handling).
 - **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
@@ -250,15 +279,15 @@ After the first boot, test the gestures once. If a swipe goes the wrong way in l
 
 Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick one with
 <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. [wallust](https://codeberg.org/explosion-mental/wallust)
-then regenerates the colors for Hyprland, waybar, swaync, SwayOSD, rofi, foot, hyprlock, btop and
-OpenCode.
+then regenerates the colors for Hyprland, waybar and its popups, swaync, rofi, foot, hyprlock, btop
+and OpenCode.
 The last wallpaper is re-applied at every login.
 
 All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
 `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
 `rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
-`swayosd/colors/colors.css`, `foot/colors-dark.ini`, `btop/themes/wallust.theme`,
+`foot/colors-dark.ini`, `btop/themes/wallust.theme`,
 `opencode/themes/wallust.json`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
 them as soon as you set a wallpaper.
 Until then, `hypr/colors/current-wallpaper.conf` makes the lock screen show a blurred screenshot.
@@ -276,8 +305,9 @@ If you're not me, look at these before running anything:
 - **`hypr/hyprland/monitors.lua`:** monitor names, resolutions, positions and which workspace goes
   where.
 - **`hypr/hyprland/input.lua`:** keyboard layout.
-- **`waybar/config.jsonc`:** the network interface name (`eno1` / `wlp2s0`) and, on the desktop,
-  the CPU temperature sensor (also set in `btop/btop.conf`).
+- **`waybar/modules.jsonc`:** the network interface name (`eno1` / `wl*`), the CPU temperature
+  sensor (also set in `btop/btop.conf`) and, on the desktop, which workspaces each monitor's bar
+  shows.
 - **`hypr/hypridle.conf` (laptop):** the keyboard backlight device is `asus::kbd_backlight`.
 - **Steam Deck:** `Post Install/run-all-steamdeck.sh` only installs the Valve packages on an LCD
   Steam Deck (board "Valve Jupiter"); on anything else it skips them.
