@@ -4,9 +4,14 @@
 # has a track title (the same title the music island shows, from playerctl):
 # paused or silent, it stays as flat bars; other sounds (notifications, a
 # video without media info) don't make it appear. An empty line hides it.
-#   cava.sh [bars]    number of bars (default 6)
+#   cava.sh [bars] [vertical]    number of bars (default 6); "vertical" for
+#                                the side bar: the same bars turned on their
+#                                side, one per line, growing to the right
+#                                (waybar "return-type": "json")
 
 BARS="${1:-6}"
+VERTICAL=0
+[ "${2:-}" = vertical ] && VERTICAL=1
 RUN="${XDG_RUNTIME_DIR:-/tmp}"
 CONF="$RUN/waybar-cava-$BARS.conf"
 TITLE_FILE="$RUN/waybar-cava-title-$BARS"
@@ -43,17 +48,34 @@ watcher=$!
 # stop the title watcher and its playerctl when waybar stops this script
 trap 'pkill -P "$watcher" 2>/dev/null; kill "$watcher" 2>/dev/null' EXIT INT TERM
 
-# levels 0-7 -> ▁..█. Only lines that changed are printed, so waybar doesn't
-# redraw for identical frames.
-cava -p "$CONF" | awk -v title_file="$TITLE_FILE" '
-BEGIN { split("▁ ▂ ▃ ▄ ▅ ▆ ▇ █", ch, " ") }
+# Levels 0-7, one character per bar: upright ▁..█ in one row; on its side
+# ▏..█, one bar per line (the same bars turned 90°). On its side the lines
+# get a little extra height, the gap the upright bars get from letter-spacing.
+# Sent as JSON there, which can hold several lines.
+# Only frames that changed are printed, so waybar doesn't redraw for
+# identical frames.
+cava -p "$CONF" | awk -v title_file="$TITLE_FILE" -v vertical="$VERTICAL" '
+BEGIN {
+    split("▁ ▂ ▃ ▄ ▅ ▆ ▇ █", up, " ")
+    split("▏ ▎ ▍ ▌ ▋ ▊ ▉ █", side, " ")
+}
 {
-    gsub(/;/, "")
     title = ""
     getline title < title_file
     close(title_file)
     out = ""
-    if (title != "")
-        for (i = 1; i <= length($0); i++) out = out ch[substr($0, i, 1) + 1]
-    if (out != prev) { print out; fflush(); prev = out }
+    if (title != "") {
+        n = split($0, level, ";")
+        for (i = 1; i <= n; i++) {
+            if (level[i] == "") continue
+            if (!vertical) out = out up[level[i] + 1]
+            else out = out (out == "" ? "" : "\\n") side[level[i] + 1]
+        }
+    }
+    if (out == prev) next
+    prev = out
+    # \047 is a single quote (the awk program itself is in single quotes)
+    if (vertical) printf "{\"text\": \"%s\"}\n", (out == "" ? "" : "<span line_height=\0471.1\047>" out "</span>")
+    else print out
+    fflush()
 }'

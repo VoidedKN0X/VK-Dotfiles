@@ -27,8 +27,12 @@
         "modules": ["custom/mpris", "custom/prev", "custom/playpause", "custom/next"]
     },
 
+    // the same visualizer as the top bar, turned on its side: one bar per
+    // line, growing to the right
     "custom/cava": {
-        "exec": "~/.config/waybar/scripts/cava.sh 4"
+        "exec": "~/.config/waybar/scripts/cava.sh 6 vertical",
+        "return-type": "json",
+        "justify": "left"
     },
     "custom/mpris": {
         "format": "󰝚",

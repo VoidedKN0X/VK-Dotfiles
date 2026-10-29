@@ -69,7 +69,7 @@ from gi.repository import Gtk4LayerShell as LayerShell  # noqa: E402
 
 CSS = """
 .panel {
-    padding: 8px 18px 8px 14px;
+    padding: 8px 14px 8px 12px;
     border-radius: 999px;
 }
 
@@ -83,7 +83,7 @@ CSS = """
 }
 
 progressbar {
-    min-width: 150px;
+    min-width: 100px;
 }
 
 progressbar > trough {
@@ -132,7 +132,7 @@ class Osd:
         # position counts from the screen edge, the bar's space included
         LayerShell.set_exclusive_zone(self.win, -1)
 
-        self.panel = Gtk.Box(spacing=12)
+        self.panel = Gtk.Box(spacing=10)
         self.panel.add_css_class("panel")
         self.icon = Gtk.Label()
         self.icon.add_css_class("osd-icon")

@@ -61,6 +61,15 @@ Changes to VK-Dotfiles, newest first.
   `ttf-ubuntu-font-family`, `ttf-nerd-fonts-symbols`.
 
 ### Changed
+- **Side bar visualizer turned on its side** (all profiles): with the bar on
+  the left, cava shows the same six bars as the top bar, rotated 90°: one bar
+  per line (`▏`..`█`), growing to the right, with a little line height as the
+  gap between them. It's drawn smaller there (7 px, 9 px on the Deck) so the
+  six lines stay compact. `cava.sh` takes `vertical` as a second argument and
+  then sends JSON, which can hold several lines (`layouts/left.jsonc`:
+  `"return-type": "json"`).
+- **Narrower volume popup** (all profiles): the level bar is 100 px instead of
+  150 px, with less padding and spacing around the icon and percentage.
 - **Blur works on swaync, and everything is blurred the same.** swaync is a
   GTK4 app, and on Hyprland 0.56 a GTK4 app tells the compositor which areas to
   blur (ext-background-effect); that replaces the layer rules, and GTK only
