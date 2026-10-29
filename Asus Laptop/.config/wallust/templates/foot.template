@@ -1,5 +1,5 @@
 [colors-dark]
-alpha=0.9
+alpha=0.8
 regular0 = {color0.strip}
 regular1 = {color1.strip}
 regular2 = {color2.strip}

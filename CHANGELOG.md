@@ -46,6 +46,22 @@ Changes to VK-Dotfiles, newest first.
   still confirm through `swaync/scripts/power.sh`.
 
 ### Fixed
+- **The music island disappears when nothing is playing** (all profiles).
+  It used to leave an empty glass pill: Waybar 0.15 can't hide a group whose
+  modules are all hidden (its `empty` class only exists in newer versions).
+  The island's glass is now drawn by its modules instead of the group
+  (`waybar/style.css`): the visualizer starts the pill, the title ends it,
+  and with the hover drawer open the pill runs on to the last button. With
+  no player every one of them is hidden, so nothing is drawn. In the side
+  bars the segments stack top to bottom, and only the top one has the
+  glass's top highlight (on the others it showed as a white line between the
+  visualizer and the music icon).
+- **foot is blurred** (all profiles). foot asks the compositor itself what
+  to blur (ext-background-effect-v1), and its own `blur` option is off by
+  default; on Hyprland 0.56 that request wins over Hyprland's window blur, so
+  foot was never blurred. `foot.ini` sets `blur=yes`. Its background is 80%
+  solid (`alpha=0.8`, was 0.9), set in `foot.ini`, `colors-dark.ini` and the
+  wallust template (so a new wallpaper keeps it).
 - **`Install.sh` installs `wireplumber`** (all profiles). The volume keys'
   popup (`hypr/scripts/osd.sh`, since SwayOSD was replaced) uses its `wpctl`
   to change and read the volume, but no script installed it: it only came

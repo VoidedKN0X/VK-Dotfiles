@@ -43,7 +43,6 @@ window#waybar {
 
 /* ── islands ───────────────────────────────────────────────────────── */
 #workspaces,
-#music-island,
 #clock,
 #system,
 #status,
@@ -59,7 +58,6 @@ window#waybar {
     transition: border-color 0.3s ease, background 0.3s ease;
 }
 
-#music-island:hover,
 #clock:hover,
 #system:hover,
 #status:hover {
@@ -68,7 +66,6 @@ window#waybar {
 
 /* side bars (left or right): islands are columns, so padding goes top/bottom */
 window#waybar.vk-left #workspaces,
-window#waybar.vk-left #music-island,
 window#waybar.vk-left #clock,
 window#waybar.vk-left #system,
 window#waybar.vk-left #status,
@@ -76,7 +73,6 @@ window#waybar.vk-left #idle_inhibitor,
 window#waybar.vk-left #custom-notification,
 window#waybar.vk-left #custom-power,
 window#waybar.vk-right #workspaces,
-window#waybar.vk-right #music-island,
 window#waybar.vk-right #clock,
 window#waybar.vk-right #system,
 window#waybar.vk-right #status,
@@ -215,6 +211,88 @@ window#waybar.vk-right #custom-cava {
     font-size: 7px;
     letter-spacing: 0;
     padding: 4px 0;
+}
+
+/* The music island's glass is drawn by its modules, not by the group: while
+   nothing is playing all of them are hidden, so the island disappears
+   completely instead of leaving an empty pill. (Waybar 0.15 can't hide an
+   empty group: its "empty" class only exists in newer versions.)
+   Segments: visualizer (start of the pill), title (end of the pill), and when
+   the hover drawer is open (the group is :hover then) the title runs on into
+   the artist and buttons, with the last button ending the pill. */
+#custom-cava,
+#custom-mpris,
+#custom-artist,
+#custom-prev,
+#custom-playpause,
+#custom-next {
+    background: @glass;
+    border: 0 solid @edge;
+    border-width: 1px 0;
+    box-shadow: inset 0 1px alpha(#ffffff, 0.07);
+}
+
+#custom-cava {
+    border-left-width: 1px;
+    border-radius: 999px 0 0 999px;
+    padding-left: 14px;
+}
+
+#custom-mpris,
+#custom-next {
+    border-right-width: 1px;
+    border-radius: 0 999px 999px 0;
+    padding-right: 14px;
+}
+
+#music:hover #custom-mpris {
+    border-right-width: 0;
+    border-radius: 0;
+    padding-right: 5px;
+}
+
+/* side bars: the same, stacked top to bottom */
+window#waybar.vk-left #custom-cava,
+window#waybar.vk-left #custom-mpris,
+window#waybar.vk-left #custom-prev,
+window#waybar.vk-left #custom-playpause,
+window#waybar.vk-left #custom-next,
+window#waybar.vk-right #custom-cava,
+window#waybar.vk-right #custom-mpris,
+window#waybar.vk-right #custom-prev,
+window#waybar.vk-right #custom-playpause,
+window#waybar.vk-right #custom-next {
+    border-width: 0 1px;
+    border-radius: 0;
+    padding-left: 0;
+    padding-right: 0;
+    /* the glass's top highlight only on the first segment: on the stacked
+       ones it would be a line across the pill */
+    box-shadow: none;
+}
+
+window#waybar.vk-left #custom-cava,
+window#waybar.vk-right #custom-cava {
+    border-top-width: 1px;
+    border-radius: 19px 19px 0 0;
+    padding-top: 12px;
+    box-shadow: inset 0 1px alpha(#ffffff, 0.07);
+}
+
+window#waybar.vk-left #custom-mpris,
+window#waybar.vk-left #custom-next,
+window#waybar.vk-right #custom-mpris,
+window#waybar.vk-right #custom-next {
+    border-bottom-width: 1px;
+    border-radius: 0 0 19px 19px;
+    padding-bottom: 12px;
+}
+
+window#waybar.vk-left #music:hover #custom-mpris,
+window#waybar.vk-right #music:hover #custom-mpris {
+    border-bottom-width: 0;
+    border-radius: 0;
+    padding-bottom: 5px;
 }
 
 #custom-artist {
