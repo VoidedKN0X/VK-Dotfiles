@@ -12,6 +12,16 @@ if [ -z "$WALLPAPER" ] && [ -f "$LAST_WALLPAPER" ]; then
     WALLPAPER=$(sed 's/^\$current_wallpaper = //' "$LAST_WALLPAPER")
 fi
 
+# At login the colors made from the saved wallpaper are already in place, so
+# only the wallpaper itself is shown (no wallust run, no bar/OSD restarts).
+# The colors are made again if the saved wallpaper is gone, or if a wallust
+# template or wallust.toml changed since (e.g. after Install.sh copied new ones).
+RESTORE_ONLY=0
+if [ -z "${1:-}" ] && [ -f "$WALLPAPER" ] &&
+    [ -z "$(find "$HOME/.config/wallust" -type f -newer "$LAST_WALLPAPER" 2>/dev/null)" ]; then
+    RESTORE_ONLY=1
+fi
+
 # Fall back to the first wallpaper (sorted, so it's the same one every time)
 if [ -z "$WALLPAPER" ] || [ ! -f "$WALLPAPER" ]; then
     WALLPAPER=$(find "$WALLPAPER_DIR" -iregex '.*\.\(jpg\|jpeg\|png\|gif\)' -type f 2>/dev/null | sort | head -n 1)
@@ -30,6 +40,7 @@ for _ in $(seq 50); do
 done
 
 awww img "$WALLPAPER"
+[ "$RESTORE_ONLY" = 1 ] && exit 0
 
 # Generate and apply accent colors
 wallust run "$WALLPAPER"

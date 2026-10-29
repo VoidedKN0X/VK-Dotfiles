@@ -12,6 +12,7 @@ application/x-folder=thunar.desktop
 image/jpeg=org.xfce.ristretto.desktop
 image/png=org.xfce.ristretto.desktop
 x-scheme-handler/nxm=amethystmodmanager-nxm.desktop
+x-scheme-handler/claude-cli=claude-code-url-handler.desktop
 
 [Added Associations]
 inode/directory=thunar.desktop
@@ -19,3 +20,6 @@ application/x-folder=thunar.desktop
 image/jpeg=org.xfce.ristretto.desktop;
 text/html=codium.desktop;
 image/png=org.xfce.ristretto.desktop;
+video/webm=vlc.desktop;
+video/mp4=vlc.desktop;
+application/json=codium.desktop;

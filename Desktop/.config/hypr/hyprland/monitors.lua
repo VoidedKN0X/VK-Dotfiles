@@ -21,13 +21,29 @@ local dp1 = {
     vrr = 3,  -- adaptive sync only for fullscreen games and video
 }
 
+-- manual HDR switch for DP-1, bound in keybinds.lua. Its state is kept in a
+-- file so it survives config reloads (wallust rewrites border-colors.lua on
+-- every wallpaper change, which reloads the config). $XDG_RUNTIME_DIR is
+-- emptied at logout, so every login still starts in SDR.
+local hdr_state_file = (os.getenv("XDG_RUNTIME_DIR") or "/tmp") .. "/hypr-dp1-hdr"
+local function hdr_saved()
+    local f = io.open(hdr_state_file, "r")
+    if f then f:close() end
+    return f ~= nil
+end
+
+local dp1_hdr = hdr_saved()
+dp1.cm = dp1_hdr and "hdr" or "srgb"
 hl.monitor(dp1)
 
--- manual HDR switch for DP-1, bound in keybinds.lua; a config reload
--- puts it back to SDR
-local dp1_hdr = false
 function toggle_dp1_hdr()
     dp1_hdr = not dp1_hdr
+    if dp1_hdr then
+        local f = io.open(hdr_state_file, "w")
+        if f then f:close() end
+    else
+        os.remove(hdr_state_file)
+    end
     dp1.cm = dp1_hdr and "hdr" or "srgb"
     hl.monitor(dp1)
     hl.notification.create({

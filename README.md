@@ -23,7 +23,7 @@ stays self-contained and works on its own.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
-| `Desktop/` | Desktop PC | Two monitors (3440x1440 + rotated 2560x1440, both 165 Hz, VRR), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
+| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
@@ -115,7 +115,7 @@ Then **reboot**. It runs these stages in order:
    Secure Boot on. If you skip Setup Mode, this step reports a failure and the rest still runs.
 4. **Performance tuning:** sysctl (smaller write batches, BBR networking, NMI watchdog off, and
    swap tuning for zram when zram is set up, with zswap turned off), a hard-disk readahead rule,
-   transparent huge pages, noatime, 32-bit gamemode and MangoHud, Proton-CachyOS, the `ntsync`
+   transparent huge pages, noatime, 32-bit gamemode and MangoHud, Proton-CachyOS, Heroic, the `ntsync`
    module (smoother frame times with Proton-CachyOS and GE-Proton), and a lower default PipeWire
    latency. The HDA audio power-save tweak is desktop-only, to save battery on the laptop and the
    Deck.
@@ -179,6 +179,7 @@ password and run `pkill -USR1 hyprlock`.
 | <kbd>Super</kbd> + <kbd>N</kbd> | Notification center |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>R</kbd> | Restart the bar and notifications |
+| <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> *(desktop)* | HDR on/off on the main monitor (needed for HDR on YouTube in Chromium: turn it on, then reload the video) |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Log out |
 | <kbd>Print</kbd> | Screenshot (copied + saved to `~/Pictures/Screenshots`) |
 | <kbd>Shift</kbd> + <kbd>Print</kbd> | Screenshot of a selected area (draw on it, then Enter: copied + saved) |

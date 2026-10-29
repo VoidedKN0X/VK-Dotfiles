@@ -69,8 +69,22 @@ if [[ -z "$target" ]]; then
 fi
 
 # Already prepared (installs on the next restart)? Then there's nothing to do.
-if [[ "$(cat "$DIR/staged" 2>/dev/null)" == "$target" ]]; then
-  write_status staged "$target"; exit 0
+# "staged" holds the target version and the boot it was prepared in. If the
+# Deck has restarted since and the BIOS is still the old version, the update
+# didn't install: report it and prepare it again (after the 24-hour limit).
+boot_id="$(cat /proc/sys/kernel/random/boot_id)"
+{ read -r staged_target staged_boot < "$DIR/staged"; } 2>/dev/null || true
+if [[ "${staged_target:-}" == "$target" ]]; then
+  # older versions of this script saved no boot: count it as this boot
+  if [[ -z "${staged_boot:-}" ]]; then
+    echo "$target $boot_id" > "$DIR/staged"; staged_boot="$boot_id"
+  fi
+  if [[ "${staged_boot:-}" == "$boot_id" ]]; then
+    write_status staged "$target"; exit 0
+  fi
+  rm -f "$DIR/staged"
+  log "BIOS $target was prepared, but the restart didn't install it (still $current)"
+  write_status failed "$target"; exit 1
 fi
 
 # Does Valve allow this update to be installed automatically?
@@ -104,8 +118,11 @@ fi
 echo "$now" > "$attempt_file"
 
 # --- 4. Prepare the update (no --auto = no reboot) ---
-if jupiter-biosupdate; then
-  echo "$target" > "$DIR/staged"
+# Sleep, shutdown and the power button are blocked while the flasher writes, so
+# a tap on the power button can't suspend the Deck halfway through.
+if systemd-inhibit --what=sleep:shutdown:idle:handle-power-key --mode=block \
+    --who=steamdeck-bios-update --why="Preparing a BIOS update" jupiter-biosupdate; then
+  echo "$target $boot_id" > "$DIR/staged"
   write_status staged "$target"
 else
   write_status failed "$target"; exit 1

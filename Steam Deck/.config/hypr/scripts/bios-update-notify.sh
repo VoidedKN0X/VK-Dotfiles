@@ -41,7 +41,7 @@ check() {
     case "$state" in
         staged)
             once status "staged>$target" -u normal \
-                "BIOS update ready" "BIOS $target installs on the next restart. Keep the charger connected while it restarts." ;;
+                "BIOS update ready" "BIOS $target installs on the next restart. Connect the charger before you restart: the battery is not checked again when it installs." ;;
         needs-ac)
             once status "needs-ac>$target" \
                 "BIOS update available" "BIOS $target is available. Connect the charger: it's prepared automatically within the hour." ;;

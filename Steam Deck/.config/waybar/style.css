@@ -44,7 +44,6 @@ tooltip {
 #network:hover,
 #battery:hover,
 #temperature:hover,
-#mpris:hover,
 #custom-mpris:hover,
 #custom-playpause:hover,
 #pulseaudio:hover,
@@ -66,7 +65,6 @@ tooltip {
     color: @color7;
 }
 
-#mpris,
 #custom-mpris {
     padding: 0px 7px;
     transition: all .3s ease;

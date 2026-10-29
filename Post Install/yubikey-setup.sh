@@ -51,6 +51,9 @@ FAILS=0
 fail()    { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; FAILS=$((FAILS + 1)); }
 section() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
 ask()     { local a; read -rp "$1 [y/N] " a; [[ "$a" =~ ^[Yy] ]]; }
+# Copy a system file to <file>.bak-yubikey before its first change. An existing
+# backup is kept, so it always holds the original from before this script.
+backup()  { [[ -e "$1" && ! -e "$1.bak-yubikey" ]] && cp -a "$1" "$1.bak-yubikey" && ok "backup: $1.bak-yubikey"; return 0; }
 
 for cmd in pamu2fcfg systemd-cryptenroll; do
   command -v "$cmd" >/dev/null || { fail "$cmd not found (Install.sh installs pam-u2f and libfido2)"; exit 1; }
@@ -83,10 +86,15 @@ register_keys() {
   section "1. Register YubiKeys for login / sudo / lock screen"
 
   if [[ -s "$KEYFILE" ]]; then
-    line="$(grep -m1 "^${REAL_USER}:" "$KEYFILE")"
-    if [[ -n "$line" ]]; then
+    # older setups can have a second "user:" line for another key: read them all,
+    # they're merged into one line when the file is written below
+    while IFS= read -r line; do
+      IFS=':' read -ra keys <<<"${line#"${REAL_USER}":}"
+      existing+=("${keys[@]}")
+    done < <(grep "^${REAL_USER}:" "$KEYFILE")
+    keys=()
+    if [[ ${#existing[@]} -gt 0 ]]; then
       # the registered keys are always kept; new keys are added after them
-      IFS=':' read -ra existing <<<"${line#"${REAL_USER}":}"
       ok "${#existing[@]} key(s) already registered for $REAL_USER (they stay registered)"
       ask "Add another key (e.g. your 2nd YubiKey)?" || return 0
     elif ! ask "Register your YubiKeys for $REAL_USER now?"; then
@@ -207,10 +215,12 @@ setup_pam() {
   ask "Apply this?" || { warn "PAM left unchanged"; return 0; }
 
   if [[ -n "${ins_line:-}" ]]; then
+    backup "$f"
     sed -i "${ins_line}${ins_mode}\\${PAM_LINE}" "$f"
     ok "added pam_u2f to $f"
   fi
   if [[ $hyprlock_change -eq 1 ]]; then
+    backup "$HYPRLOCK_PAM_FILE"
     printf '%s\n' "$HYPRLOCK_PAM" > "$HYPRLOCK_PAM_FILE"
     chmod 644 "$HYPRLOCK_PAM_FILE"
     ok "$HYPRLOCK_PAM_FILE now accepts only the YubiKey"
@@ -242,6 +252,7 @@ enable_fido2_at_boot() {
       ok "crypttab.initramfs already has fido2-device for this disk"
       return 0
     fi
+    backup /etc/crypttab.initramfs
     awk -v u="UUID=${uuid}" -v d="$dev" -v b="/dev/disk/by-uuid/${uuid}" '
       $1 !~ /^#/ && ($2 == u || $2 == d || $2 == b) {
         if (NF < 3) $3 = "none"
@@ -263,6 +274,7 @@ enable_fido2_at_boot() {
     elif grep -qE '(^|[[:space:]])rd\.luks\.options=' <<<"$cmdline"; then
       warn "cmdline already has rd.luks.options= - add ',fido2-device=auto' to it by hand"
     else
+      backup /etc/kernel/cmdline
       echo "$cmdline rd.luks.options=fido2-device=auto" > /etc/kernel/cmdline
       ok "added rd.luks.options=fido2-device=auto to /etc/kernel/cmdline"
       REBUILD=1

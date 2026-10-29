@@ -2,6 +2,85 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-10-29
+
+### Fixed
+- **Waybar no longer crashes when music starts** (all profiles: Desktop,
+  Asus Laptop, Steam Deck). Waybar's built-in `mpris` module crashed waybar
+  (segfault in libplayerctl) the first time music started playing, so the bar
+  had to be restarted by hand. It's replaced by `custom/mpris`, which runs
+  `playerctl --follow metadata` as its own process, so a playerctl problem
+  can't take the bar down. Clicking the title toggles play/pause. Titles are
+  escaped (`markup_escape`), so a title with `&` or `<` still shows, and both
+  music modules restart after 5 seconds if playerctl exits
+  (`restart-interval`). This replaces the `mpris` module from 2026-10-22.
+- **Fresh installs no longer stop at the pacman step** (all profiles).
+  `Install.sh` wrote `/etc/default/earlyoom` before installing earlyoom; that
+  file belongs to the earlyoom package, so pacman refused the whole install.
+  It's now written after the pacman install.
+- **HDR stays on when you change the wallpaper** (Desktop). wallust rewrites
+  `hypr/hyprland/border-colors.lua`, which reloads the Hyprland config, and
+  the reload put DP-1 back to SDR. The HDR toggle now keeps its state in
+  `$XDG_RUNTIME_DIR/hypr-dp1-hdr`; every login still starts in SDR.
+- **Restarting waybar (Super + R) no longer leaves playerctl running**
+  (all profiles). The music modules' `playerctl --follow` processes don't
+  exit with waybar, so every restart left another set behind;
+  `restart-waybar-swaync.sh` now stops them with waybar.
+- **Steam Deck BIOS updates**: a prepared update that didn't install at the
+  next restart was reported as "ready" forever and never tried again. The
+  boot it was prepared in is now saved with it; after a restart without the
+  new version it's reported as failed and prepared again. Sleep, shutdown
+  and the power button are blocked while the update is written
+  (`systemd-inhibit`), and the "BIOS update ready" notification says to
+  connect the charger before restarting.
+
+### Changed
+- **Desktop main monitor (DP-1) runs SDR by default, with HDR when needed.**
+  It runs at 280 Hz (was 165 Hz). `render.cm_auto_hdr` switches it to HDR
+  by itself while a fullscreen game or video shows HDR content, and
+  <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> switches it by hand
+  (needed for HDR on YouTube in Chromium, which only offers HDR when the
+  screen is already in HDR mode). DP-2 never switches to HDR. The HDR
+  brightness values come from the monitor's EDID; `sdr_min_luminance = 0`
+  keeps SDR blacks black while in HDR. README updated.
+- **Running `Install.sh` again keeps your wallpaper and colors** (all
+  profiles). The chosen wallpaper (`hypr/colors/current-wallpaper.conf`), the
+  files wallust generates from it, and settings apps save themselves
+  (btop, and Thunar on the Deck) are only copied when they don't exist yet.
+- **Each Desktop bar shows only its own monitor's workspaces**: DP-1 shows
+  1, 3, 5 and DP-2 shows 2, 4 (the split from the workspace rules in
+  `monitors.lua`), instead of 1-5 on both bars.
+- **Desktop file associations**: `mimeapps.list` adds claude-cli links
+  (Claude Code), webm/mp4 (VLC) and JSON (VSCodium).
+- **Logging in is lighter** (all profiles). `wallpaper.sh` at login only shows
+  the saved wallpaper; wallust, the waybar/swaync reload and the swayosd
+  restart now run only for a new wallpaper, or when a wallust template
+  changed since the colors were made.
+- **`Install.sh`** (all profiles):
+  - asks before removing orphaned packages (it removed them without asking,
+    on every run);
+  - switches the login screen to greetd also when another one (e.g. sddm) is
+    enabled;
+  - masks power-profiles-daemon, tuned and TLP when they're installed, so they
+    don't fight auto-cpufreq over the CPU settings;
+  - installs `faugus-launcher`, `jdownloader2`, `auto-cpufreq`,
+    `claude-desktop` and `claude-code` with pacman (they're in the CachyOS
+    repo), and the AUR packages the desktop needs (wallust, the cursor theme,
+    qt6ct-kde, and lisgd on the Deck) before the optional ones, so a failed
+    build can't leave them out;
+  - installs and enables NetworkManager (the Wi-Fi button and waybar use
+    `nmcli`/`nmtui`).
+- **Asus Laptop**: `upower` (critical-battery action, keyboard backlight in
+  swayosd) and `intel-media-driver` (hardware video decoding) are installed;
+  the disk temperature warning is at 80 °C instead of 70 °C (laptop NVMe
+  drives often pass 70 °C under load); waybar's network module matches any
+  Wi-Fi card (`wl*`) and the temperature module reads the CPU package sensor
+  (coretemp).
+- **`yubikey-setup.sh`** saves a `.bak-yubikey` copy of `/etc/pam.d/system-auth`,
+  `/etc/pam.d/hyprlock`, `/etc/crypttab.initramfs` and `/etc/kernel/cmdline`
+  before changing them for the first time, and keeps keys saved on more than
+  one line of `u2f_keys` (older setups) instead of dropping all but the first.
+
 ## 2026-10-22
 
 ### Changed

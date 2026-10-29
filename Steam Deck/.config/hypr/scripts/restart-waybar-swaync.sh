@@ -13,6 +13,9 @@ for _ in $(seq 20); do
 done
 # Still alive after 2s: force it
 killall -q -9 waybar
+# The music modules' playerctl processes don't exit with waybar: stop them
+# too, or every restart leaves another set running
+pkill -f '^playerctl --follow (status|metadata)'
 
 # a swaync started outside systemd (older login) would block the service
 pkill -x -f '^swaync$' && sleep 0.5

@@ -28,14 +28,11 @@
             "default": "",
             "empty": ""
         },
+        // each bar shows only its own monitor's workspaces (same split as the
+        // workspace rules in hypr/hyprland/monitors.lua)
         "persistent-workspaces": {
-            "*": [
-                1,
-                2,
-                3,
-                4,
-                5
-            ]
+            "DP-1": [1, 3, 5],
+            "DP-2": [2, 4]
         }
     },
     "custom/notification": {
@@ -119,11 +116,13 @@
     "custom/playpause": {
         "exec": "playerctl --follow status 2>/dev/null | sed -u -e 's/^Playing$/\uf04c/' -e 's/^Paused$/\uf04b/' -e 's/^Stopped$//'",
         "on-click": "playerctl play-pause",
+        "restart-interval": 5,
         "tooltip": false
     },
     "custom/mpris": {
-        "exec": "playerctl --follow metadata --format '{{ trunc(title, 20) }}' 2>/dev/null",
+        "exec": "playerctl --follow metadata --format '{{ markup_escape(trunc(title, 20)) }}' 2>/dev/null",
         "on-click": "playerctl play-pause",
+        "restart-interval": 5,
         "tooltip": false
     },
 

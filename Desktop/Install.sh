@@ -169,49 +169,47 @@ PACMAN_PKGS=(
     bluez
     bluez-utils
     libnotify
+    # in the CachyOS repo (were installed through yay before)
+    faugus-launcher
+    jdownloader2
+    auto-cpufreq
+    claude-desktop
+    claude-code
+    # Wi-Fi/network tools used by the swaync Wi-Fi button and waybar (nmcli, nmtui)
+    networkmanager
 )
 
 # === Packages (AUR, via yay) ===
+# The desktop itself needs these: installed on their own first, so a failed
+# build of one of the big optional apps below can't leave them out
+AUR_ESSENTIAL_PKGS=(
+    wallust-git
+    bibata-cursor-theme-bin
+    qt6ct-kde
+)
 AUR_PKGS=(
     rapidraw-bin
     bs-manager-bin
-    faugus-launcher
     xrizer
     lib32-xrizer
     wivrn-dashboard
     amethyst-mod-manager
-    wallust-git
     github-desktop-bin
     eid-mw
-    jdownloader2
     orca-slicer-bin
-    auto-cpufreq
     mangojuice-bin
     localsend-bin
     opendeck-bin
     imsprog
     vscodium-bin
     vscodium-bin-marketplace
-    bibata-cursor-theme-bin
-    qt6ct-kde
     yubico-authenticator-bin
     bedrock-on-linux-bin
-    claude-desktop
-    claude-code
 )
-
-# === Memory: close the biggest app instead of freezing (earlyoom) ===
-# When free memory AND free swap (zram) both drop below 10%, earlyoom closes
-# the single process using the most memory - usually the game or app that
-# filled it - before the system locks up. The desktop itself (Hyprland, bar,
-# notifications, login) is never picked (--ignore).
-# -r 0: no memory reports in the journal. (No quotes around the regex: the
-# service passes it on word by word, quotes would become part of it.)
-echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|swayosd-server|waybar|swaync)$"' \
-    | sudo tee /etc/default/earlyoom >/dev/null
 
 # === Services (enabled AND started) ===
 SERVICES=(
+    NetworkManager.service
     pcscd.service
     cups.service
     auto-cpufreq.service
@@ -250,6 +248,18 @@ sudo "$POST_DIR/cachyos-repo.sh" || { echo "CachyOS repo setup failed, stopping.
 # installing onto an out-of-date system (a partial upgrade).
 sudo pacman -Syu --needed "${PACMAN_PKGS[@]}" || { echo "pacman install failed, stopping." >&2; exit 1; }
 
+# === Memory: close the biggest app instead of freezing (earlyoom) ===
+# Written after the pacman install: earlyoom's package owns this file, so a
+# copy written before it is installed makes pacman refuse the whole install.
+# When free memory AND free swap (zram) both drop below 10%, earlyoom closes
+# the single process using the most memory - usually the game or app that
+# filled it - before the system locks up. The desktop itself (Hyprland, bar,
+# notifications, login) is never picked (--ignore).
+# -r 0: no memory reports in the journal. (No quotes around the regex: the
+# service passes it on word by word, quotes would become part of it.)
+echo 'EARLYOOM_ARGS="-r 0 --ignore ^(Hyprland|start-hyprland|greetd|systemd|sshd|swayosd-server|waybar|swaync)$"' \
+    | sudo tee /etc/default/earlyoom >/dev/null
+
 # Install yay (skipped if it's already installed), built in a temp dir
 if ! command -v yay >/dev/null; then
     YAY_TMP="$(mktemp -d)"
@@ -263,6 +273,7 @@ if ! command -v yay >/dev/null; then
 fi
 
 # Install apps from yay (a failed AUR build shouldn't stop the config copy below)
+yay -S --needed "${AUR_ESSENTIAL_PKGS[@]}" || warn "some essential AUR packages failed to install"
 yay -S --needed "${AUR_PKGS[@]}" || warn "some AUR packages failed to install"
 
 # === Shell + CLI tools (as your user) ===
@@ -289,12 +300,21 @@ if [[ ! -x "$HOME/.opencode/bin/opencode" ]]; then
     curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path || warn "OpenCode install failed"
 fi
 
-# Remove leftover install files (orphaned deps such as make-dependencies, then caches)
+# Remove leftover install files (orphaned deps such as make-dependencies, then caches).
+# pacman lists the orphans and asks first: on a re-run the list can also hold
+# optional dependencies you installed on purpose.
 mapfile -t ORPHANS < <(pacman -Qdtq)
 if [[ ${#ORPHANS[@]} -gt 0 ]]; then
-    sudo pacman -Rns --noconfirm "${ORPHANS[@]}" || warn "orphan removal failed"
+    sudo pacman -Rns "${ORPHANS[@]}" || warn "orphan removal skipped or failed"
 fi
 yay -Sc --noconfirm || warn "cache cleanup failed"
+
+# auto-cpufreq sets the CPU governor and power profile itself: stop and mask the
+# other daemons that do the same (the CachyOS installer can add them), so they
+# don't fight over it. Units that aren't installed are skipped.
+for unit in power-profiles-daemon.service tuned.service tuned-ppd.service tlp.service; do
+    systemctl list-unit-files "$unit" >/dev/null 2>&1 && sudo systemctl mask --now "$unit"
+done
 
 # Enable services one by one, so one missing unit doesn't skip all the others
 for unit in "${SERVICES[@]}"; do
@@ -304,6 +324,11 @@ done
 # pkgfile's list of files, downloaded now and refreshed by pkgfile-update.timer
 sudo pkgfile --update >/dev/null || warn "could not download the pkgfile database"
 # greetd is only enabled, not started: starting it now would replace this session
+# If another login screen (e.g. sddm) is enabled, display-manager.service already
+# points to it and enabling greetd fails: switch it over to greetd.
+if [[ "$(readlink -f /etc/systemd/system/display-manager.service 2>/dev/null)" != */greetd.service ]]; then
+    sudo systemctl disable display-manager.service 2>/dev/null
+fi
 sudo systemctl enable greetd.service || warn "could not enable greetd.service"
 
 # === Login screen (greetd + tuigreet) ===
@@ -413,9 +438,32 @@ for _d in /media /media/Games /media/Recordings /media/Data /media/Backup; do
     [[ -d "$_d" ]] && sudo chown "$USER:" "$_d"
 done
 
-# Copy .config folder and .zshrc
+# Copy .config folder and .zshrc. Files the desktop changes by itself are kept
+# when they already exist, so running this again doesn't reset them: the chosen
+# wallpaper, the colors wallust made from it, and settings apps save themselves.
+KEEP_IF_EXISTS=(
+    hypr/colors/current-wallpaper.conf
+    waybar/colors/colors.css
+    swaync/colors/colors.css
+    swayosd/colors/colors.css
+    foot/colors-dark.ini
+    rofi/colors/colors.rasi
+    hypr/hyprland/border-colors.lua
+    hypr/colors/hyprlock-colors.conf
+    btop/themes/wallust.theme
+    opencode/themes/wallust.json
+    btop/btop.conf
+)
 mkdir -p "$HOME/.config"
+KEEP_TMP="$(mktemp -d)"
+for f in "${KEEP_IF_EXISTS[@]}"; do
+    if [[ -e "$HOME/.config/$f" ]]; then
+        mkdir -p "$KEEP_TMP/$(dirname "$f")" && cp -a "$HOME/.config/$f" "$KEEP_TMP/$f"
+    fi
+done
 cp -r "$PROFILE_DIR/.config/." "$HOME/.config/"
+cp -a "$KEEP_TMP/." "$HOME/.config/"
+rm -rf "$KEEP_TMP"
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so
