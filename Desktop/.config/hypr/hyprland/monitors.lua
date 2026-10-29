@@ -55,7 +55,7 @@ end
 hl.monitor({
     output = "DP-2",
     mode = "2560x1440@165",
-    position = "3440x-415",
+    position = "3440x-462",
     scale = 1,
     transform = 3,
     bitdepth = 10,
