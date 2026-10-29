@@ -47,11 +47,31 @@ Changes to VK-Dotfiles, newest first.
   profiles). The chosen wallpaper (`hypr/colors/current-wallpaper.conf`), the
   files wallust generates from it, and settings apps save themselves
   (btop, and Thunar on the Deck) are only copied when they don't exist yet.
-- **Each Desktop bar shows only its own monitor's workspaces**: DP-1 shows
-  1, 3, 5 and DP-2 shows 2, 4 (the split from the workspace rules in
-  `monitors.lua`), instead of 1-5 on both bars.
-- **Desktop file associations**: `mimeapps.list` adds claude-cli links
-  (Claude Code), webm/mp4 (VLC) and JSON (VSCodium).
+- **Each Desktop bar shows five dots for its own monitor's workspaces**: DP-1
+  shows 1, 3, 5, 7, 9 and DP-2 shows 2, 4, 6, 8, 10 (the split from the
+  workspace rules in `monitors.lua`), instead of 1-5 on both bars.
+- **Desktop file associations** (`mimeapps.list`) cover every file type the
+  installed apps can open (about 1,100 entries, alias names included):
+  - web pages and links (also XHTML and browser add-ons): LibreWolf
+  - all text and code (everything the system treats as text, also shell,
+    Perl, Ruby, Lua, fish scripts, CSV, JSON, XML, YAML, TOML, logs): VSCodium
+  - images: Ristretto for every type it can open (its gdk-pixbuf/glycin
+    loaders: also AVIF, HEIC/HEIF, JPEG XL, SVG, ICO, TGA, ...), editor
+    formats (XCF, PSD, JPEG 2000, ...) in GIMP
+  - RAW photos (all 30 RAW types, also Canon CR3, CR2, Nikon NEF, Sony ARW,
+    DNG, Fuji RAF): RapidRAW. Its own entry has no file argument and lists no
+    file types, so the new `.local/share/applications/RapidRAW.desktop`
+    overrides it with `Exec=RapidRAW %f` (RapidRAW opens the file straight in
+    the editor) and the RAW types; `Install.sh` copies it. darktable stays
+    available under "Open with" and keeps the HDR formats (ACES, Radiance, PFM)
+  - all video and audio, and playlists: VLC
+  - PDF and comic books: Papers; office documents: LibreOffice (Writer, Calc,
+    Impress, Draw, Math); archives and disk images: File Roller
+  - 3D prints (STL, OBJ, 3MF): OrcaSlicer; CAD (STEP, IGES, FreeCAD): FreeCAD
+  - Windows programs and installers: Faugus; `.jar`: Java; torrents and magnet
+    links: qBittorrent; certificates and keys: the certificate viewer
+  - app links (Steam, Discord, Element, Heroic, GitHub Desktop, Claude,
+    nxm, ...) go to their own app; Kdenlive and Audacity projects to their apps.
 - **Logging in is lighter** (all profiles). `wallpaper.sh` at login only shows
   the saved wallpaper; wallust, the waybar/swaync reload and the swayosd
   restart now run only for a new wallpaper, or when a wallust template
