@@ -175,13 +175,18 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
 - **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> moves the bar between the top and the
   left edge (on an OLED screen, so it doesn't stay in one place). The notification panel,
   calendar, music and volume popups move with it. The choice survives a reinstall.
+  On the desktop this is the main monitor's bar: the rotated DP-2 always has its bar on the
+  right edge (too narrow for a top bar), and the popups and notification panel open next to
+  whichever bar you click.
 - **Blur:** Hyprland's layer rules blur the bar (`hypr/hyprland/rules.lua`). swaync and the popups
   are GTK4 apps: they mark the areas to blur themselves with `backdrop-filter` in their CSS
   (Hyprland 0.56 follows the app, not the layer rules). The strength is `decoration.blur` in
   `hypr/hyprland/decoration.lua`, the same for everything.
-- **Files:** `waybar/config.jsonc` only includes the others: `layouts/top.jsonc` /
-  `layouts/left.jsonc` (what differs per edge), `layouts/current.jsonc` (the edge in use, written
-  by `scripts/bar-position.sh`) and `modules.jsonc` (everything else). The popups are
+- **Files:** `waybar/config.jsonc` only includes the others (on the desktop, per monitor):
+  `layouts/top.jsonc` / `layouts/left.jsonc` / `layouts/right.jsonc` (what differs per edge),
+  `layouts/current.jsonc` (the main bar's edge, written by `scripts/bar-position.sh`) and
+  `modules.jsonc` (everything else). `scripts/notifications.sh` opens the notification panel
+  next to the bell of the bar you're on. The popups are
   `waybar/scripts/calendar.py`, `music.py` and `osd.py`; `popup_common.py` holds their shared
   look and the gap between them and the bar (`GAP`, in px).
 - **Fonts:** text in Ubuntu, icons from Symbols Nerd Font, so the icons line up with the numbers.
@@ -207,7 +212,7 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
 | <kbd>Super</kbd> + <kbd>N</kbd> | Notification center |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
 | <kbd>Super</kbd> + <kbd>R</kbd> | Restart the bar and notifications |
-| <kbd>Super</kbd> + <kbd>B</kbd> | Move the bar between the top and the left edge |
+| <kbd>Super</kbd> + <kbd>B</kbd> | Move the bar between the top and the left edge (desktop: the main monitor's bar) |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> *(desktop)* | HDR on/off on the main monitor (needed for HDR on YouTube in Chromium: turn it on, then reload the video) |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Log out |
 | <kbd>Print</kbd> | Screenshot (copied + saved to `~/Pictures/Screenshots`) |

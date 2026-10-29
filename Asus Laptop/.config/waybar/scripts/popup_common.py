@@ -29,8 +29,43 @@ def preload_layer_shell():
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
 
-def bar_position():
-    """'left' or 'top', from the layout waybar is using."""
+def _read_jsonc(path):
+    import re
+    with open(path) as f:
+        return json.loads(re.sub(r"^\s*//.*$", "", f.read(), flags=re.M))
+
+
+def focused_monitor_name():
+    """Name of the monitor Hyprland has focused (e.g. DP-1), or None."""
+    try:
+        out = subprocess.run(["hyprctl", "monitors", "-j"], capture_output=True, text=True, timeout=2).stdout
+        return next(m["name"] for m in json.loads(out) if m.get("focused"))
+    except (OSError, ValueError, StopIteration, subprocess.SubprocessError):
+        return None
+
+
+def bar_position(monitor=None):
+    """Edge of the bar on a monitor (default: the focused one): 'top', 'left'
+    or 'right'. waybar/config.jsonc can give monitors their own bar (on the
+    desktop DP-2 always has one on the right); otherwise the bar follows
+    layouts/current.jsonc (top or left, switched with Super + B)."""
+    layout = "current"
+    try:
+        config = _read_jsonc(os.path.join(CONFIG, "config.jsonc"))
+        if isinstance(config, list):
+            monitor = monitor or focused_monitor_name()
+            for bar in config:
+                outputs = bar.get("output", [])
+                outputs = [outputs] if isinstance(outputs, str) else outputs
+                if monitor in outputs:
+                    includes = bar.get("include", [])
+                    includes = [includes] if isinstance(includes, str) else includes
+                    layout = next((os.path.basename(i)[:-6] for i in includes if "/layouts/" in i), layout)
+                    break
+    except (OSError, ValueError, AttributeError):
+        pass
+    if layout in ("top", "left", "right"):
+        return layout
     try:
         with open(os.path.join(CONFIG, "layouts", "current.jsonc")) as f:
             return "left" if "left.jsonc" in f.read() else "top"
@@ -40,16 +75,14 @@ def bar_position():
 
 def bar_edge(position):
     """Where the bar ends, in px from the screen edge: margin + height (top)
-    or margin + width (left), read from waybar/layouts/<position>.jsonc, so
-    every profile's own bar size is used."""
-    import re
+    or margin + width (left, right), read from waybar/layouts/<position>.jsonc,
+    so every profile's own bar size is used."""
     try:
-        with open(os.path.join(CONFIG, "layouts", f"{position}.jsonc")) as f:
-            layout = json.loads(re.sub(r"^\s*//.*$", "", f.read(), flags=re.M))
+        layout = _read_jsonc(os.path.join(CONFIG, "layouts", f"{position}.jsonc"))
     except (OSError, ValueError):
         layout = {}
-    if position == "left":
-        return layout.get("margin-left", 8) + layout.get("width", 40)
+    if position in ("left", "right"):
+        return layout.get(f"margin-{position}", 8) + layout.get("width", 40)
     return layout.get("margin-top", 8) + layout.get("height", 30)
 
 
@@ -136,3 +169,8 @@ def cursor_position():
         return pos["x"], pos["y"]
     except (OSError, ValueError, KeyError, subprocess.SubprocessError):
         return None
+
+
+if __name__ == "__main__":
+    # for shell scripts (notifications.sh): the bar's edge on the focused monitor
+    print(bar_position())

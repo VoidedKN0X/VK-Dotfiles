@@ -11,7 +11,7 @@ The first call starts the popup; it keeps running and later calls only send
 it the new value (over a socket), so holding a key updates one popup instead
 of opening new ones. It shows on the focused monitor, at the same distance
 from the bar as the calendar (popup_common.GAP), and hides itself after a
-moment. With the bar on the left it shows at the bottom of the screen.
+moment. With a side bar (left or right) it shows at the bottom of the screen.
 
 Needs python-gobject and gtk4-layer-shell (Install.sh installs both).
 """
@@ -185,7 +185,7 @@ class Osd:
             self.win.set_visible(False)
             LayerShell.set_monitor(self.win, monitor)
             self.monitor = monitor
-        self.place()
+        self.place(monitor)
         self.win.present()
 
         if self.hide_timer:
@@ -203,9 +203,9 @@ class Osd:
         else:
             self.panel.remove_css_class("muted")
 
-    def place(self):
-        """Top bar: centered under it. Left bar: at the bottom of the screen."""
-        top = common.bar_position() == "top"
+    def place(self, monitor):
+        """Top bar: centered under it. Side bar: at the bottom of the screen."""
+        top = common.bar_position(monitor.get_connector()) == "top"
         LayerShell.set_anchor(self.win, LayerShell.Edge.TOP, top)
         LayerShell.set_anchor(self.win, LayerShell.Edge.BOTTOM, not top)
         LayerShell.set_margin(self.win, LayerShell.Edge.TOP, common.offset("top") if top else 0)

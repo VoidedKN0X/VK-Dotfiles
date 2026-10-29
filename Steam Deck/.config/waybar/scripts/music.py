@@ -155,7 +155,8 @@ def mmss(seconds):
 class MusicPopup:
     def __init__(self, app):
         self.app = app
-        self.position_bar = common.bar_position()
+        monitor = common.focused_monitor(Gdk)
+        self.position_bar = common.bar_position(monitor.get_connector())
         self.art_url = None
         self.length = 0
         self.updating = False
@@ -163,12 +164,11 @@ class MusicPopup:
         win = self.win = Gtk.ApplicationWindow(application=app)
         win.add_css_class("vk-popup")
         LayerShell.init_for_window(win)
-        # vk-music-top / vk-music-left: Hyprland picks the slide-in/out
+        # vk-music-top / -left / -right: Hyprland picks the slide-in/out
         # direction by name (hypr/hyprland/rules.lua)
         LayerShell.set_namespace(win, f"vk-music-{self.position_bar}")
         LayerShell.set_layer(win, LayerShell.Layer.TOP)
         LayerShell.set_keyboard_mode(win, LayerShell.KeyboardMode.ON_DEMAND)
-        monitor = common.focused_monitor(Gdk)
         LayerShell.set_monitor(win, monitor)
         # an invisible layer over the whole screen with the panel inside it:
         # a click outside the panel closes the popup
@@ -199,13 +199,16 @@ class MusicPopup:
 
     def place(self, monitor):
         """Under the music island, where it was clicked (centered on the mouse,
-        kept on the screen); next to it with the bar on the left."""
+        kept on the screen); next to it with a side bar (left or right)."""
         geo = monitor.get_geometry()
         cursor = common.cursor_position()
-        if self.position_bar == "left":
-            self.panel.set_halign(Gtk.Align.START)
+        if self.position_bar in ("left", "right"):
+            self.panel.set_halign(Gtk.Align.START if self.position_bar == "left" else Gtk.Align.END)
             self.panel.set_valign(Gtk.Align.START)
-            self.panel.set_margin_start(common.offset("left"))
+            if self.position_bar == "left":
+                self.panel.set_margin_start(common.offset("left"))
+            else:
+                self.panel.set_margin_end(common.offset("right"))
             y = (cursor[1] - geo.y) if cursor else geo.height // 4
             self.panel.set_margin_top(max(10, min(geo.height - 220, y - 60)))
         else:

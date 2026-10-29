@@ -2,7 +2,7 @@
 """Calendar popup for the bar's clock: click the clock to open it; click
 anywhere outside it, click the clock again or press Escape to close it. Same
 dark blurred glass as the notification panel. With the bar on top it opens
-under the clock; with the bar on the left it opens next to it, at the same
+under the clock; with a side bar (left or right) it opens next to it, at the same
 distance from the bar as the volume popup (popup_common.GAP).
 
 Like swaync's panel, the window is an invisible layer over the whole screen
@@ -121,17 +121,18 @@ calendar > grid > label.day-number.today {
 
 
 def on_activate(app):
-    position = common.bar_position()
+    monitor = common.focused_monitor(Gdk)
+    position = common.bar_position(monitor.get_connector())
     win = Gtk.ApplicationWindow(application=app)
     win.add_css_class("vk-popup")
 
     LayerShell.init_for_window(win)
-    # vk-calendar-top / vk-calendar-left: Hyprland picks the slide-in/out
+    # vk-calendar-top / -left / -right: Hyprland picks the slide-in/out
     # direction by name (hypr/hyprland/rules.lua)
     LayerShell.set_namespace(win, f"vk-calendar-{position}")
     LayerShell.set_layer(win, LayerShell.Layer.TOP)
     LayerShell.set_keyboard_mode(win, LayerShell.KeyboardMode.ON_DEMAND)
-    LayerShell.set_monitor(win, common.focused_monitor(Gdk))
+    LayerShell.set_monitor(win, monitor)
     # cover the whole screen, the bar included (exclusive zone -1), so the
     # panel's position counts from the screen edge, like the volume popup's
     LayerShell.set_exclusive_zone(win, -1)
@@ -145,6 +146,10 @@ def on_activate(app):
         panel.set_halign(Gtk.Align.START)
         panel.set_valign(Gtk.Align.CENTER)
         panel.set_margin_start(common.offset(position))
+    elif position == "right":
+        panel.set_halign(Gtk.Align.END)
+        panel.set_valign(Gtk.Align.CENTER)
+        panel.set_margin_end(common.offset(position))
     else:
         panel.set_halign(Gtk.Align.CENTER)
         panel.set_valign(Gtk.Align.START)

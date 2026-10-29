@@ -56,6 +56,6 @@ hl.bind("SUPER + X", hl.dsp.window.resize())
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = 0 }))
 hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen({ mode = 1 }))
 
-hl.bind("SUPER + N", hl.dsp.exec_cmd("swaync-client -t -sw"))
+hl.bind("SUPER + N", hl.dsp.exec_cmd("~/.config/waybar/scripts/notifications.sh"))
 
 hl.bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))

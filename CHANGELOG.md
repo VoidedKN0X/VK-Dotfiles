@@ -2,6 +2,39 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-10-30
+
+### Added
+- **DP-2 always has its bar on the right edge** (Desktop). The rotated
+  monitor is too narrow for a top bar with the clock in the middle (the
+  islands pushed it off-center), so it gets the vertical layout on its right
+  edge. `waybar/config.jsonc` is now a list with one bar per monitor: DP-1
+  still follows <kbd>Super</kbd> + <kbd>B</kbd> (top or left), DP-2 uses the
+  new `layouts/right.jsonc` (a mirrored `left.jsonc`, layer name
+  `vk-right`). The laptop and Steam Deck have one screen and keep one bar;
+  they get `right.jsonc` too, unused.
+  - The calendar and music popups open next to the right bar and slide in
+    from the right (`vk-calendar-right` / `vk-music-right` in `rules.lua`);
+    the volume popup shows at the bottom of the screen there. The popups
+    find their monitor's bar edge in `config.jsonc`
+    (`popup_common.bar_position`).
+  - The right bar's visualizer is the left bar's mirrored: the bars grow to
+    the left, away from the screen edge (`cava.sh 6 vertical flip`: the
+    characters are drawn rotated 180° with Pango gravity, right-aligned).
+  - Notification bell and <kbd>Super</kbd> + <kbd>N</kbd> run the new
+    `waybar/scripts/notifications.sh`: swaync has one position for all
+    monitors, so it first points the panel at the bell of the bar on the
+    focused monitor (`bar-position.sh --swaync-only top|left|right`, then
+    `swaync-client -R`; swaync reads its position each time the panel opens),
+    then opens it. On DP-2 the panel opens bottom right, next to the bell.
+    Notification popups use the position the panel last had.
+
+### Fixed
+- Each running visualizer (`cava.sh`) uses its own config and title files in
+  `$XDG_RUNTIME_DIR` (by process ID) and removes them when it stops. Two bars
+  shared one set before, so one restarting could clear the other's title for
+  a moment.
+
 ## 2026-10-29
 
 ### Added

@@ -4,8 +4,8 @@
    tooltips (layer rule for "waybar" in hypr/hyprland/rules.lua).
    Colors come from wallust (colors/colors.css): @accent is the wallpaper's
    accent color, the glass and text stay neutral so they work on any wallpaper.
-   window#waybar.vk-top / .vk-left: the bar's position ("name" in layouts/top.jsonc and
-   layouts/left.jsonc). The name is also the bar's layer namespace in Hyprland. */
+   window#waybar.vk-top / .vk-left / .vk-right: the bar's edge (the "name" in
+   the layouts files). The name is also the bar's layer namespace in Hyprland. */
 
 @import 'colors/colors.css';
 
@@ -66,7 +66,7 @@ window#waybar {
     border-color: alpha(#ffffff, 0.16);
 }
 
-/* side bar: islands are columns, so padding goes top/bottom */
+/* side bars (left or right): islands are columns, so padding goes top/bottom */
 window#waybar.vk-left #workspaces,
 window#waybar.vk-left #music-island,
 window#waybar.vk-left #clock,
@@ -74,7 +74,15 @@ window#waybar.vk-left #system,
 window#waybar.vk-left #status,
 window#waybar.vk-left #idle_inhibitor,
 window#waybar.vk-left #custom-notification,
-window#waybar.vk-left #custom-power {
+window#waybar.vk-left #custom-power,
+window#waybar.vk-right #workspaces,
+window#waybar.vk-right #music-island,
+window#waybar.vk-right #clock,
+window#waybar.vk-right #system,
+window#waybar.vk-right #status,
+window#waybar.vk-right #idle_inhibitor,
+window#waybar.vk-right #custom-notification,
+window#waybar.vk-right #custom-power {
     border-radius: 19px;
     padding: 10px 0;
 }
@@ -89,12 +97,34 @@ window#waybar.vk-left #custom-power {
     transition: color 0.2s ease;
 }
 
-window#waybar.vk-left #cpu, window#waybar.vk-left #temperature, window#waybar.vk-left #memory,
-window#waybar.vk-left #tray, window#waybar.vk-left #bluetooth,
-window#waybar.vk-left #network, window#waybar.vk-left #pulseaudio,
-window#waybar.vk-left #battery, window#waybar.vk-left #custom-keyboard,
-window#waybar.vk-left #custom-cava, window#waybar.vk-left #custom-mpris,
-window#waybar.vk-left #custom-prev, window#waybar.vk-left #custom-playpause, window#waybar.vk-left #custom-next {
+window#waybar.vk-left #cpu,
+window#waybar.vk-left #temperature,
+window#waybar.vk-left #memory,
+window#waybar.vk-left #tray,
+window#waybar.vk-left #bluetooth,
+window#waybar.vk-left #network,
+window#waybar.vk-left #pulseaudio,
+window#waybar.vk-left #battery,
+window#waybar.vk-left #custom-keyboard,
+window#waybar.vk-left #custom-cava,
+window#waybar.vk-left #custom-mpris,
+window#waybar.vk-left #custom-prev,
+window#waybar.vk-left #custom-playpause,
+window#waybar.vk-left #custom-next,
+window#waybar.vk-right #cpu,
+window#waybar.vk-right #temperature,
+window#waybar.vk-right #memory,
+window#waybar.vk-right #tray,
+window#waybar.vk-right #bluetooth,
+window#waybar.vk-right #network,
+window#waybar.vk-right #pulseaudio,
+window#waybar.vk-right #battery,
+window#waybar.vk-right #custom-keyboard,
+window#waybar.vk-right #custom-cava,
+window#waybar.vk-right #custom-mpris,
+window#waybar.vk-right #custom-prev,
+window#waybar.vk-right #custom-playpause,
+window#waybar.vk-right #custom-next {
     padding: 5px 0;
 }
 
@@ -115,7 +145,8 @@ window#waybar.vk-left #custom-prev, window#waybar.vk-left #custom-playpause, win
     padding: 0 9px;
 }
 
-window#waybar.vk-left #workspaces {
+window#waybar.vk-left #workspaces,
+window#waybar.vk-right #workspaces {
     padding: 9px 0;
 }
 
@@ -131,7 +162,8 @@ window#waybar.vk-left #workspaces {
     transition: min-width 0.25s ease, min-height 0.25s ease, background 0.25s ease;
 }
 
-window#waybar.vk-left #workspaces button {
+window#waybar.vk-left #workspaces button,
+window#waybar.vk-right #workspaces button {
     margin: 3px 14px;
 }
 
@@ -151,7 +183,8 @@ window#waybar.vk-left #workspaces button {
     background: @accent;
 }
 
-window#waybar.vk-left #workspaces button.active {
+window#waybar.vk-left #workspaces button.active,
+window#waybar.vk-right #workspaces button.active {
     min-width: 8px;
     min-height: 24px;
 }
@@ -177,7 +210,8 @@ window#waybar.vk-left #workspaces button.active {
 /* side bar: the same bars turned on their side, one per line (the gap
    between them comes from the line height, in scripts/cava.sh); smaller,
    so the six lines stay compact */
-window#waybar.vk-left #custom-cava {
+window#waybar.vk-left #custom-cava,
+window#waybar.vk-right #custom-cava {
     font-size: 7px;
     letter-spacing: 0;
     padding: 4px 0;
@@ -200,7 +234,8 @@ window#waybar.vk-left #custom-cava {
     padding: 0 14px;
 }
 
-window#waybar.vk-left #clock {
+window#waybar.vk-left #clock,
+window#waybar.vk-right #clock {
     padding: 12px 0;
     font-size: 14px;
 }
@@ -244,7 +279,8 @@ window#waybar.vk-left #clock {
     font-size: 17px;
 }
 
-window#waybar.vk-left #idle_inhibitor {
+window#waybar.vk-left #idle_inhibitor,
+window#waybar.vk-right #idle_inhibitor {
     padding: 8px 0;
 }
 
@@ -269,7 +305,8 @@ window#waybar.vk-left #idle_inhibitor {
     font-size: 17px;
 }
 
-window#waybar.vk-left #custom-notification {
+window#waybar.vk-left #custom-notification,
+window#waybar.vk-right #custom-notification {
     padding: 9px 0;
 }
 
@@ -295,7 +332,8 @@ window#waybar.vk-left #custom-notification {
     font-size: 17px;
 }
 
-window#waybar.vk-left #custom-power {
+window#waybar.vk-left #custom-power,
+window#waybar.vk-right #custom-power {
     padding: 9px 0;
 }
 

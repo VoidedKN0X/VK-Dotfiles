@@ -1,14 +1,29 @@
 // Waybar entry point: only includes, nothing to change here.
-//   layouts/current.jsonc  -> which layout is in use (top or left); written by
-//                             scripts/bar-position.sh (Super + B switches it)
+//   layouts/current.jsonc  -> which layout the main monitor (DP-1) uses (top or
+//                             left); written by scripts/bar-position.sh
+//                             (Super + B switches it)
 //   layouts/top.jsonc,
-//   layouts/left.jsonc     -> what differs per position (modules order, sizes,
+//   layouts/left.jsonc,
+//   layouts/right.jsonc    -> what differs per edge (modules order, sizes,
 //                             one-line or stacked formats)
-//   modules.jsonc          -> the module settings both positions share
+//   modules.jsonc          -> the module settings all bars share
 // When a setting is in more than one file, the file listed first wins.
-{
-    "include": [
-        "~/.config/waybar/layouts/current.jsonc",
-        "~/.config/waybar/modules.jsonc"
-    ]
-}
+[
+    // DP-1, the main monitor: top or left edge, switched with Super + B
+    {
+        "output": "DP-1",
+        "include": [
+            "~/.config/waybar/layouts/current.jsonc",
+            "~/.config/waybar/modules.jsonc"
+        ]
+    },
+    // DP-2, rotated (portrait): always on the right edge; it's too narrow for
+    // a top bar with the clock in the middle
+    {
+        "output": "DP-2",
+        "include": [
+            "~/.config/waybar/layouts/right.jsonc",
+            "~/.config/waybar/modules.jsonc"
+        ]
+    }
+]
