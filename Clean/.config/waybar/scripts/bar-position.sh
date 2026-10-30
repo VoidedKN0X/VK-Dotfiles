@@ -27,6 +27,8 @@ SWAYNC_POS="$HOME/.config/swaync/position.css"
 # Notification panel (control center) and popups next to the bell. The
 # panel's margins are counted from the screen edge after the bar's space;
 # right/bottom skip the power button so the panel lines up with the bell.
+# With a side bar, 14 is popup_common.py's GAP: the same distance from the bar
+# as the calendar, whatever the bar's width.
 swaync_files() {
     case "$1" in
         top)
@@ -34,12 +36,12 @@ swaync_files() {
             popup_margin="0 46px 0 0"
             ;;
         left)
-            x=left y=bottom mt=8 mb=46 ml=6 mr=0
-            popup_margin="0 0 46px 0"
+            x=left y=bottom mt=8 mb=46 ml=14 mr=0
+            popup_margin="0 0 46px 14px"
             ;;
         right)
-            x=right y=bottom mt=8 mb=46 ml=0 mr=6
-            popup_margin="0 0 46px 0"
+            x=right y=bottom mt=8 mb=46 ml=0 mr=14
+            popup_margin="0 14px 46px 0"
             ;;
     esac
     sed -i -E \

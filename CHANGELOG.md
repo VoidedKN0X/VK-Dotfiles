@@ -5,6 +5,17 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-30
 
 ### Changed
+- **Side bars: the notification panel and popups line up with the calendar**
+  (all profiles). With the bar on the left or right, the panel sat 52 px and
+  the popups 46 px from the screen edge, against 60 px for the calendar, music
+  popup and power menu (measured on the desktop). `waybar/scripts/bar-position.sh`
+  now gives them a 14 px margin on the bar's side (`popup_common.py`'s `GAP`):
+  `control-center-margin-left`/`-right` 6 -> 14, and popup margin
+  `0 0 46px 14px` (left) or `0 14px 46px 0` (right). swaync counts from where
+  the bar's space ends, so the same values fit every bar width: 60 px on a
+  38 px bar, 68 px on the Steam Deck's 46 px bar, matching its calendar. The
+  popup window stays 360 px wide, so popup cards are 14 px narrower (346 px)
+  with a side bar. The top layout is unchanged.
 - **The clock shows seconds** (all profiles). Top bar: `HH:MM:SS`
   (`waybar/layouts/top.jsonc`); side bars: the seconds as a third line under
   the hours and minutes (`left.jsonc`, `right.jsonc`). `modules.jsonc` sets
