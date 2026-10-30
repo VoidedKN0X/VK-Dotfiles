@@ -2,10 +2,10 @@
 # Move the bar between the top and the left edge of the screen, so on an OLED
 # the bar doesn't sit in the same place all the time. The notification panel,
 # notification popups, the calendar and the volume popup move with it:
-#   top:  notifications top right, under the bell button; calendar and volume
-#         popup under the clock
+#   top:  notifications top right, under the bell button; calendar under the
+#         clock, volume popup top left
 #   left: notifications bottom left, next to the bell button; calendar next to
-#         the clock, volume popup at the bottom
+#         the clock, volume popup top left
 # (On the desktop, DP-2 always has its bar on the right edge: config.jsonc.
 # This switches the main monitor's bar.)
 #

@@ -5,6 +5,16 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-30
 
 ### Changed
+- **The volume popup sits in the top left corner** (all profiles), with the
+  top and the left bar alike, instead of centered under the top bar or at the
+  bottom center with a side bar (`waybar/scripts/osd.py`). Its gap to the bar
+  is the 14 px of the other popups (`popup_common.py`'s `GAP`): 52 px from the
+  top under a top bar, 60 px from the left next to a left bar (68 px on the
+  Steam Deck's wider bar), and 10 px from the screen edge along the bar, like
+  the power menu. Next to a right bar (DP-2 on the desktop) it's the mirror
+  image, top right, so it stays next to that bar. Also applies to the
+  microphone, brightness and Caps Lock popups, which use the same window. The
+  comment at the top of `bar-position.sh` is updated to match.
 - **Side bars: the notification panel and popups line up with the calendar**
   (all profiles). With the bar on the left or right, the panel sat 52 px and
   the popups 46 px from the screen edge, against 60 px for the calendar, music

@@ -11,7 +11,8 @@ The first call starts the popup; it keeps running and later calls only send
 it the new value (over a socket), so holding a key updates one popup instead
 of opening new ones. It shows on the focused monitor, at the same distance
 from the bar as the calendar (popup_common.GAP), and hides itself after a
-moment. With a side bar (left or right) it shows at the bottom of the screen.
+moment. It sits in the top left corner, under a top bar or next to a left bar
+(next to a right bar: top right).
 
 Needs python-gobject and gtk4-layer-shell (Install.sh installs both).
 """
@@ -204,12 +205,18 @@ class Osd:
             self.panel.remove_css_class("muted")
 
     def place(self, monitor):
-        """Top bar: centered under it. Side bar: at the bottom of the screen."""
-        top = common.bar_position(monitor.get_connector()) == "top"
-        LayerShell.set_anchor(self.win, LayerShell.Edge.TOP, top)
-        LayerShell.set_anchor(self.win, LayerShell.Edge.BOTTOM, not top)
-        LayerShell.set_margin(self.win, LayerShell.Edge.TOP, common.offset("top") if top else 0)
-        LayerShell.set_margin(self.win, LayerShell.Edge.BOTTOM, 0 if top else 40)
+        """In the top left corner, next to the bar. A right bar (DP-2) gets the
+        mirror image, top right, to stay next to its bar. Along the bar 10 px,
+        like the bar's own margins and the power menu."""
+        position = common.bar_position(monitor.get_connector())
+        top = position == "top"
+        right = position == "right"
+        LayerShell.set_anchor(self.win, LayerShell.Edge.TOP, True)
+        LayerShell.set_anchor(self.win, LayerShell.Edge.LEFT, not right)
+        LayerShell.set_anchor(self.win, LayerShell.Edge.RIGHT, right)
+        LayerShell.set_margin(self.win, LayerShell.Edge.TOP, common.offset("top") if top else 10)
+        LayerShell.set_margin(self.win, LayerShell.Edge.LEFT, 10 if top else 0 if right else common.offset("left"))
+        LayerShell.set_margin(self.win, LayerShell.Edge.RIGHT, common.offset("right") if right else 0)
 
     def hide(self):
         self.hide_timer = 0
