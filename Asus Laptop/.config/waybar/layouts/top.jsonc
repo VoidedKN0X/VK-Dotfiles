@@ -33,7 +33,7 @@
     "clock": {
         // {0:...}: every field reads the same time (a bare {:...} would ask
         // waybar for a second value it doesn't have, and the clock stays empty)
-        "format": "<span alpha='60%'>{0:%a %d %b}</span>  <span alpha='45%'>·</span>  <b>{0:%H:%M}</b>"
+        "format": "<span alpha='60%'>{0:%a %d %b}</span>  <span alpha='45%'>·</span>  <b>{0:%H:%M:%S}</b>"
     },
 
     // icons one size up from the text (<span size='large'>)

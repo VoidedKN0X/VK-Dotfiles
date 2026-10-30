@@ -43,7 +43,7 @@
     },
 
     "clock": {
-        "format": "<b>{0:%H}</b>\n<b>{0:%M}</b>\n<span alpha='55%' size='small'>{0:%a}</span>\n<span alpha='55%'>{0:%d}</span>",
+        "format": "<b>{0:%H}</b>\n<b>{0:%M}</b>\n<b>{0:%S}</b>\n<span alpha='55%' size='small'>{0:%a}</span>\n<span alpha='55%'>{0:%d}</span>",
         "justify": "center"
     },
 

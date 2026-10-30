@@ -84,6 +84,8 @@
     // a blurred popup in the notification panel's style, opened and closed
     // by clicking the clock)
     "clock": {
+        // every second, for the seconds (waybar's default is once a minute)
+        "interval": 1,
         "tooltip": false,
         "on-click": "~/.config/waybar/scripts/calendar.py"
     },

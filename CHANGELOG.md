@@ -5,6 +5,10 @@ Changes to VK-Dotfiles, newest first.
 ## 2026-10-30
 
 ### Changed
+- **The clock shows seconds** (all profiles). Top bar: `HH:MM:SS`
+  (`waybar/layouts/top.jsonc`); side bars: the seconds as a third line under
+  the hours and minutes (`left.jsonc`, `right.jsonc`). `modules.jsonc` sets
+  the clock's `interval` to 1 second (waybar's default is 60).
 - **Steam Deck: the clock sits right after the workspaces** instead of in the
   middle of the bar (`waybar/layouts/top.jsonc`, `left.jsonc`, `right.jsonc`:
   workspaces, clock, music island; the center is empty). The calendar popup
