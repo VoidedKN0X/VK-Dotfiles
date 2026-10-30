@@ -4,6 +4,14 @@ Changes to VK-Dotfiles, newest first.
 
 ## 2026-10-30
 
+### Changed
+- **Steam Deck: the clock sits right after the workspaces** instead of in the
+  middle of the bar (`waybar/layouts/top.jsonc`, `left.jsonc`, `right.jsonc`:
+  workspaces, clock, music island; the center is empty). The calendar popup
+  (`waybar/scripts/calendar.py`) opens where the clock was tapped, centered on
+  it and kept on the screen, like the music popup, instead of at the bar's
+  center.
+
 ### Added
 - **Clean profile** (`Clean/`): the desktop of this repo for anyone's
   machine, without my personal apps and settings. It's based on the Asus

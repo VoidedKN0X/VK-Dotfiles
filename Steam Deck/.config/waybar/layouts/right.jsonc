@@ -12,8 +12,8 @@
     "reload_style_on_change": true,
 
     // in a side bar, "left" is the top, "center" the middle, "right" the bottom
-    "modules-left": ["hyprland/workspaces", "group/music-island"],
-    "modules-center": ["clock"],
+    // clock right after the workspaces (Steam Deck: the center stays empty)
+    "modules-left": ["hyprland/workspaces", "clock", "group/music-island"],
     "modules-right": ["group/system", "group/status", "idle_inhibitor", "custom/notification", "custom/power"],
 
     // music island: visualizer and a note icon (hover it for the track);

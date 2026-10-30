@@ -47,6 +47,11 @@ gi.require_version("Gtk4LayerShell", "1.0")
 from gi.repository import Gdk, Gio, GLib, Gtk  # noqa: E402
 from gi.repository import Gtk4LayerShell as LayerShell  # noqa: E402
 
+# rough size of the popup (calendar with week numbers + padding), used to
+# center it on the clock and keep it on the screen
+CAL_WIDTH = 300
+CAL_HEIGHT = 300
+
 CSS = """
 .panel {
     padding: 10px 12px 12px 12px;
@@ -141,19 +146,26 @@ def on_activate(app):
 
     panel = Gtk.Box(orientation=Gtk.Orientation.VERTICAL)
     panel.add_css_class("panel")
-    # centered along the bar, where the clock sits (the bar's center module)
-    if position == "left":
-        panel.set_halign(Gtk.Align.START)
-        panel.set_valign(Gtk.Align.CENTER)
-        panel.set_margin_start(common.offset(position))
-    elif position == "right":
-        panel.set_halign(Gtk.Align.END)
-        panel.set_valign(Gtk.Align.CENTER)
-        panel.set_margin_end(common.offset(position))
+    # Steam Deck: the clock sits right after the workspaces, not in the
+    # middle of the bar, so the popup opens where the clock was clicked
+    # (centered on it, kept on the screen), like the music popup
+    geo = monitor.get_geometry()
+    cursor = common.cursor_position()
+    if position in ("left", "right"):
+        panel.set_halign(Gtk.Align.START if position == "left" else Gtk.Align.END)
+        panel.set_valign(Gtk.Align.START)
+        if position == "left":
+            panel.set_margin_start(common.offset(position))
+        else:
+            panel.set_margin_end(common.offset(position))
+        y = (cursor[1] - geo.y) if cursor else geo.height // 4
+        panel.set_margin_top(max(10, min(geo.height - CAL_HEIGHT - 10, y - CAL_HEIGHT // 2)))
     else:
-        panel.set_halign(Gtk.Align.CENTER)
+        panel.set_halign(Gtk.Align.START)
         panel.set_valign(Gtk.Align.START)
         panel.set_margin_top(common.offset(position))
+        x = (cursor[0] - geo.x) if cursor else geo.width // 4
+        panel.set_margin_start(max(10, min(geo.width - CAL_WIDTH - 10, x - CAL_WIDTH // 2)))
 
     calendar = Gtk.Calendar()
     calendar.set_show_week_numbers(True)
