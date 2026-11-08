@@ -3,9 +3,16 @@
 # Interactive YubiKey setup. Run it AFTER Install.sh and run-all-<profile>.sh,
 # with your YubiKey(s) at hand:
 #
-#     sudo "Post Install/yubikey-setup.sh"
+#     sudo "Post Install/yubikey-setup.sh"            all steps, each asks first
+#     sudo "Post Install/yubikey-setup.sh" --login    only steps 1 and 2
+#     sudo "Post Install/yubikey-setup.sh" --disk     only step 3
 #
-# Steps (each one asks before changing anything):
+# Install.sh asks at its start which parts you want and passes --login and/or
+# --disk (or skips this script). With an option, the steps you chose start
+# without asking "do it now?" first; questions that show what will change or
+# remove something (the PAM plan, more keys, PIN slots) are still asked.
+#
+# Steps (without options, each one asks before changing anything):
 #   1. Register your YubiKeys in ~/.config/Yubico/u2f_keys. Keys that are
 #      already registered stay; new ones (e.g. your 2nd key) are added to them.
 #   2. Accept the YubiKey instead of your password for sudo, greetd and logins:
@@ -29,6 +36,21 @@ set -uo pipefail
 if [[ $EUID -ne 0 ]]; then
   exec sudo "$0" "$@"
 fi
+# --------------- options ---------------------------------------------------
+# DO_LOGIN / DO_DISK: which parts run. CHOSEN=1: picked at the start (Install.sh),
+# so a part's "start now?" question is answered yes.
+DO_LOGIN=1; DO_DISK=1; CHOSEN=0
+if [[ $# -gt 0 ]]; then
+  DO_LOGIN=0; DO_DISK=0; CHOSEN=1
+  for arg in "$@"; do
+    case "$arg" in
+      --login) DO_LOGIN=1 ;;
+      --disk)  DO_DISK=1 ;;
+      *) echo "usage: yubikey-setup.sh [--login] [--disk]" >&2; exit 2 ;;
+    esac
+  done
+fi
+
 REAL_USER="${SUDO_USER:-}"
 if [[ -z "$REAL_USER" || "$REAL_USER" == "root" ]]; then
   echo "Run this with sudo from your normal user account, not as root directly." >&2
@@ -51,6 +73,8 @@ FAILS=0
 fail()    { printf '%s[✗]%s %s\n' "$C_E" "$C_0" "$*"; FAILS=$((FAILS + 1)); }
 section() { printf '\n%s== %s ==%s\n' "$C_B" "$*" "$C_0"; }
 ask()     { local a; read -rp "$1 [y/N] " a; [[ "$a" =~ ^[Yy] ]]; }
+# "Start this part now?": yes without asking when the part was chosen at the start
+ask_start() { [[ $CHOSEN -eq 1 ]] || ask "$1"; }
 # Copy a system file to <file>.bak-yubikey before its first change. An existing
 # backup is kept, so it always holds the original from before this script.
 backup()  { [[ -e "$1" && ! -e "$1.bak-yubikey" ]] && cp -a "$1" "$1.bak-yubikey" && ok "backup: $1.bak-yubikey"; return 0; }
@@ -97,10 +121,10 @@ register_keys() {
       # the registered keys are always kept; new keys are added after them
       ok "${#existing[@]} key(s) already registered for $REAL_USER (they stay registered)"
       ask "Add another key (e.g. your 2nd YubiKey)?" || return 0
-    elif ! ask "Register your YubiKeys for $REAL_USER now?"; then
+    elif ! ask_start "Register your YubiKeys for $REAL_USER now?"; then
       return 0
     fi
-  elif ! ask "Register your YubiKeys now?"; then
+  elif ! ask_start "Register your YubiKeys now?"; then
     return 0
   fi
 
@@ -224,6 +248,17 @@ setup_pam() {
     printf '%s\n' "$HYPRLOCK_PAM" > "$HYPRLOCK_PAM_FILE"
     chmod 644 "$HYPRLOCK_PAM_FILE"
     ok "$HYPRLOCK_PAM_FILE now accepts only the YubiKey"
+  fi
+  # The password field Install.sh adds without the YubiKey login has nothing to
+  # do now: remove its line from hyprlock.conf (as your user, so the file stays yours)
+  local lockconf="$REAL_HOME/.config/hypr/hyprlock.conf"
+  if grep -qF 'hyprlock-password.conf' "$lockconf" 2>/dev/null; then
+    if runuser -u "$REAL_USER" -- sed -i -e '/^# password field (no YubiKey login)$/d' \
+         -e '\#^source = \$HOME/\.config/hypr/hyprlock-password\.conf$#d' "$lockconf"; then
+      ok "lock screen: password field removed (it unlocks with the key)"
+    else
+      warn "could not remove the password field from $lockconf"
+    fi
   fi
 
   ok "pam_u2f active: sudo, greetd and logins accept the key (password as fallback)"
@@ -390,7 +425,13 @@ setup_luks() {
     else
       prompt="Enroll another YubiKey for $dev (e.g. your 2nd key as a backup)?"
     fi
-    ask "$prompt" || continue
+    # the first key for the disk starts right away when the disk unlock was
+    # chosen at the start; another key, or replacing PIN keys, is always asked
+    if [[ $existing -eq 0 && ${#pin_slots[@]} -eq 0 ]]; then
+      ask_start "$prompt" || continue
+    else
+      ask "$prompt" || continue
+    fi
 
     added=0   # counted per disk
     while :; do
@@ -432,13 +473,15 @@ setup_luks() {
 }
 
 # =====================================================================
-register_keys
-setup_pam
-setup_luks
+if [[ $DO_LOGIN -eq 1 ]]; then
+  register_keys
+  setup_pam
+fi
+[[ $DO_DISK -eq 1 ]] && setup_luks
 
 section "DONE"
-echo "Reboot to test the LUKS unlock. Your passphrase and password still work as a fallback,"
-echo "except on the lock screen, which only accepts the YubiKey."
+[[ $DO_DISK -eq 1 ]] && echo "Reboot to test the LUKS unlock. Your LUKS passphrase still works as a fallback."
+[[ $DO_LOGIN -eq 1 ]] && echo "Your password still works for sudo and logins, but not on the lock screen, which only accepts the YubiKey."
 if [[ $FAILS -gt 0 ]]; then
   fail "$FAILS step(s) failed - see the messages above"
   exit 1

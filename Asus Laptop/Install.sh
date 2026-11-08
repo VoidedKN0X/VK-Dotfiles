@@ -4,8 +4,9 @@
 # start and keeps sudo active until the end.
 # Works from any directory: paths are resolved relative to this script.
 # When it's done it runs "Post Install/run-all-laptop.sh" (kernel, boot, tuning)
-# and "Post Install/yubikey-setup.sh" (asks before every step), so this one
-# file does the whole setup. Reboot once at the end.
+# and "Post Install/yubikey-setup.sh" (only the YubiKey parts you chose at the
+# start: login and/or disk unlock), so this one file does the whole setup.
+# Reboot once at the end.
 
 set -uo pipefail
 
@@ -28,6 +29,17 @@ sudo -v || { echo "This script needs sudo." >&2; exit 1; }
 while sleep 60; do sudo -n true || exit; done 2>/dev/null &
 SUDO_KEEPALIVE=$!
 trap 'kill "$SUDO_KEEPALIVE" 2>/dev/null' EXIT
+
+# === YubiKey (optional): asked now, done at the very end ===
+# Both are off unless you answer y. Your YubiKey(s) are needed at the end
+# (touch them when they blink); the disk unlock also needs your LUKS passphrase.
+YUBIKEY_ARGS=()
+echo
+read -rp "Use a YubiKey for login, sudo and the lock screen? [y/N] " _a
+[[ "$_a" =~ ^[Yy] ]] && YUBIKEY_ARGS+=(--login)
+read -rp "Unlock the encrypted disk with a YubiKey at boot? [y/N] " _a
+[[ "$_a" =~ ^[Yy] ]] && YUBIKEY_ARGS+=(--disk)
+unset _a
 
 # === Packages (official repos) ===
 PACMAN_PKGS=(
@@ -458,6 +470,16 @@ rm -rf "$KEEP_TMP"
 # goes: write swaync's files to match it
 "$HOME/.config/waybar/scripts/bar-position.sh" --files-only
 cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
+
+# Lock screen: without the YubiKey login it unlocks with your password, so it
+# gets a password field (hyprlock.conf has none: with the key there's nothing
+# to type). Added once; yubikey-setup.sh --login removes the line again.
+HYPRLOCK_PW_LINE='source = $HOME/.config/hypr/hyprlock-password.conf'
+if [[ " ${YUBIKEY_ARGS[*]} " != *" --login "* ]] \
+    && ! grep -qxF "$HYPRLOCK_PW_LINE" "$HOME/.config/hypr/hyprlock.conf"; then
+    printf '\n# password field (no YubiKey login)\n%s\n' "$HYPRLOCK_PW_LINE" >>"$HOME/.config/hypr/hyprlock.conf" \
+        || warn "could not add the password field to the lock screen"
+fi
 # App entries that override the installed ones: hide helper apps from the
 # launcher, and RapidRAW opens RAW photos passed to it (for mimeapps.list)
 mkdir -p "$HOME/.local/share/applications"
@@ -487,7 +509,7 @@ chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/swaync/scripts/*.sh \
          "$HOME"/.config/rofi/launchers/type-2/launcher.sh
 
-# === Post install: kernel, boot and tuning, then the YubiKey setup ===
+# === Post install: kernel, boot and tuning, then the YubiKey setup (if chosen) ===
 # Both run as root (sudo is still active from the start of this script). Each one
 # runs even if the other reports a failure, and nothing reboots on its own:
 # reboot at the end.
@@ -500,12 +522,16 @@ else
     POST_RESULT="finished with failures (see its summary above)"
 fi
 
-echo
-echo "== Next: yubikey-setup.sh (every step asks first; answer N to skip it) =="
-if sudo "$POST_DIR/yubikey-setup.sh"; then
-    YUBIKEY_RESULT="done"
+if [[ ${#YUBIKEY_ARGS[@]} -eq 0 ]]; then
+    YUBIKEY_RESULT="skipped (not chosen at the start)"
 else
-    YUBIKEY_RESULT="finished with failures (see above)"
+    echo
+    echo "== Next: yubikey-setup.sh ${YUBIKEY_ARGS[*]} (have your YubiKey(s) at hand) =="
+    if sudo "$POST_DIR/yubikey-setup.sh" "${YUBIKEY_ARGS[@]}"; then
+        YUBIKEY_RESULT="done"
+    else
+        YUBIKEY_RESULT="finished with failures (see above)"
+    fi
 fi
 
 echo

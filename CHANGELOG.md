@@ -2,6 +2,42 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-08
+
+### Changed
+- **The YubiKey setup is optional, chosen at the start of the install**
+  (Desktop, Asus Laptop, Steam Deck). Right after the password, `Install.sh`
+  asks two questions, both defaulting to no: *Use a YubiKey for login, sudo
+  and the lock screen?* and *Unlock the encrypted disk with a YubiKey at
+  boot?*. The rest of the install then runs without stopping. At the end it
+  runs `Post Install/yubikey-setup.sh` with only the parts you said yes to,
+  or skips it (the summary then says "skipped (not chosen at the start)").
+  Before, the script always ran and asked y/N at every step.
+- **`yubikey-setup.sh` takes `--login` and/or `--disk`** to run only those
+  parts: `--login` = registering the keys + the PAM setup (steps 1 and 2),
+  `--disk` = the LUKS disk unlock (step 3). With an option, a chosen part
+  starts without its "do it now?" question; the questions that show what will
+  change or remove something (the PAM plan, more keys, replacing PIN keys on
+  the Deck) are still asked. Without options it works as before (all steps,
+  each asks first). The closing message only mentions the parts that ran.
+  README updated.
+
+### Added
+- **Password field on the lock screen when it unlocks with a password**
+  (all profiles). `hyprlock.conf` has no input field, because with the
+  YubiKey login the lock screen only takes a key touch; without it you had to
+  type your password blind. New `hypr/hyprlock-password.conf` holds the field
+  (280x50, under the date, outlined in the wallust accent `$purple`, white
+  text, red on a wrong password with the attempt count, "Password"
+  placeholder). Desktop, Asus Laptop, Steam Deck: `Install.sh` adds
+  `source = $HOME/.config/hypr/hyprlock-password.conf` to your
+  `~/.config/hypr/hyprlock.conf` when you don't choose the YubiKey login
+  (once, it isn't added twice), and `yubikey-setup.sh` removes that line again
+  when it makes the lock screen key-only. Clean profile: `hyprlock.conf`
+  always loads it (it never uses the YubiKey). The repo's `hyprlock.conf`
+  in the three personal profiles is unchanged, so after an install without
+  the YubiKey login your copy has one extra line.
+
 ## 2026-10-30
 
 ### Changed

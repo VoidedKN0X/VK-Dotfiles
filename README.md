@@ -52,7 +52,8 @@ unlock an encrypted disk at boot? In archinstall's disk encryption menu, also se
 YubiKey: only then does it build the boot image with `sd-encrypt`, the hook that can use the key
 (without it, step 3 can't set up the disk unlock). Then run **one script**, your profile's
 `Install.sh`. When it's done it runs the other two by itself, in this
-order: `run-all-<profile>.sh` (step 2) and `yubikey-setup.sh` (step 3). Reboot once at the end.
+order: `run-all-<profile>.sh` (step 2) and `yubikey-setup.sh` (step 3, only the parts you chose).
+Reboot once at the end.
 
 Using Secure Boot (desktop and laptop)? Put your firmware's Secure Boot in **Setup Mode** before you
 start; see step 2.
@@ -135,14 +136,29 @@ can't simply be turned off again), and it adds Valve's **fan control** and **BIO
 
 ### 3. `yubikey-setup.sh`: YubiKey login and disk unlock (optional)
 
-`Install.sh` runs this for you after step 2; answer **N** to the questions to skip it. To run it
-again on its own (for example to add a 2nd key later):
+Both parts are **optional**. Right after your password, `Install.sh` asks two questions:
+
+- *Use a YubiKey for login, sudo and the lock screen?* (steps 1 and 2 below)
+- *Unlock the encrypted disk with a YubiKey at boot?* (step 3)
+
+Both default to **no**. Install.sh then runs unattended until the end, where it runs this
+script with only the parts you said yes to (`--login` and/or `--disk`), or skips it. Without
+the YubiKey login, the lock screen unlocks with your password and gets a password field
+(`hypr/hyprlock-password.conf`, loaded from `hyprlock.conf`); with it, there's nothing to type, so
+the field isn't there. Keep your
+YubiKey(s) at hand for that. The parts you chose start right away; the questions that show what
+will change or remove something (the PAM plan, adding more keys, removing PIN slots) are still
+asked.
+
+To run it again on its own (for example to add a 2nd key later), with every step asking first:
 
 ```sh
-sudo "VK-Dotfiles/Post Install/yubikey-setup.sh"
+sudo "VK-Dotfiles/Post Install/yubikey-setup.sh"          # all steps
+sudo "VK-Dotfiles/Post Install/yubikey-setup.sh" --login  # only login (steps 1 and 2)
+sudo "VK-Dotfiles/Post Install/yubikey-setup.sh" --disk   # only the disk unlock (step 3)
 ```
 
-Keep your YubiKey(s) at hand. Every step asks before it changes anything:
+The steps:
 
 1. **Registers your keys** for login. Keys that are already registered stay; a 2nd key is added
    to them.
