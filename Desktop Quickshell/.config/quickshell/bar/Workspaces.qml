@@ -1,7 +1,8 @@
 // Workspaces island: every workspace is a dot, the active one stretches into
 // a pill in the accent color. Occupied workspaces are brighter than empty
 // ones, urgent ones turn red. Click a dot to go there, scroll to move to the
-// next / previous one (like Super + scroll). Each bar shows only its own
+// next / previous one (like Super + scroll), middle-click for the workspace
+// overview (like Super + Tab). Each bar shows only its own
 // monitor's workspaces (BarState.workspaces).
 
 import QtQuick
@@ -78,6 +79,11 @@ Island {
                 }
             }
         }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.MiddleButton
+        onTapped: BarState.toggleOverview()
     }
 
     WheelHandler {

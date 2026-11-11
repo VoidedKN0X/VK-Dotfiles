@@ -6,6 +6,9 @@
 //   top bar:   under the bar, at the bar's end / middle / start
 //   side bars: next to the bar, at its bottom / middle / top
 // 14 px from the bar (Theme.gap) and 10 px from the screen edge along it.
+// With centered set (app launcher, wallpaper picker, clipboard, password
+// dialog) it's in the middle of the screen instead, and with typing set it
+// takes the keyboard as soon as it opens.
 
 import QtQuick
 import Quickshell
@@ -27,6 +30,11 @@ PanelWindow {
     property bool fullHeight: false
     property int panelWidth: 380
     property int padding: 16
+    // in the middle of the screen, not next to the bar
+    property bool centered: false
+    // takes the keyboard at once (a search field): typing goes here until it
+    // closes. Otherwise it only gets the keyboard once clicked.
+    property bool typing: false
     default property alias content: inner.data
     readonly property alias panel: panel
 
@@ -43,7 +51,7 @@ PanelWindow {
     exclusionMode: ExclusionMode.Ignore
     WlrLayershell.namespace: name + "-" + edge
     WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
+    WlrLayershell.keyboardFocus: typing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
 
     // a click outside the panel
     MouseArea {
@@ -59,8 +67,11 @@ PanelWindow {
         readonly property int barSide: Theme.offset(popupLayer.edge)
 
         width: popupLayer.panelWidth
-        height: popupLayer.fullHeight ? popupLayer.height - y - Theme.barEndMargin : Math.min(inner.implicitHeight + popupLayer.padding * 2, popupLayer.height - y - Theme.barEndMargin)
+        // (centered: from the size alone, as y depends on the height there)
+        height: popupLayer.centered ? Math.min(inner.implicitHeight + popupLayer.padding * 2, popupLayer.height - 2 * Theme.barEndMargin) : popupLayer.fullHeight ? popupLayer.height - y - Theme.barEndMargin : Math.min(inner.implicitHeight + popupLayer.padding * 2, popupLayer.height - y - Theme.barEndMargin)
         x: {
+            if (popupLayer.centered)
+                return (popupLayer.width - width) / 2;
             if (popupLayer.edge === "left")
                 return barSide;
             if (popupLayer.edge === "right")
@@ -72,6 +83,8 @@ PanelWindow {
             return popupLayer.width - alongStart - width;
         }
         y: {
+            if (popupLayer.centered)
+                return Math.max(Theme.barEndMargin, (popupLayer.height - height) / 2);
             if (popupLayer.edge === "top")
                 return barSide;
             if (popupLayer.fullHeight || popupLayer.place === "start")

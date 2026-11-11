@@ -34,13 +34,24 @@ hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --inp
 -- still reaches the keyboard (non_consuming), so Caps Lock keeps working
 hl.bind("Caps_Lock", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --caps-lock"), { release = true, non_consuming = true, ignore_mods = true })
 
-hl.bind("Print", hl.dsp.exec_cmd('mkdir -p "$HOME/Pictures/Screenshots" && flameshot full --clipboard --path "$HOME/Pictures/Screenshots"'), { locked = true })
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd('mkdir -p "$HOME/Pictures/Screenshots" && flameshot gui --clipboard --path "$HOME/Pictures/Screenshots"'))
+-- screenshot of both monitors: saved to ~/Pictures/Screenshots and copied
+hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh"), { locked = true })
+-- window switcher: hold Alt, Tab / Shift + Tab to pick, let go of Alt to switch
+-- (quickshell/popups/WindowSwitcher.qml). Alt's release also tells it, in case
+-- the switcher didn't get the key itself; non_consuming, so apps still see Alt.
+hl.bind("ALT + Tab", hl.dsp.exec_cmd("qs ipc call switcher next"))
+hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("qs ipc call switcher prev"))
+hl.bind("ALT + Alt_L", hl.dsp.exec_cmd("qs ipc call switcher commit"), { release = true, non_consuming = true })
+-- workspace overview on both monitors: click to go, drag windows to move them,
+-- type to find one (quickshell/popups/Overview.qml)
+hl.bind("SUPER + Tab", hl.dsp.exec_cmd("qs ipc call overview toggle"))
 
-hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd("pavucontrol"))
+-- the volume mixer (outputs, inputs, a volume per app)
+hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd("qs ipc call mixer toggle"))
 hl.bind("SUPER + W", hl.dsp.exec_cmd(browser))
-hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("rofi -show wallpaper -modi \"wallpaper:~/.config/hypr/scripts/wallpaper-picker.sh\" -theme ~/.config/rofi/wallpaper-picker.rasi -show-icons -p \"\""))
-hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("~/.config/hypr/scripts/clipboard.sh"))
+-- wallpaper picker and clipboard history (quickshell/popups)
+hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
+hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))
 hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager))
 hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(menu), { release = true })

@@ -1,6 +1,6 @@
 hl.on("hyprland.start", function()
-    hl.exec_cmd("awww-daemon")
-    -- the bar, control center, notifications and popups (~/.config/quickshell)
+    -- the wallpaper, bar, control center, notifications, launcher and popups,
+    -- and the password dialog for admin rights (~/.config/quickshell)
     hl.exec_cmd("qs")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
@@ -12,7 +12,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd('gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"')
 
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
-    hl.exec_cmd("systemctl --user start hyprpolkitagent")
 
     hl.exec_cmd("hypridle")
 

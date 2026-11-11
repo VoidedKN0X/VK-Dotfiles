@@ -1,6 +1,6 @@
-// System island: CPU usage, CPU temperature and memory used / total. Click any
-// of them for btop.
-//   top bar:  󰻠 23%  󰔏 54°  󰍛 13.1/31G
+// System island: CPU usage, CPU temperature and memory usage, all short (the
+// control center has memory used / total). Click any of them for btop.
+//   top bar:  󰻠 23%  󰔏 54°  󰍛 41%
 //   side bar: the values stacked under their icons
 
 import QtQuick
@@ -26,9 +26,7 @@ Island {
     BarModule {
         vertical: island.vertical
         icon: Theme.iconMemory
-        text: SystemStats.memUsed.toFixed(1)
-        // total in whole GiB: "13.1/31G"
-        subText: `/${Math.round(SystemStats.memTotal)}G`
+        text: `${Math.round(SystemStats.memUsage)}%`
         onClicked: Session.btop()
     }
 }

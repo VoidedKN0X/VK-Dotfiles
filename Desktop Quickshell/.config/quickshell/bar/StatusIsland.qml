@@ -1,9 +1,9 @@
 // Status island: the system tray, Bluetooth, network and volume. Every icon
 // opens its program, like the Waybar modules did:
 //   tray icons  -> their app (right click: its menu)
-//   Bluetooth   -> blueman-manager (right click: Bluetooth on / off)
-//   network     -> nmtui in foot
-//   volume      -> pavucontrol (scroll: volume in 1% steps, right click: mute)
+//   Bluetooth   -> the Bluetooth panel (right click: Bluetooth on / off)
+//   network     -> the network panel
+//   volume      -> the volume mixer (scroll: volume in 1% steps, right click: mute)
 
 import QtQuick
 import Quickshell.Services.SystemTray
@@ -32,21 +32,21 @@ Island {
         // the battery of a connected device, if it reports one
         text: Connectivity.bluetoothBattery >= 0 ? `${Connectivity.bluetoothBattery}%` : ""
         color: Connectivity.bluetoothOn ? Theme.fg : Theme.faint
-        onClicked: Session.bluetoothSettings()
+        onClicked: BarState.toggleBluetooth(island.window.modelData)
         onRightClicked: Connectivity.toggleBluetooth()
     }
     BarModule {
         vertical: island.vertical
         icon: Connectivity.networkIcon
         color: Connectivity.connected ? Theme.fg : Theme.faint
-        onClicked: Session.networkSettings()
+        onClicked: BarState.toggleNetwork(island.window.modelData)
     }
     BarModule {
         vertical: island.vertical
         icon: Audio.icon
         text: `${Audio.percent}%`
         color: Audio.muted ? Theme.faint : Theme.fg
-        onClicked: Session.volumeMixer()
+        onClicked: BarState.toggleMixer(island.window.modelData)
         onRightClicked: Audio.toggleMute()
         onScrolled: steps => Audio.setVolume(Audio.volume + steps * 0.01)
     }

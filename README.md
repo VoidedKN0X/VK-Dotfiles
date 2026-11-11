@@ -25,7 +25,7 @@ stays self-contained and works on its own.
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
-| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the bar, notifications and popups made in [Quickshell](https://quickshell.org) instead of waybar + swaync, plus a control center (see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
+| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the whole desktop shell made in [Quickshell](https://quickshell.org): bar, control center, notifications, app launcher, wallpaper (picker), clipboard history, volume mixer, Bluetooth and network panels, window switcher, screenshots and the polkit password dialog, instead of waybar, swaync, rofi, awww, pavucontrol, blueman, flameshot and hyprpolkitagent (see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
@@ -38,7 +38,7 @@ stays self-contained and works on its own.
 | waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
 | Bar popups (`waybar/scripts/*.py`) | Calendar, music and power menu popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
-| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications and popups, instead of waybar, swaync and the bar popups above |
+| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications, popups, app launcher, wallpaper and wallpaper picker, clipboard history, volume mixer and polkit dialog, instead of waybar, swaync, the bar popups, rofi, awww, pavucontrol and hyprpolkitagent |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -260,10 +260,14 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
 
 ## Desktop Quickshell
 
-`Desktop Quickshell/` is the `Desktop/` profile with one difference: the bar, the notifications
-and the bar's popups are one [Quickshell](https://quickshell.org) config
-(`.config/quickshell/`) instead of waybar, swaync and the Python popups. Monitors, apps,
-services, tuning, the shell (zsh with the same plugins, aliases and fastfetch), foot, rofi, the lock
+`Desktop Quickshell/` is the `Desktop/` profile with one difference: the desktop shell is one
+[Quickshell](https://quickshell.org) config (`.config/quickshell/`). It replaces waybar, swaync
+and the Python popups (bar, notifications, popups), rofi (app launcher, wallpaper picker,
+clipboard history), awww (the wallpaper), pavucontrol (volume mixer), blueman (Bluetooth),
+flameshot (screenshots) and hyprpolkitagent (the password dialog when an app asks for admin
+rights); those aren't installed. nmtui (part of NetworkManager) stays for VPNs and static
+addresses, but the bar and control center open the network panel instead. Monitors, apps,
+services, tuning, the shell (zsh with the same plugins, aliases and fastfetch), foot, the lock
 screen and the wallust colors are exactly the same; `Install.sh` runs the same
 `run-all-desktop.sh`.
 
@@ -275,11 +279,37 @@ It looks like the waybar bar (the same glass islands, icons, fonts and sizes) an
 
 - **Islands:** workspaces (dots, the active one a pill; each monitor shows its own), music
   (visualizer + title, hover for the artist and the buttons), clock, CPU / temperature / memory
-  (memory as used / total, e.g. `13.1/31G`), tray + Bluetooth + network + volume, stay awake,
+  (as percentages; the control center shows memory used / total), tray + Bluetooth + network +
+  volume, stay awake,
   notifications, power.
-- **Every icon opens its program:** CPU, temperature and memory open btop, Bluetooth opens
-  blueman-manager (right click: Bluetooth on/off), network opens nmtui, volume opens pavucontrol
-  (scroll: volume, right click: mute), tray icons open their app (right click: their menu).
+- **Every icon opens its program or panel:** CPU, temperature and memory open btop, Bluetooth
+  opens the Bluetooth panel (right click: Bluetooth on/off), network opens the network panel,
+  volume opens the mixer (scroll: volume, right click: mute), tray icons open their app (right
+  click: their menu).
+- **Bluetooth panel:** on/off, your paired devices (connect/disconnect, battery, forget), and
+  *Search* to find new devices in pairing mode; click one to pair, trust and connect it. A device
+  that asks for a PIN code needs `bluetoothctl` in a terminal (Quickshell can't answer PIN requests
+  yet).
+- **Network panel:** each cable connection with its state and IP address; on a PC with Wi-Fi also
+  Wi-Fi on/off and the networks around (strongest first): click one to connect, a password field
+  opens when it needs one; disconnect and forget. *More settings* opens nmtui.
+- **Window switcher** (<kbd>Alt</kbd> + <kbd>Tab</kbd>): live previews of every window, most
+  recently used first. Keep <kbd>Alt</kbd> down, <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>
+  to pick, let go to switch; a quick <kbd>Alt</kbd> + <kbd>Tab</kbd> flips between the last two.
+- **Workspace overview** (<kbd>Super</kbd> + <kbd>Tab</kbd>, or middle-click the workspaces
+  island): on both monitors at once, every workspace of that monitor as a thumbnail with its
+  windows as live previews at their real place. Click a workspace to go there, click a window to
+  focus it, drag a window onto another workspace (also on the other monitor) to move it,
+  middle-click a window to close it. Type to find a window (the others dim, <kbd>Enter</kbd> goes
+  to it); arrow keys + <kbd>Enter</kbd> pick a workspace; <kbd>Esc</kbd> clears the search, then
+  closes it.
+- **Screenshot** (<kbd>Print</kbd>): both monitors in one image, saved to
+  `~/Pictures/Screenshots` and copied to the clipboard, with a short flash and a notification
+  (Open / Show in folder). `hypr/scripts/screenshot.sh`, with grim.
+- **Volume:** click the volume icon (or <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd>) for the
+  **mixer**: pick the output and input device, their volume, and a volume slider for every app
+  playing sound. Its **Edit** button hides devices you never use (a GPU's HDMI outputs, a webcam
+  mic) from the lists, remembered per PC; click them again to show them.
 - **Clock:** click for the **calendar** (month view, Monday first; arrows or scrolling change the
   month, clicking the month's name goes back to today).
 - **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the last
@@ -296,6 +326,21 @@ It looks like the waybar bar (the same glass islands, icons, fonts and sizes) an
   critical ones (like a failing disk) pop up.
 - **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> (or the control center's toggle), saved
   in `quickshell/bar-position` (kept by a reinstall). DP-2 always has its bar on the right edge.
+- **App launcher** (tap <kbd>Super</kbd>): type to search (names, descriptions, keywords),
+  <kbd>↑</kbd> / <kbd>↓</kbd> and <kbd>Enter</kbd>, or click. Apps you start often come first
+  (counted in `~/.local/state/quickshell`). The entries hidden in `~/.local/share/applications`
+  stay hidden.
+- **Wallpaper picker** (<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>, or the control
+  center's toggle): thumbnails of `~/Pictures/Wallpapers` (subfolders too), the current one
+  outlined; search, arrow keys, <kbd>Enter</kbd> or a click.
+- **Wallpaper:** Quickshell draws it (cropped to fill each monitor, fading over to a new one,
+  GIFs play), from `hypr/colors/current-wallpaper.conf`, which `hypr/scripts/wallpaper.sh`
+  writes and the lock screen reads.
+- **Clipboard history** (<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>): what you copied,
+  newest first (kept by cliphist); search, <kbd>Enter</kbd> copies it again,
+  <kbd>Ctrl</kbd> + <kbd>Delete</kbd> removes it.
+- **Admin rights (polkit):** when an app asks for your password, a dialog in the same glass
+  (what's asking, a password field; with the YubiKey login also "touch your key").
 - **Volume popup:** the volume, mic and Caps Lock keys show the same popup as before
   (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`).
 - **Colors:** wallust writes `quickshell/colors.json` (`wallust/templates/colors-quickshell.template`);
@@ -304,7 +349,7 @@ It looks like the waybar bar (the same glass islands, icons, fonts and sizes) an
 - **Blur:** Hyprland's layer rules blur everything named `vk-*` (`hypr/hyprland/rules.lua`).
 - **Files:** `shell.qml` (what runs, and the `qs ipc` commands), `common/Theme.qml` (colors, fonts,
   sizes, icons), `services/` (system info, audio, music, notifications, network/Bluetooth),
-  `bar/`, `controlcenter/`, `popups/`, and `scripts/stats.sh` (CPU, memory and temperature,
+  `bar/`, `controlcenter/`, `popups/`, `background/` (the wallpaper), and `scripts/stats.sh` (CPU, memory and temperature,
   every 2 s) and `scripts/cava.sh` (the visualizer). The monitors, their bar edges and their
   workspaces are at the top of `services/BarState.qml`; the network interface (`eno1`) is in
   `services/Connectivity.qml`; the temperature sensor path is in `scripts/stats.sh`.

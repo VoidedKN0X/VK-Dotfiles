@@ -11,10 +11,6 @@ foot.template = 'foot.template'
 foot.target = '~/.config/foot/colors-dark.ini'
 foot.pywal = true
 
-colors-rofi.template = 'colors-rofi.template'
-colors-rofi.target = '~/.config/rofi/colors/colors.rasi'
-colors-rofi.pywal = true
-
 border-colors.template = 'border-colors.template'
 border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
 border-colors.pywal = true

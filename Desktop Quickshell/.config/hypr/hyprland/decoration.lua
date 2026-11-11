@@ -13,7 +13,7 @@ hl.config({
             popups = true,
             input_methods = true,
             -- softer blur plus a little grain (noise) and color (vibrancy):
-            -- frosted glass instead of a heavy smear (the bar, its popups, rofi, ...)
+            -- frosted glass instead of a heavy smear (the bar, its popups, ...)
             size = 2,
             passes = 2,
             noise = 0.02,

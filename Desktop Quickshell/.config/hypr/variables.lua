@@ -1,6 +1,7 @@
 terminal = "foot"
 fileManager = "thunar"
-menu = "pkill rofi || ~/.config/rofi/launchers/type-2/launcher.sh"
+-- the app launcher (quickshell/popups/Launcher.qml); a second tap closes it
+menu = "qs ipc call launcher toggle"
 browser = "librewolf"
 cursorTheme = "Bibata-Modern-Ice"
 cursorSize = "24"

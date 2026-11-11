@@ -78,11 +78,30 @@ Singleton {
     }
 
     // ── popups: one open at a time, on one screen ─────────────────────────
-    // the control center (bell, Super + N), the calendar (clock) and the
-    // power menu (power button): the screen they're open on, or null
+    // the screen each one is open on, or null:
+    //   control center (bell, Super + N), calendar (clock), power menu (power
+    //   button), volume mixer (volume icon, Ctrl + Alt + V), app launcher
+    //   (Super), wallpaper picker (Super + Shift + W), clipboard history
+    //   (Super + Shift + H), Bluetooth and network panels (their bar icons),
+    //   window switcher (Alt + Tab)
     property var controlCenterScreen: null
     property var calendarScreen: null
     property var powerMenuScreen: null
+    property var mixerScreen: null
+    property var launcherScreen: null
+    property var wallpaperScreen: null
+    property var clipboardScreen: null
+    property var bluetoothScreen: null
+    property var networkScreen: null
+    // the window switcher (Alt + Tab), always on the focused monitor
+    property var switcherScreen: null
+    // the workspace overview (Super + Tab): on every monitor at once
+    property bool overviewOpen: false
+    // the Tab / Shift + Tab that opened it (1 / -1)
+    property int switcherFirstStep: 1
+
+    signal switcherStep(int step)
+    signal switcherCommit
     // stay awake (idle inhibitor): the bar's coffee cup and the control center
     property bool stayAwake: false
 
@@ -94,6 +113,41 @@ Singleton {
     }
     function togglePowerMenu(screen) {
         toggle("powerMenuScreen", screen);
+    }
+    function toggleMixer(screen) {
+        toggle("mixerScreen", screen);
+    }
+    function toggleLauncher(screen) {
+        toggle("launcherScreen", screen);
+    }
+    function toggleWallpaperPicker(screen) {
+        toggle("wallpaperScreen", screen);
+    }
+    function toggleClipboard(screen) {
+        toggle("clipboardScreen", screen);
+    }
+    function toggleOverview() {
+        const wasOpen = overviewOpen;
+        closeAll();
+        overviewOpen = !wasOpen;
+    }
+    function toggleBluetooth(screen) {
+        toggle("bluetoothScreen", screen);
+    }
+    function toggleNetwork(screen) {
+        toggle("networkScreen", screen);
+    }
+
+    // Alt + Tab (step 1) / Alt + Shift + Tab (step -1): open the switcher,
+    // or move the selection while it's open
+    function switchWindows(step) {
+        if (switcherScreen !== null) {
+            switcherStep(step);
+            return;
+        }
+        closeAll();
+        switcherFirstStep = step;
+        switcherScreen = focusedScreen();
     }
 
     // a second click on the same button closes it; any other popup closes
@@ -113,5 +167,13 @@ Singleton {
         controlCenterScreen = null;
         calendarScreen = null;
         powerMenuScreen = null;
+        mixerScreen = null;
+        launcherScreen = null;
+        wallpaperScreen = null;
+        clipboardScreen = null;
+        bluetoothScreen = null;
+        networkScreen = null;
+        switcherScreen = null;
+        overviewOpen = false;
     }
 }

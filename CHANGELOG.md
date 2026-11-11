@@ -2,6 +2,162 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-11 (2)
+
+### Changed
+- **Desktop Quickshell: rofi, awww, pavucontrol and hyprpolkitagent replaced
+  by Quickshell.** All new parts use the shell's glass (`common/Theme.qml`)
+  and wallust accent, and open on the focused monitor.
+  - **App launcher** (`popups/Launcher.qml`, tap Super:
+    `menu = "qs ipc call launcher toggle"` in `hypr/variables.lua`; tapping
+    again closes it): in the middle of the screen, 480 px wide, a search
+    field and 8 rows (icon, name, generic name). Search matches the name
+    first (start of the name, then the start of a word, then anywhere), then
+    the generic name, description, keywords and categories. Apps you start
+    often rank higher (counts in Quickshell's state folder,
+    `~/.local/state/quickshell/.../launcher-usage.json`). Up/Down/Tab, Enter
+    or a click starts the app (terminal apps in foot), Escape closes it. It
+    reads the installed `.desktop` files and skips NoDisplay ones, so the
+    overrides in `.local/share/applications` still hide the helper apps.
+  - **Wallpaper picker** (`popups/WallpaperPicker.qml`, Super + Shift + W and
+    the control center's wallpaper toggle): 720 px, a search field and a
+    3-column grid of thumbnails (scaled down to 320 px so a big folder opens
+    fast) of every jpg/jpeg/png/gif in `~/Pictures/Wallpapers` (subfolders
+    too, sorted, like `wallpaper.sh`), with the name under each. The
+    current wallpaper is outlined and selected when it opens. Arrow keys,
+    Enter or a click runs `hypr/scripts/wallpaper.sh` with it.
+  - **Wallpaper** (`background/WallpaperLayer.qml`, `services/Wallpaper.qml`):
+    drawn by Quickshell on the background layer of every monitor, cropped to
+    fill it, fading over (0.6 s) when it changes; GIFs play. It shows the
+    file in `hypr/colors/current-wallpaper.conf` and follows changes to it.
+  - **`hypr/scripts/wallpaper.sh`** no longer waits for awww-daemon or runs
+    `awww img`: at login there's nothing to do (Quickshell shows the saved
+    wallpaper), and a new wallpaper is written to `current-wallpaper.conf`
+    first (so it shows at once), then wallust makes the colors.
+  - **Clipboard history** (`popups/Clipboard.qml`, Super + Shift + H):
+    `cliphist list` in a 560 px list with a search field, newest first;
+    images show as "Image · 23 KiB png 800x600". Enter or a click copies the
+    entry again (`cliphist decode | wl-copy`), Ctrl + Delete removes it
+    (`cliphist delete`) and the list reloads. cliphist and wl-clipboard stay.
+  - **Volume mixer** (`popups/Mixer.qml`, the bar's volume icon and
+    Ctrl + Alt + V): next to the volume icon, like the other popups. Output:
+    the volume slider of the speakers and, with more than one output, a list
+    to pick the default one; Apps: a volume slider (click the icon to mute)
+    with the app's icon, name and what it plays, for every app playing
+    sound; Input: the microphone's slider and, with more than one, a list
+    to pick it. **Edit** (top right) lists every output and input with an
+    eye: click one to hide it from the lists (a GPU's HDMI outputs, a webcam
+    mic, ...), again to show it; the device in use always shows ("In use").
+    Hidden devices are remembered by their PipeWire node name in Quickshell's
+    state folder (`~/.local/state/quickshell/.../hidden-audio-devices.json`),
+    so per PC and kept across reinstalls. `services/Audio.qml` gained the
+    lists of outputs, inputs and app streams, the hidden devices, and the
+    default output/input switch.
+  - **Polkit dialog** (`popups/PolkitDialog.qml`, Quickshell's polkit
+    agent in `shell.qml`): when an app asks for admin rights, a dialog in
+    the middle of the focused monitor with the app's icon, what it wants
+    (message and action id), a password field (the prompt as its
+    placeholder), the extra message ("touch your key" with the YubiKey login,
+    in red on errors, "Wrong password, try again" after a failed try), and
+    Cancel / Authenticate. Enter confirms, Escape cancels.
+  - **Popups in the middle of the screen** (`common/PopupLayer.qml`:
+    `centered`, and `typing`, which takes the keyboard at once for the search
+    or password field). Typing goes to them until they close.
+  - **`hypr/hyprland/rules.lua`:** the mixer slides in from the bar like the
+    other popups; the launcher, wallpaper picker, clipboard and polkit dialog
+    rise from the bottom (as rofi did). The rofi layer rules and the
+    pavucontrol window rule are gone. The wallpaper's layer is named
+    `wallpaper`, so the blur rule for `vk-*` skips it.
+  - **Removed:** rofi, awww, pavucontrol and hyprpolkitagent from
+    `Install.sh`; `.config/rofi/`, the wallust template `colors-rofi.template`
+    (and its `wallust.toml` entry, and `rofi/colors/colors.rasi` from the
+    files kept on a re-run), `hypr/scripts/wallpaper-picker.sh` and
+    `hypr/scripts/clipboard.sh`, the `rofi.desktop`,
+    `rofi-theme-selector.desktop` and `org.pulseaudio.pavucontrol.desktop`
+    overrides, and the `awww-daemon` and `hyprpolkitagent` lines in
+    `execs.lua`. gnome-keyring stays (the login store for Claude Desktop and
+    Element, not a polkit agent).
+- **Desktop Quickshell: blueman, flameshot and nmtui replaced** (the
+  `nmtui` window stays installed with NetworkManager, for VPNs and static IPs).
+  - **Bluetooth panel** (`popups/BluetoothPanel.qml`): the bar's Bluetooth
+    icon (was blueman-manager) and a right click on the control center's
+    Bluetooth toggle. An on/off switch; "My devices": every paired device
+    with its icon, "Connected · 85%" (battery when it reports one),
+    "Connecting...", Connect / Disconnect and Forget; "Available": Search /
+    Stop turns on BlueZ discovery (stopped again when the panel closes) and
+    lists new devices with a name; clicking one pairs it, then trusts it (so
+    it reconnects by itself) and connects. A note says to use bluetoothctl
+    for devices that ask for a PIN code (Quickshell has no PIN agent yet).
+  - **Network panel** (`popups/NetworkPanel.qml`): the bar's network icon
+    and the control center's Network toggle (were nmtui). Each wired device
+    ("Ethernet · eno1", connected with its IPv4 address from `ip -4 addr`,
+    or "Cable unplugged or not connected"). On a PC with Wi-Fi (for the
+    laptop and Steam Deck profiles later): a Wi-Fi switch, a warning when a
+    hardware switch blocks it, the networks around (scanning only while the
+    panel is open), connected first then by signal strength, with signal
+    bars, "Connected" / "Connecting..." / "Saved", Disconnect and Forget;
+    clicking one connects, and when it needs a password (or the saved one is
+    wrong) a password field opens in its row. "More settings (VPN, static
+    IP) in nmtui" opens nmtui in foot.
+  - **Window switcher** (`popups/WindowSwitcher.qml`,
+    `services/WindowHistory.qml`): Alt + Tab / Alt + Shift + Tab
+    (`qs ipc call switcher next|prev`). Live previews (Hyprland's toplevel
+    export) of every window, 248 x 196 cards with the app icon, title and
+    workspace, most recently used first (the order windows got focus since
+    Quickshell started), in the middle of the focused monitor. It opens on
+    the previous window (Shift + Tab: the last one); Tab / Shift + Tab or the
+    arrow keys move, letting go of Alt switches (the switcher has the
+    keyboard; an Alt release keybind, `switcher commit`, catches it too),
+    Enter or a click switches, Escape closes it. Switching activates the
+    window through the Wayland foreign-toplevel protocol, so Hyprland goes to
+    its workspace. It fades in and out (`rules.lua`).
+  - **Screenshots** (`hypr/scripts/screenshot.sh`, Print; replaces
+    `flameshot full`): grim captures both monitors as one image to
+    `~/Pictures/Screenshots/Screenshot_<date>_<time>.png`, wl-copy puts it on
+    the clipboard, Quickshell flashes the screens white
+    (`popups/ScreenshotFlash.qml`, `qs ipc call screenshot flash`; clicks go
+    through, not blurred), and a notification shows the picture with Open
+    and Show in folder (Thunar). Shift + Print (flameshot's area selection)
+    is gone.
+  - **Removed:** flameshot and blueman from `Install.sh`, their
+    `.local/share/applications` overrides (`org.flameshot.Flameshot.desktop`,
+    `blueman-manager.desktop`), the blueman window rule, and
+    `Session.bluetoothSettings()`. `rules.lua`: the Bluetooth and network
+    panels slide in like the mixer.
+- **Desktop Quickshell: workspace overview** (`popups/Overview.qml`,
+  `popups/OverviewScreen.qml`; Super + Tab, `qs ipc call overview toggle`,
+  or a middle click on the bar's workspaces island). Opens on both monitors
+  at once (one Overlay layer per monitor with a bar, `vk-overview`: blurred
+  and dimmed behind, zooming in with `popin 95%`). Each monitor shows its own
+  workspaces from `BarState.workspaces` (DP-1: 1, 3, 5, 7, 9; DP-2: 2, 4, 6,
+  8, 10) as thumbnails in the monitor's shape, as big as fit (the best number
+  of columns is worked out per monitor), with the wallpaper and every window
+  at its real position and size (from `hyprctl clients -j`, read when it
+  opens, every second while open, and after a move) as a live preview
+  (Hyprland toplevel export; the app's icon until the preview is there). The
+  active workspace is outlined in the accent, empty ones say "Empty", each
+  has "Workspace N · N windows" under it.
+  - Click a workspace: go there. Click a window: focus it (Hyprland goes to
+    its workspace). Middle-click a window: close it.
+  - Drag a window (after 8 px, so a shaky click is still a click) onto any
+    workspace thumbnail, also on the other monitor: it moves there. The
+    window is focused first and then moved with
+    `hl.dsp.window.move({ workspace = ... })`, like Super + Alt + 1-0; the
+    overview stays open and updates.
+  - The focused monitor has a search field and the keyboard: typing filters
+    the windows by title or app (the others dim to 25%), Enter goes to the
+    first match; with nothing typed, the arrow keys pick a workspace and
+    Enter goes there. Escape clears the search, then closes it. A click on
+    the dimmed background closes it too.
+  - `BarState`: `overviewOpen` and `toggleOverview()`; opening any other
+    popup closes it and the other way round.
+- **Desktop Quickshell bar: memory as a percentage** (`13.1/31G` -> `41%`),
+  like CPU usage, on the top and side bars; the control center keeps memory
+  used / total under its ring.
+- README: the Desktop Quickshell profile row, "What's inside" and the Desktop
+  Quickshell section list the launcher, wallpaper picker, wallpaper,
+  clipboard history, mixer and polkit dialog.
+
 ## 2026-11-11
 
 ### Added

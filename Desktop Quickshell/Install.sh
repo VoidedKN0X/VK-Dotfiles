@@ -70,7 +70,6 @@ PACMAN_PKGS=(
     android-tools
     android-udev
     darktable
-    flameshot
     qbittorrent
     gamemode
     gimp
@@ -120,10 +119,8 @@ PACMAN_PKGS=(
     hyprland
     hyprlock
     hypridle
-    hyprpolkitagent
     btop
     fastfetch
-    awww
     thunar
     thunar-volman
     gvfs
@@ -140,7 +137,6 @@ PACMAN_PKGS=(
     pacman-contrib
     zsh
     pkgfile
-    rofi
     # the bar, control center, notifications and popups (~/.config/quickshell)
     quickshell
     # wpctl: the volume keys (hypr/scripts/osd.sh)
@@ -154,7 +150,6 @@ PACMAN_PKGS=(
     ttf-jetbrains-mono-nerd
     ttf-ubuntu-font-family
     ttf-nerd-fonts-symbols
-    pavucontrol
     nwg-look
     orchis-theme
     papirus-icon-theme
@@ -171,7 +166,6 @@ PACMAN_PKGS=(
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     discord
-    blueman
     yubikey-manager
     pam-u2f
     libfido2
@@ -192,8 +186,8 @@ PACMAN_PKGS=(
     auto-cpufreq
     claude-desktop
     claude-code
-    # the bar's network icon and the control center (state from NetworkManager;
-    # clicking them opens nmtui)
+    # the bar's network icon, the network panel and the control center (state
+    # and Wi-Fi from NetworkManager; nmtui comes with it, for VPN / static IP)
     networkmanager
 )
 
@@ -464,7 +458,6 @@ KEEP_IF_EXISTS=(
     quickshell/colors.json
     quickshell/bar-position
     foot/colors-dark.ini
-    rofi/colors/colors.rasi
     hypr/hyprland/border-colors.lua
     hypr/colors/hyprlock-colors.conf
     btop/themes/wallust.theme
@@ -493,7 +486,8 @@ if [[ " ${YUBIKEY_ARGS[*]} " != *" --login "* ]] \
         || warn "could not add the password field to the lock screen"
 fi
 # App entries that override the installed ones: hide helper apps from the
-# launcher, and RapidRAW opens RAW photos passed to it (for mimeapps.list)
+# launcher (quickshell/popups/Launcher.qml reads them too), and RapidRAW opens
+# RAW photos passed to it (for mimeapps.list)
 mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
@@ -518,8 +512,7 @@ fi
 
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
-         "$HOME"/.config/quickshell/scripts/*.sh \
-         "$HOME"/.config/rofi/launchers/type-2/launcher.sh
+         "$HOME"/.config/quickshell/scripts/*.sh
 
 # === Post install: kernel, boot and tuning, then the YubiKey setup (if chosen) ===
 # Both run as root (sudo is still active from the start of this script). Each one

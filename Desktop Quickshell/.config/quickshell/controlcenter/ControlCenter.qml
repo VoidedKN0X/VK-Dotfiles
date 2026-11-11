@@ -112,8 +112,8 @@ PopupLayer {
                     icon: Connectivity.networkIcon
                     label: "Network"
                     on: Connectivity.connected
-                    // nmtui, like the bar's network icon
-                    onClicked: cc.openApp(() => Session.networkSettings())
+                    // the network panel, like the bar's network icon
+                    onClicked: BarState.toggleNetwork(cc.targetScreen)
                 }
                 RoundToggle {
                     Layout.fillWidth: true
@@ -121,7 +121,8 @@ PopupLayer {
                     label: "Bluetooth"
                     on: Connectivity.bluetoothOn
                     onClicked: Connectivity.toggleBluetooth()
-                    onRightClicked: cc.openApp(() => Session.bluetoothSettings())
+                    // the Bluetooth panel (devices, pairing)
+                    onRightClicked: BarState.toggleBluetooth(cc.targetScreen)
                 }
                 RoundToggle {
                     Layout.fillWidth: true
@@ -148,7 +149,7 @@ PopupLayer {
                     Layout.fillWidth: true
                     icon: Theme.iconWallpaper
                     label: "Wallpaper"
-                    onClicked: cc.openApp(() => Session.wallpaperPicker())
+                    onClicked: BarState.toggleWallpaperPicker(cc.targetScreen)
                 }
             }
 
