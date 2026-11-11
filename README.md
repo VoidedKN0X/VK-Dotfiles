@@ -275,7 +275,15 @@ screen and the wallust colors are exactly the same; `Install.sh` runs the same
 "VK-Dotfiles/Desktop Quickshell/Install.sh"
 ```
 
-It looks like the waybar bar (the same glass islands, icons, fonts and sizes) and works the same way:
+It has the waybar bar's glass islands, icons, fonts and sizes, set in a **frame**: one piece of
+glass around each screen with a bar. The bar's side holds the islands, the other three sides are a
+thin border (8 px), and the desktop inside has round corners. Windows stay inside the frame.
+Every popup grows out of the frame's inner edge with rounded joins: the calendar, power menu,
+mixer, Bluetooth and network panels out of the bar's side, the control center along the whole
+right side (with a side bar: the bar's side), notifications out of the right side under a top bar
+(the bar's side at the bottom with a side bar), the volume popup out of the right side, and the
+launcher, wallpaper picker and clipboard out of the bottom. The password dialog and the window
+switcher float in the middle.
 
 - **Islands:** workspaces (dots, the active one a pill; each monitor shows its own), music
   (visualizer + title, hover for the artist and the buttons), clock, CPU / temperature / memory
@@ -343,8 +351,14 @@ It looks like the waybar bar (the same glass islands, icons, fonts and sizes) an
   (what's asking, a password field; with the YubiKey login also "touch your key").
 - **Volume popup:** the volume, mic and Caps Lock keys show the same popup as before
   (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`).
-- **Colors:** wallust writes `quickshell/colors.json` (`wallust/templates/colors-quickshell.template`);
-  Quickshell watches it and recolors at once, without a restart.
+- **Colors:** everything follows the wallpaper. wallust writes `quickshell/colors.json`
+  (`wallust/templates/colors-quickshell.template`); Quickshell watches it and recolors at once,
+  without a restart. The accent is wallust's color5, the glass is the palette's background, the
+  text its foreground, and every other color (borders, cards, sliders, switches, the red of the
+  power button) is made from those, with guards that keep it readable: the text stays light, the
+  glass dark, the accent bright enough for dark text on it. A black and white wallpaper gives a
+  gray shell (wallust fills the palette with shades, `fallback_generator` in `wallust.toml`).
+  Window borders, foot, btop, the lock screen and opencode follow wallust too.
 - **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
 - **Blur:** Hyprland's layer rules blur everything named `vk-*` (`hypr/hyprland/rules.lua`).
 - **Files:** `shell.qml` (what runs, and the `qs ipc` commands), `common/Theme.qml` (colors, fonts,

@@ -14,7 +14,9 @@ PopupLayer {
     id: picker
 
     name: "vk-wallpaper"
-    centered: true
+    // grows out of the bottom of the frame, in the middle
+    attach: "bottom"
+    place: "center"
     typing: true
     panelWidth: 720
     targetScreen: BarState.wallpaperScreen

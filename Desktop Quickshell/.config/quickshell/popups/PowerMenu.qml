@@ -78,7 +78,7 @@ PopupLayer {
                         Label {
                             Layout.fillWidth: true
                             text: row.confirming ? Session.confirmText[row.modelData.action] : (row.modelData.label ?? "")
-                            color: row.confirming ? "#f3b4aa" : Theme.fg
+                            color: row.confirming ? Theme.warnLight : Theme.fg
                             font.pixelSize: 13
                             font.weight: row.confirming ? Font.DemiBold : Font.Medium
                         }

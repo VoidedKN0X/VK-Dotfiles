@@ -5,6 +5,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.common
 import qs.services
 
 PanelWindow {
@@ -13,7 +14,7 @@ PanelWindow {
     required property var modelData
 
     screen: modelData
-    color: "#0a0b0f"
+    color: Theme.solid
     anchors {
         top: true
         bottom: true

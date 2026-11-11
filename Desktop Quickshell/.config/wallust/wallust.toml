@@ -1,4 +1,9 @@
 check_contrast = true
+# a wallpaper with few colors (black and white, one color) still gets a full
+# palette: wallust fills it with shades between the colors it finds instead
+# of stopping with "not enough colors". Quickshell keeps such a palette gray
+# (quickshell/common/Theme.qml).
+fallback_generator = "interpolation"
 
 [templates]
 # the bar, control center and popups (Quickshell watches this file and

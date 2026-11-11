@@ -15,7 +15,7 @@ Rectangle {
     required property var notification
     // "now", "5 min", ... (from Notifs.age)
     property string age: ""
-    // a popup is solid glass, a card in the control center a lighter card
+    // a popup (in the notification panel) or a card in the control center
     property bool popup: false
     readonly property bool hovered: hover.hovered
     readonly property bool critical: notification?.urgency === NotificationUrgency.Critical
@@ -26,8 +26,8 @@ Rectangle {
 
     implicitHeight: content.implicitHeight + 24
     radius: 16
-    color: popup ? Theme.panel : Theme.card
-    border.width: popup || critical ? 1 : 0
+    color: Theme.card
+    border.width: critical ? 1 : 0
     border.color: critical ? Qt.alpha(Theme.warn, 0.6) : Theme.edge
 
     HoverHandler {

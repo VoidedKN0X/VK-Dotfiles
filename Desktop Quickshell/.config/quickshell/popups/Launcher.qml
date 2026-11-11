@@ -16,7 +16,9 @@ PopupLayer {
     id: launcher
 
     name: "vk-launcher"
-    centered: true
+    // grows out of the bottom of the frame, in the middle
+    attach: "bottom"
+    place: "center"
     typing: true
     panelWidth: 480
     targetScreen: BarState.launcherScreen

@@ -1,6 +1,7 @@
-// Notification popups, on the focused monitor next to the bell: top right
-// under a top bar, bottom left next to a left bar, bottom right next to a
-// right bar (where swaync put them). Newest nearest the bell. Each one stays
+// Notification popups, on the focused monitor next to the bell, in one panel
+// that grows out of the frame (Theme "the frame"): out of its right side at
+// the top with the bar on top, out of the bar's side at the bottom with a
+// side bar (where swaync put them). Newest nearest the bell. Each one stays
 // 8 s (low: 6 s, critical: until closed); hovering one keeps it. They stay in
 // the control center's list after they go away.
 
@@ -17,32 +18,40 @@ PanelWindow {
     readonly property var targetScreen: BarState.focusedScreen()
     readonly property string edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
     readonly property bool fromBottom: edge !== "top"
+    // the frame side it grows out of
+    readonly property string side: edge === "left" ? "left" : "right"
+    readonly property int padding: 10
 
     screen: targetScreen
     visible: Notifs.popups.length > 0
     color: "transparent"
     exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "vk-notifications"
+    WlrLayershell.namespace: "vk-notifications-" + side
     WlrLayershell.layer: WlrLayer.Overlay
 
     anchors {
         top: !popups.fromBottom
         bottom: popups.fromBottom
-        left: popups.edge === "left"
-        right: popups.edge !== "left"
+        left: popups.side === "left"
+        right: popups.side === "right"
     }
+    // from the frame's inner edge, clear of the desktop's round corner (the
+    // window includes the rounded joins above and below the cards)
     margins {
-        top: popups.fromBottom ? 0 : Theme.offset("top")
-        bottom: popups.fromBottom ? Theme.barEndMargin : 0
-        left: popups.edge === "left" ? Theme.offset("left") : 0
-        right: popups.edge === "right" ? Theme.offset("right") : popups.edge === "top" ? Theme.barEndMargin : 0
+        top: popups.fromBottom ? 0 : Theme.frameSize(popups.edge, "top") + Theme.cornerClearance - Theme.fillet
+        bottom: popups.fromBottom ? Theme.frameSize(popups.edge, "bottom") + Theme.cornerClearance - Theme.fillet : 0
+        left: popups.side === "left" ? Theme.frameSize(popups.edge, "left") : 0
+        right: popups.side === "right" ? Theme.frameSize(popups.edge, "right") : 0
     }
-    implicitWidth: 360
-    implicitHeight: Math.max(1, list.implicitHeight)
+    implicitWidth: 360 + padding * 2
+    implicitHeight: Math.max(1, list.implicitHeight) + padding * 2 + Theme.fillet * 2
 
-    // only the cards take clicks, not the space around them
-    mask: Region {
-        item: list
+    FramePanel {
+        side: popups.side
+        base: popups.side === "right" ? popups.width : 0
+        from: Theme.fillet
+        to: popups.height - Theme.fillet
+        depth: popups.width
     }
 
     // in the order on screen: newest at the top under a top bar, at the
@@ -59,7 +68,9 @@ PanelWindow {
 
     ColumnLayout {
         id: list
-        width: parent.width
+        x: popups.padding
+        y: Theme.fillet + popups.padding
+        width: parent.width - popups.padding * 2
         spacing: 8
 
         Repeater {

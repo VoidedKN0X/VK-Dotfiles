@@ -2,6 +2,75 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-11 (3)
+
+### Changed
+- **Desktop Quickshell: the bar is now a rounded frame around the screen,
+  and popups grow out of it** (inspired by the Caelestia shell's frame; the
+  islands, icons and fonts stay the same).
+  - **Frame** (`bar/Bar.qml`): one layer over the whole screen draws one
+    piece of glass along every edge (`Theme.frame`): the bar's side is 46 px
+    on top (8 + 30 + 8) or 54 px at the side (8 + 38 + 8) and holds the
+    islands, the other three sides are an 8 px border. The desktop inside
+    has 24 px round corners (QtQuick.Shapes, curve renderer). Only the frame
+    takes clicks (a mask over its four sides); the desktop inside goes to
+    the windows. Four invisible `frame-zone` layers (one per side) keep the
+    frame's space free, so windows sit inside it with Hyprland's 10 px gap.
+    The main monitor's bar still switches between top and left (Super + B);
+    DP-2 keeps its bar on the right.
+  - **Popups join the frame** (new `common/FramePanel.qml`, used by
+    `common/PopupLayer.qml`): a panel starts at the frame's inner edge with a
+    22 px rounded join on each side and 22 px round outer corners, in the
+    frame's color, so frame and panel read as one piece. `PopupLayer` gets
+    `attach` (the side it grows out of; the bar's side by default) and
+    places the panel along that side (`start` / `center` / `end`, clear of
+    the desktop's round corners); `fullHeight` fills the whole side and takes
+    the desktop's corners.
+    - control center: the whole right side (with a side bar: the bar's side)
+    - calendar, power menu, mixer, Bluetooth, network: out of the bar's side
+      (calendar in the middle, the others at the end)
+    - app launcher, wallpaper picker, clipboard: out of the bottom, in the
+      middle (they were floating in the middle of the screen)
+    - notifications (`popups/NotificationPopups.qml`): one panel holding the
+      cards, out of the right side at the top with the bar on top, out of the
+      bar's side at the bottom with a side bar; the cards inside are lighter
+      cards (`NotificationCard`)
+    - volume popup (`popups/Osd.qml`): out of the right side in the middle,
+      vertical (icon, a level bar going up, the value), click-through
+    - the password dialog and window switcher still float in the middle as
+      rounded panels of their own
+  - **Animations** (`hypr/hyprland/rules.lua`): every popup slides out of the
+    side it grows out of; its layer is named after that side
+    (`vk-<popup>-top/-bottom/-left/-right`, `vk-notifications-left/-right`).
+    The volume popup slides in from the right.
+- **Desktop Quickshell: every color follows the wallpaper**
+  (`common/Theme.qml`). Before, only the accent did; the text, glass, edges,
+  cards, sliders and the power red were fixed.
+  - accent: wallust's color5, its lightness kept at 60-80 % so dark text on
+    it stays readable; `onAccent` (text on the accent) is a very dark shade
+    of it
+  - text: the palette's foreground, kept at least 85 % light and only
+    slightly tinted; dim / faint text, edges, highlights, cards, buttons,
+    hover and slider tracks are that text color at low opacity
+  - glass: the palette's background hue at 8.5 % lightness (islands 48 %,
+    frame and popups 72 % opaque); `solid` (5 %) behind the wallpaper and in
+    the overview's thumbnails; `shade` dims the overview and switcher
+  - red for power and warnings: as colorful as the wallpaper
+    (`warn`, `warnLight` for the power menu's confirm text)
+  - black and white wallpapers: when the strongest of color1-6 has almost no
+    color (saturation x brightness under 0.12) the shell turns gray (text,
+    glass and accent without a hue; the power red muted) instead of
+    tinting it with a made-up color
+  - replaced the last fixed colors: round toggles, session buttons, pill
+    sliders, switches, the switcher's preview shade, the overview's dim,
+    thumbnails and window tiles, the screenshot flash (now the text color)
+    and the wallpaper layer's background
+- **wallust** (`wallust/wallust.toml`): `fallback_generator = "interpolation"`,
+  so a wallpaper with few colors (black and white, one color) still gets a
+  full palette (shades between the colors it has) instead of failing with
+  "not enough colors".
+- README: the frame, where each popup opens, and how the colors work.
+
 ## 2026-11-11 (2)
 
 ### Changed

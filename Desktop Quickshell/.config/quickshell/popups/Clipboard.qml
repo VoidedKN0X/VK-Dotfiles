@@ -13,7 +13,9 @@ PopupLayer {
     id: history
 
     name: "vk-clipboard"
-    centered: true
+    // grows out of the bottom of the frame, in the middle
+    attach: "bottom"
+    place: "center"
     typing: true
     panelWidth: 560
     targetScreen: BarState.clipboardScreen

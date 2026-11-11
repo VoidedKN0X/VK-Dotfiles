@@ -18,7 +18,7 @@ Rectangle {
 
     implicitHeight: 44
     radius: height / 2
-    color: Qt.rgba(0.827, 0.839, 0.871, 0.1)
+    color: Theme.track
     clip: true
 
     Accessible.role: Accessible.Slider
@@ -62,7 +62,7 @@ Rectangle {
             size: 34
             icon: slider.icon
             iconColor: slider.muted ? Theme.warn : slider.value > 0.08 ? Theme.onAccent : Theme.fg
-            hoverFill: Qt.rgba(0, 0, 0, 0.15)
+            hoverFill: Qt.alpha(Theme.onAccent, 0.15)
             accessibleName: slider.muted ? "Unmute" : "Mute"
             onClicked: slider.iconClicked()
         }

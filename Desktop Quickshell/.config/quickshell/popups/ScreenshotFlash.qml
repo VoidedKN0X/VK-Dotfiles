@@ -4,6 +4,7 @@
 import QtQuick
 import Quickshell
 import Quickshell.Wayland
+import qs.common
 
 Scope {
     id: flash
@@ -43,7 +44,7 @@ Scope {
 
             Rectangle {
                 anchors.fill: parent
-                color: "white"
+                color: Theme.fg
                 opacity: 0
                 SequentialAnimation on opacity {
                     running: true

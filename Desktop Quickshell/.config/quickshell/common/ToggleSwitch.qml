@@ -13,7 +13,7 @@ Rectangle {
     implicitWidth: 44
     implicitHeight: 26
     radius: height / 2
-    color: checked ? Theme.accent : Qt.rgba(1, 1, 1, 0.12)
+    color: checked ? Theme.accent : Theme.track
     border.width: checked ? 0 : 1
     border.color: Theme.cardEdge
 

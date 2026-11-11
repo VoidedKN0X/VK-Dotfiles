@@ -4,8 +4,9 @@
 //   qs ipc call osd show mic <muted 0|1> ""
 //   qs ipc call osd show brightness <0-100> ""
 //   qs ipc call osd show caps <on 0|1> ""
-// On the focused monitor, in the top left corner next to the bar (top right
-// next to a right bar), and gone after 1.2 s. Holding a key updates it.
+// On the focused monitor, a small panel growing out of the right side of the
+// frame (Theme "the frame"), in the middle: the icon, a level bar going up
+// and the value. Gone after 1.2 s; holding a key updates it.
 
 import QtQuick
 import QtQuick.Layouts
@@ -33,65 +34,61 @@ PanelWindow {
     WlrLayershell.namespace: "vk-osd"
     WlrLayershell.layer: WlrLayer.Overlay
 
-    anchors {
-        top: true
-        left: osd.edge !== "right"
-        right: osd.edge === "right"
+    // only anchored right: in the middle of the right side
+    anchors.right: true
+    margins.right: Theme.frameSize(osd.edge, "right")
+    implicitWidth: 64
+    implicitHeight: column.implicitHeight + 32 + Theme.fillet * 2
+    // it only shows; clicks go through it
+    mask: Region {}
+
+    FramePanel {
+        side: "right"
+        base: osd.width
+        from: Theme.fillet
+        to: osd.height - Theme.fillet
+        depth: osd.width
     }
-    margins {
-        top: osd.edge === "top" ? Theme.offset("top") : Theme.barEndMargin
-        left: osd.edge === "left" ? Theme.offset("left") : osd.edge === "top" ? Theme.barEndMargin : 0
-        right: osd.edge === "right" ? Theme.offset("right") : 0
-    }
-    implicitWidth: pill.implicitWidth
-    implicitHeight: pill.implicitHeight
 
-    Rectangle {
-        id: pill
-        anchors.fill: parent
-        implicitWidth: row.implicitWidth + 26
-        implicitHeight: 40
-        radius: height / 2
-        color: Theme.panel
-        border.color: Theme.edge
-        border.width: 1
+    ColumnLayout {
+        id: column
+        anchors.centerIn: parent
+        spacing: 10
 
-        RowLayout {
-            id: row
-            anchors.centerIn: parent
-            spacing: 10
-
-            Glyph {
-                glyph: osd.icon
-                color: osd.muted ? Theme.faint : Theme.fg
-                font.pixelSize: 18
-            }
+        Glyph {
+            Layout.alignment: Qt.AlignHCenter
+            glyph: osd.icon
+            color: osd.muted ? Theme.faint : Theme.accent
+            font.pixelSize: 18
+        }
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            visible: osd.level >= 0
+            implicitWidth: 26
+            implicitHeight: 150
+            radius: 13
+            color: Theme.track
             Rectangle {
-                visible: osd.level >= 0
-                implicitWidth: 100
-                implicitHeight: 4
-                radius: 2
-                color: Qt.rgba(1, 1, 1, 0.14)
-                Rectangle {
-                    width: parent.width * Math.max(0, osd.level)
-                    height: parent.height
-                    radius: 2
-                    color: osd.muted ? Qt.alpha(Theme.fg, 0.35) : Theme.accent
-                    Behavior on width {
-                        NumberAnimation {
-                            duration: 80
-                        }
+                anchors.bottom: parent.bottom
+                width: parent.width
+                height: Math.max(parent.width, parent.height * Math.max(0, osd.level))
+                visible: osd.level > 0
+                radius: 13
+                color: osd.muted ? Qt.alpha(Theme.fg, 0.35) : Theme.accent
+                Behavior on height {
+                    NumberAnimation {
+                        duration: 80
                     }
                 }
             }
-            Label {
-                text: osd.valueText
-                color: osd.muted ? Theme.faint : Theme.fg
-                font.pixelSize: Theme.smallSize
-                font.weight: Font.DemiBold
-                horizontalAlignment: Text.AlignRight
-                Layout.preferredWidth: 32
-            }
+        }
+        Label {
+            Layout.alignment: Qt.AlignHCenter
+            text: osd.valueText
+            color: osd.muted ? Theme.faint : Theme.fg
+            font.pixelSize: Theme.smallSize
+            font.weight: Font.DemiBold
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 

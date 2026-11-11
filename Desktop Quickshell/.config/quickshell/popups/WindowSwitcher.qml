@@ -112,7 +112,7 @@ PopupLayer {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: 10
-                        color: Qt.rgba(0, 0, 0, 0.3)
+                        color: Theme.shade
                         ScreencopyView {
                             anchors.centerIn: parent
                             captureSource: card.modelData.wayland

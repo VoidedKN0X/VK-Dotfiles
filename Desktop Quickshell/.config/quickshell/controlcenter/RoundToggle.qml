@@ -21,9 +21,9 @@ Column {
         width: 48
         height: 48
         radius: 24
-        color: toggle.on ? Theme.accent : mouse.containsMouse ? Qt.rgba(1, 1, 1, 0.1) : Qt.rgba(1, 1, 1, 0.06)
+        color: toggle.on ? Theme.accent : mouse.containsMouse ? Theme.buttonHover : Theme.button
         border.width: toggle.on ? 0 : 1
-        border.color: Qt.rgba(1, 1, 1, 0.1)
+        border.color: Theme.buttonHover
 
         Accessible.role: Accessible.Button
         Accessible.name: toggle.label

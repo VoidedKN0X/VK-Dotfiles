@@ -6,8 +6,8 @@
 //   volume and microphone sliders
 //   the music player (while one has a track)
 //   notifications (folded into one row; click it for the list)
-// With the bar on top it hangs under the bar on the right; with a side bar it
-// runs along it. A click outside, the bell again or Escape closes it.
+// It fills the whole right side of the frame around the screen (with a side
+// bar: the bar's side). A click outside, the bell again or Escape closes it.
 
 import QtQuick
 import QtQuick.Layouts
@@ -19,7 +19,8 @@ PopupLayer {
     id: cc
 
     name: "vk-control-center"
-    place: "end"
+    // the whole right side of the frame (with a side bar: the bar's side)
+    attach: edge === "top" ? "right" : edge
     fullHeight: true
     panelWidth: 410
     targetScreen: BarState.controlCenterScreen
@@ -94,8 +95,8 @@ PopupLayer {
                         iconSize: 17
                         accessibleName: modelData.name
                         iconColor: confirming ? Theme.onAccent : modelData.danger ? Theme.warn : Theme.fg
-                        fill: confirming ? Theme.warn : modelData.danger ? Qt.alpha(Theme.warn, 0.14) : Qt.rgba(1, 1, 1, 0.06)
-                        borderColor: modelData.danger ? Qt.alpha(Theme.warn, 0.35) : Qt.rgba(1, 1, 1, 0.1)
+                        fill: confirming ? Theme.warn : modelData.danger ? Qt.alpha(Theme.warn, 0.14) : Theme.button
+                        borderColor: modelData.danger ? Qt.alpha(Theme.warn, 0.35) : Theme.buttonHover
                         onClicked: cc.session(modelData.action)
                     }
                 }

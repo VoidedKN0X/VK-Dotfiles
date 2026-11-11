@@ -92,7 +92,7 @@ PanelWindow {
     // the dimmed desktop; a click on it closes the overview
     Rectangle {
         anchors.fill: parent
-        color: Qt.rgba(0.04, 0.03, 0.07, 0.6)
+        color: Theme.shade
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.AllButtons
@@ -168,7 +168,7 @@ PanelWindow {
                     implicitWidth: view.thumbWidth
                     implicitHeight: view.thumbHeight
                     radius: 14
-                    color: "#0a0b0f"
+                    color: Theme.solid
                     border.width: workspace.active ? 3 : workspace.picked ? 2 : 1
                     border.color: workspace.active || workspace.picked ? Theme.accent : Theme.edge
 
@@ -228,7 +228,7 @@ PanelWindow {
                             width: Math.max(12, modelData.size[0] * view.zoom)
                             height: Math.max(12, modelData.size[1] * view.zoom)
                             radius: 6
-                            color: Qt.rgba(0.08, 0.06, 0.13, 0.9)
+                            color: Qt.alpha(Theme.base, 0.9)
                             border.width: winMouse.containsMouse ? 2 : 1
                             border.color: winMouse.containsMouse ? Theme.accent : Qt.alpha(Theme.fg, 0.25)
                             opacity: beingDragged ? 0.35 : dim ? 0.25 : 1
