@@ -2,6 +2,102 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-11
+
+### Added
+- **Desktop Quickshell profile** (`Desktop Quickshell/`): the Desktop profile
+  with the bar, notifications and the bar's popups made in Quickshell
+  (`.config/quickshell/`) instead of waybar, swaync and the Python popups.
+  Everything else is a copy of `Desktop/`: monitors, apps, services, the
+  `.zshrc` (Oh My Zsh plugins, aliases, `clean`, fastfetch at every new
+  terminal), foot, rofi, hyprlock, btop and the other wallust templates; its
+  `Install.sh` runs the same `Post Install/run-all-desktop.sh`.
+  - **Bar:** the same glass islands as the waybar bar (dark glass with a light
+    edge and top highlight, Ubuntu + Symbols Nerd Font, the same Material
+    Design icons, 30 px high on top / 38 px wide on the side, 6 px between
+    islands): workspaces as dots (the active one a 24 px pill in the accent,
+    occupied brighter than empty, urgent red; click to go there, scroll for
+    the next/previous; DP-1 shows 1, 3, 5, 7, 9 and DP-2 2, 4, 6, 8, 10),
+    music island (6-bar cava visualizer + title, hover for the artist and
+    previous / play-pause / next; only while a player has a title), clock
+    (`Tue 10 Nov · 21:47:05`; stacked on a side bar), CPU / temperature /
+    memory, tray + Bluetooth + network + volume, stay awake (idle
+    inhibitor), notifications (an accent pill while there are any) and
+    power.
+  - **Memory as used / total** in the bar (`13.1/31G`, used in GiB with one
+    decimal and the total rounded; on a side bar `/31G` sits under the
+    value). Used = total - available, like waybar's memory module.
+  - **Every status icon opens its program:** CPU, temperature and memory ->
+    btop in foot; Bluetooth -> blueman-manager (right click: Bluetooth on or
+    off; shows a connected device's battery like waybar did); network ->
+    nmtui in foot; volume -> pavucontrol (scroll: 1% steps, right click:
+    mute); tray icons -> their app (right click or menu-only apps: their
+    menu, middle click: second action, scroll passed on).
+  - **Calendar popup on the clock:** a month view (Monday first, today in
+    the accent, days of the months around it dimmed), arrows or the scroll
+    wheel change the month, clicking the month's name goes back to today.
+    Under the clock with the bar on top, next to it with a side bar.
+  - **Control center** (the bell or Super + N), replacing the swaync panel:
+    an overlay layer (not a window: Hyprland doesn't tile it, it floats over
+    everything, fullscreen apps too). Full height next to the bar (right side
+    under a top bar, along a side bar), 410 px wide. From the top: hostname
+    and uptime with session buttons (lock, suspend, restart, shut down;
+    restart and shut down need a second click within 3 s, the subtitle then
+    says "Click again to ..."), six round quick toggles (network: opens nmtui;
+    Bluetooth on/off, right click blueman-manager; do not disturb; stay awake;
+    bar top/left; wallpaper picker), CPU usage and memory as 270° ring gauges
+    with the percentage inside (memory with used / total GiB under it) and the
+    CPU temperature between them (click the card for btop), volume and
+    microphone pill sliders (drag, click, scroll in 5% steps, click the icon
+    to mute), the music player (visualizer, title, artist · app, buttons,
+    progress bar to seek) while a player has a track, and the notifications
+    folded into one row ("2 notifications · pacman, Element"; click it for
+    the cards and Clear all). A click outside, the bell again or Escape
+    closes it.
+  - **Notifications:** Quickshell is the notification daemon (swaync is no
+    longer installed). Popups next to the bell on the focused monitor (top
+    right under a top bar, bottom corner next to a side bar), newest nearest
+    the bell, at most 5. Normal ones stay 8 s, low 6 s, critical until closed
+    (swaync's timeouts); hovering a popup keeps it. Clicking runs the default
+    action and closes it, action buttons are shown, middle click closes.
+    While the control center is open no popups appear. Do not disturb (right
+    click the bell or the toggle) hides popups except critical ones, so a
+    failing disk (smartd) still shows.
+  - **Power menu** on the power button: the same as before (lock, suspend,
+    log out, restart, shut down; the last three need a second click).
+  - **Volume popup:** `hypr/scripts/osd.sh` shows the volume, mic and Caps
+    Lock popup through `qs ipc call osd show ...` instead of `osd.py`; same
+    place (top left next to the bar, top right next to DP-2's right bar),
+    same look, hides after 1.2 s.
+  - **Bar position:** Super + B runs `qs ipc call bar toggle` (also a toggle
+    in the control center); saved in `~/.config/quickshell/bar-position`,
+    which `Install.sh` keeps. DP-2 keeps its bar on the right edge. The
+    popups follow the bar of the monitor they open on.
+  - **Colors:** new wallust template `colors-quickshell.template` writes
+    `~/.config/quickshell/colors.json` (kept by `Install.sh`, default
+    included); Quickshell watches it and recolors without a restart, so
+    `wallpaper.sh` no longer reloads waybar, swaync or the volume popup. The
+    accent is color5, as before.
+  - **Hyprland:** `execs.lua` starts `qs` instead of waybar and swaync;
+    Super + R runs the new `hypr/scripts/restart-quickshell.sh` (replaces
+    `restart-waybar-swaync.sh`); Super + N runs `qs ipc call controlCenter
+    toggle`. `rules.lua`: one blur rule for every `vk-*` layer
+    (ignore_alpha 0.2), slide animations for the control center, calendar
+    and power menu by the bar's edge, the notifications slide in from the
+    right, the volume popup fades.
+  - **`Install.sh`:** installs `quickshell` instead of waybar, swaync,
+    playerctl, python-gobject and gtk4-layer-shell (cava, wireplumber and
+    NetworkManager stay); earlyoom never closes `qs`/`quickshell` (instead of
+    waybar/swaync); the waybar/swaync color and position files are replaced by
+    `quickshell/colors.json` and `quickshell/bar-position` in the files kept
+    on a re-run; `bar-position.sh --files-only` is gone; `quickshell/scripts`
+    is made executable instead of `swaync/scripts`.
+  - Left out compared to `Desktop/`: `waybar/`, `swaync/`, the waybar and
+    swaync wallust templates and `restart-waybar-swaync.sh`.
+- README: the Desktop Quickshell profile in the profile table, a
+  "Desktop Quickshell" section, the Quickshell row in "What's inside", its
+  files in "Things to change for your setup" and the structure.
+
 ## 2026-11-08
 
 ### Changed

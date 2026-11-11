@@ -1,0 +1,13 @@
+[Desktop Entry]
+# Copy of RapidRAW's own entry (rapidraw-bin) with two additions, so file
+# managers can open RAW photos in it: %f passes the file to RapidRAW, which
+# opens it straight in the editor, and MimeType lists the RAW formats.
+Categories=Graphics;Photography;
+Comment=A blazingly-fast, non-destructive, and GPU-accelerated RAW image editor built with performance in mind.
+Exec=RapidRAW %f
+StartupWMClass=RapidRAW
+Icon=RapidRAW
+Name=RapidRAW
+Terminal=false
+Type=Application
+MimeType=image/x-adobe-dng;image/x-canon-cr2;image/x-canon-cr3;image/x-canon-crw;image/x-dcraw;image/x-epson-erf;image/x-fuji-raf;image/x-hasselblad-3fr;image/x-hasselblad-fff;image/x-kde-raw;image/x-kodak-dcr;image/x-kodak-k25;image/x-kodak-kdc;image/x-leaf-mos;image/x-mamiya-mef;image/x-minolta-mdc;image/x-minolta-mrw;image/x-nikon-nef;image/x-nikon-nrw;image/x-olympus-orf;image/x-panasonic-rw;image/x-panasonic-rw2;image/x-pentax-pef;image/x-phaseone-iiq;image/x-samsung-srw;image/x-sigma-x3f;image/x-sinar-sti;image/x-sony-arw;image/x-sony-sr2;image/x-sony-srf;

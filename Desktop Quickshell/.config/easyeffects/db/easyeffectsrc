@@ -1,0 +1,13 @@
+[StreamInputs]
+inputDevice=alsa_input.usb-SteelSeries_SteelSeries_Alias-00.mono-fallback
+
+[StreamOutputs]
+outputDevice=alsa_output.pci-0000_03_00.1.hdmi-stereo-extra3
+plugins=bass_enhancer#0
+visiblePage=pluginsPage
+visiblePlugin=bass_enhancer#0
+
+[Window]
+height=1367
+showTrayIcon=false
+width=1699

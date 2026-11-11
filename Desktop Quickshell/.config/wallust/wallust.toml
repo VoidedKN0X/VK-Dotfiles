@@ -1,0 +1,32 @@
+check_contrast = true
+
+[templates]
+# the bar, control center and popups (Quickshell watches this file and
+# recolors itself)
+colors-quickshell.template = 'colors-quickshell.template'
+colors-quickshell.target = '~/.config/quickshell/colors.json'
+colors-quickshell.pywal = true
+
+foot.template = 'foot.template'
+foot.target = '~/.config/foot/colors-dark.ini'
+foot.pywal = true
+
+colors-rofi.template = 'colors-rofi.template'
+colors-rofi.target = '~/.config/rofi/colors/colors.rasi'
+colors-rofi.pywal = true
+
+border-colors.template = 'border-colors.template'
+border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
+border-colors.pywal = true
+
+hyprlock-colors.template = 'hyprlock-colors.template'
+hyprlock-colors.target = '~/.config/hypr/colors/hyprlock-colors.conf'
+hyprlock-colors.pywal = true
+
+btop.template = 'btop.template'
+btop.target = '~/.config/btop/themes/wallust.theme'
+btop.pywal = true
+
+opencode.template = 'opencode.template'
+opencode.target = '~/.config/opencode/themes/wallust.json'
+opencode.pywal = true

@@ -17,14 +17,15 @@ and YubiKey login.
 > a machine you care about. **Want the desktop without my stuff? Use the
 > [Clean profile](#clean-profile).**
 
-## Four profiles
+## Five profiles
 
-The repo has **four independent profiles**. Everything is duplicated on purpose, so each profile
+The repo has **five independent profiles**. Everything is duplicated on purpose, so each profile
 stays self-contained and works on its own.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
+| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the bar, notifications and popups made in [Quickshell](https://quickshell.org) instead of waybar + swaync, plus a control center (see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
@@ -37,6 +38,7 @@ stays self-contained and works on its own.
 | waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
 | Bar popups (`waybar/scripts/*.py`) | Calendar, music and power menu popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
+| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications and popups, instead of waybar, swaync and the bar popups above |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -69,7 +71,7 @@ once at the start and keeps sudo active until the end, so the long AUR builds an
 don't ask again). It works from any directory.
 
 ```sh
-"VK-Dotfiles/Desktop/Install.sh"        # or "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
+"VK-Dotfiles/Desktop/Install.sh"        # or "Desktop Quickshell/Install.sh" / "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
 ```
 
 It does the following:
@@ -256,6 +258,57 @@ Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent
   look and the gap between them and the bar (`GAP`, in px).
 - **Fonts:** text in Ubuntu, icons from Symbols Nerd Font, so the icons line up with the numbers.
 
+## Desktop Quickshell
+
+`Desktop Quickshell/` is the `Desktop/` profile with one difference: the bar, the notifications
+and the bar's popups are one [Quickshell](https://quickshell.org) config
+(`.config/quickshell/`) instead of waybar, swaync and the Python popups. Monitors, apps,
+services, tuning, the shell (zsh with the same plugins, aliases and fastfetch), foot, rofi, the lock
+screen and the wallust colors are exactly the same; `Install.sh` runs the same
+`run-all-desktop.sh`.
+
+```sh
+"VK-Dotfiles/Desktop Quickshell/Install.sh"
+```
+
+It looks like the waybar bar (the same glass islands, icons, fonts and sizes) and works the same way:
+
+- **Islands:** workspaces (dots, the active one a pill; each monitor shows its own), music
+  (visualizer + title, hover for the artist and the buttons), clock, CPU / temperature / memory
+  (memory as used / total, e.g. `13.1/31G`), tray + Bluetooth + network + volume, stay awake,
+  notifications, power.
+- **Every icon opens its program:** CPU, temperature and memory open btop, Bluetooth opens
+  blueman-manager (right click: Bluetooth on/off), network opens nmtui, volume opens pavucontrol
+  (scroll: volume, right click: mute), tray icons open their app (right click: their menu).
+- **Clock:** click for the **calendar** (month view, Monday first; arrows or scrolling change the
+  month, clicking the month's name goes back to today).
+- **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the last
+  three need a second click).
+- **Control center** (the bell or <kbd>Super</kbd> + <kbd>N</kbd>): an overlay, not a window,
+  that floats over everything. Session buttons (lock, suspend, restart, shut down), quick toggles
+  (network, Bluetooth, do not disturb, stay awake, bar position, wallpaper), CPU usage and memory
+  as ring gauges with the CPU temperature between them (click for btop), volume and microphone
+  sliders, the music player, and the notifications (one row; click it for the list). Right-click
+  the bell for do not disturb.
+- **Notifications:** Quickshell is the notification daemon. Popups appear next to the bell on the
+  focused monitor, stay 8 s (low: 6 s, critical: until closed; hovering keeps them) and stay in
+  the control center's list. Clicking one runs its default action. With do not disturb on, only
+  critical ones (like a failing disk) pop up.
+- **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> (or the control center's toggle), saved
+  in `quickshell/bar-position` (kept by a reinstall). DP-2 always has its bar on the right edge.
+- **Volume popup:** the volume, mic and Caps Lock keys show the same popup as before
+  (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`).
+- **Colors:** wallust writes `quickshell/colors.json` (`wallust/templates/colors-quickshell.template`);
+  Quickshell watches it and recolors at once, without a restart.
+- **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
+- **Blur:** Hyprland's layer rules blur everything named `vk-*` (`hypr/hyprland/rules.lua`).
+- **Files:** `shell.qml` (what runs, and the `qs ipc` commands), `common/Theme.qml` (colors, fonts,
+  sizes, icons), `services/` (system info, audio, music, notifications, network/Bluetooth),
+  `bar/`, `controlcenter/`, `popups/`, and `scripts/stats.sh` (CPU, memory and temperature,
+  every 2 s) and `scripts/cava.sh` (the visualizer). The monitors, their bar edges and their
+  workspaces are at the top of `services/BarState.qml`; the network interface (`eno1`) is in
+  `services/Connectivity.qml`; the temperature sensor path is in `scripts/stats.sh`.
+
 ## Keybinds
 
 | Keys | Action |
@@ -381,18 +434,22 @@ If you're not me, look at these before running anything:
 - **`hypr/hypridle.conf` (laptop):** the keyboard backlight device is `asus::kbd_backlight`.
 - **Steam Deck:** `Post Install/run-all-steamdeck.sh` only installs the Valve packages on an LCD
   Steam Deck (board "Valve Jupiter"); on anything else it skips them.
+- **Desktop Quickshell:** the monitors, their bar edges and workspaces
+  (`quickshell/services/BarState.qml`), the network interface
+  (`quickshell/services/Connectivity.qml`) and the CPU temperature sensor
+  (`quickshell/scripts/stats.sh`).
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.
 
 ## Structure
 
 ```
-<profile>/                 # Desktop/, Asus Laptop/, Steam Deck/ or Clean/
+<profile>/                 # Desktop/, Desktop Quickshell/, Asus Laptop/, Steam Deck/ or Clean/
 ├── .config/               # Hyprland, waybar, swaync, rofi, wallust, foot, btop, fastfetch, ...
 ├── .zshrc                 # Shell config
 └── Install.sh             # Apps, services, shell, login screen, printer, firewall, copies the configs
 
 Post Install/
-├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop
+├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop (both desktop profiles)
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
 ├── run-all-clean.sh       # Kernel, boot and tuning for the Clean profile (no Secure Boot, gaming extras optional)

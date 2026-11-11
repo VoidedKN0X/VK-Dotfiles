@@ -1,0 +1,14 @@
+/**
+ *
+ * Author : Aditya Shakya (adi1090x)
+ * Github : @adi1090x
+ * 
+ * Colors
+ *
+ * Available Colors Schemes
+ *
+ **/
+
+/* Wallust-generated dynamic colors */
+
+@import "~/.config/rofi/colors/colors.rasi"
