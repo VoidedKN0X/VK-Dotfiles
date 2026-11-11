@@ -307,11 +307,6 @@ if [[ "$(getent passwd "$USER" | cut -d: -f7)" != "/usr/bin/zsh" ]]; then
     sudo chsh -s /usr/bin/zsh "$USER" || warn "could not set zsh as login shell"
 fi
 
-# OpenCode: --no-modify-path because .zshrc already adds ~/.opencode/bin to PATH
-if [[ ! -x "$HOME/.opencode/bin/opencode" ]]; then
-    curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path || warn "OpenCode install failed"
-fi
-
 # Remove leftover install files (orphaned deps such as make-dependencies, then caches).
 # pacman lists the orphans and asks first: on a re-run the list can also hold
 # optional dependencies you installed on purpose.
@@ -461,7 +456,6 @@ KEEP_IF_EXISTS=(
     hypr/hyprland/border-colors.lua
     hypr/colors/hyprlock-colors.conf
     btop/themes/wallust.theme
-    opencode/themes/wallust.json
     btop/btop.conf
 )
 mkdir -p "$HOME/.config"

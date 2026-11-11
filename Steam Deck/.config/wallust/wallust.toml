@@ -29,9 +29,6 @@ btop.template = 'btop.template'
 btop.target = '~/.config/btop/themes/wallust.theme'
 btop.pywal = true
 
-opencode.template = 'opencode.template'
-opencode.target = '~/.config/opencode/themes/wallust.json'
-opencode.pywal = true
 
 colors-nwg-drawer.template = 'colors-nwg-drawer.template'
 colors-nwg-drawer.target = '~/.config/nwg-drawer/colors.css'

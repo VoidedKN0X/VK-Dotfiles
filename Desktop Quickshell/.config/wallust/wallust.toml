@@ -28,6 +28,3 @@ btop.template = 'btop.template'
 btop.target = '~/.config/btop/themes/wallust.theme'
 btop.pywal = true
 
-opencode.template = 'opencode.template'
-opencode.target = '~/.config/opencode/themes/wallust.json'
-opencode.pywal = true

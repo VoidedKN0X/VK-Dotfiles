@@ -82,7 +82,7 @@ It does the following:
    instead of being downloaded and reinstalled a second time when the repos are added later.
    The installer switches only the base system from archinstall to the CachyOS builds.
 3. Installs the packages (pacman), then `yay` and the AUR packages.
-4. Installs Oh My Zsh (keeping your `.zshrc`), sets zsh as your shell and installs OpenCode.
+4. Installs Oh My Zsh (keeping your `.zshrc`) and sets zsh as your shell.
 5. Removes leftover build dependencies and cleans the package caches.
 6. Enables the services (CUPS, Bluetooth, Syncthing, fstrim, ...) and the greetd login screen.
 7. Sets up tuigreet, the TrueNAS network share, the printer and the ufw firewall (rules for
@@ -214,7 +214,7 @@ for both), and pick your graphics driver in archinstall: the Clean profile doesn
   `waybar/modules.jsonc` to pick your CPU sensor), US keyboard layout (`hypr/hyprland/input.lua`).
 
 **Not included** (compared to my profiles): my apps, Syncthing, the NAS share, the printer,
-firewall rules for my apps, OpenCode, EasyEffects, the `/media` folders, Secure Boot and the
+firewall rules for my apps, EasyEffects, the `/media` folders, Secure Boot and the
 YubiKey setup. Secure Boot is off by default; to use it, set `SECURE_BOOT=1` in
 `Post Install/run-all-clean.sh` (read [step 2](#2-run-all-profilesh-kernel-boot-and-tuning)
 first). Run on its own, `sudo "Post Install/run-all-clean.sh"` asks about the gaming extras
@@ -358,7 +358,7 @@ switcher float in the middle.
   power button) is made from those, with guards that keep it readable: the text stays light, the
   glass dark, the accent bright enough for dark text on it. A black and white wallpaper gives a
   gray shell (wallust fills the palette with shades, `fallback_generator` in `wallust.toml`).
-  Window borders, foot, btop, the lock screen and opencode follow wallust too.
+  Window borders, foot, btop and the lock screen follow wallust too.
 - **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
 - **Blur:** Hyprland's layer rules blur everything named `vk-*` (`hypr/hyprland/rules.lua`).
 - **Files:** `shell.qml` (what runs, and the `qs ipc` commands), `common/Theme.qml` (colors, fonts,
@@ -461,16 +461,14 @@ After the first boot, test the gestures once. If a swipe goes the wrong way in l
 
 Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick one with
 <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. [wallust](https://codeberg.org/explosion-mental/wallust)
-then regenerates the colors for Hyprland, waybar and its popups, swaync, rofi, foot, hyprlock, btop
-and OpenCode.
+then regenerates the colors for Hyprland, waybar and its popups, swaync, rofi, foot, hyprlock and btop.
 The last wallpaper is re-applied at every login.
 
 All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
 `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
 `rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
-`foot/colors-dark.ini`, `btop/themes/wallust.theme`,
-`opencode/themes/wallust.json`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
+`foot/colors-dark.ini`, `btop/themes/wallust.theme`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
 them as soon as you set a wallpaper.
 Until then, `hypr/colors/current-wallpaper.conf` makes the lock screen show a blurred screenshot.
 

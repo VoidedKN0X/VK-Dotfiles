@@ -2,6 +2,25 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-11 (4)
+
+### Removed
+- **OpenCode is gone from every profile that had it** (Desktop, Desktop
+  Quickshell, Steam Deck, Asus Laptop; Clean never had it).
+  - `Install.sh` no longer downloads and runs the OpenCode installer
+    (`curl https://opencode.ai/install | bash`), which ran a script straight
+    from the internet without checking it.
+  - `.zshrc` no longer adds `~/.opencode/bin` to `PATH`.
+  - The `.config/opencode/` folder (`opencode.jsonc`, `tui.json`,
+    `themes/wallust.json`) is removed.
+  - wallust no longer makes an OpenCode theme: `wallust/templates/opencode.template`
+    and its three lines in `wallust/wallust.toml` are removed, and
+    `opencode/themes/wallust.json` is off the list of files `Install.sh`
+    keeps on a re-run.
+  - README: the mentions of OpenCode are removed.
+  - On a machine that already has it, remove it yourself with
+    `rm -rf ~/.opencode ~/.config/opencode`.
+
 ## 2026-11-11 (3)
 
 ### Changed

@@ -1,9 +1,6 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:$HOME/.local/bin:/usr/local/bin:$PATH
 
-# OpenCode (installed in ~/.opencode/bin by Install.sh)
-export PATH="$HOME/.opencode/bin:$PATH"
-
 # Text editor for git commit, sudoedit, yay, ... (Arch has no vi by default)
 export EDITOR=nano
 export VISUAL=nano
