@@ -50,7 +50,7 @@ hl.window_rule({
 -- Layer rules (blur + animations for the Quickshell frame and its popups)
 -- Quickshell's layers are see-through except for their glass: ignore_alpha
 -- leaves the transparent parts alone (the desktop inside the frame, the
--- invisible full-screen layer around a popup) and blurs the glass (48-72 %
+-- invisible full-screen layer around a popup) and blurs the glass (28-42 %
 -- opaque). Blur gets a rule of its own: a rule with a setting Hyprland
 -- doesn't accept (an animation) is dropped whole, without a config error. The
 -- extras (xray off, animations) are separate and in pcall, so a Hyprland

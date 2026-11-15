@@ -87,11 +87,11 @@ Singleton {
 
     // frosted glass: the bar's islands. Hyprland blurs what's behind it
     // (layer rules in hypr/hyprland/rules.lua)
-    readonly property color glass: Qt.alpha(base, 0.48)
+    readonly property color glass: Qt.alpha(base, 0.28)
     // the frame around the screen and everything that grows out of it (the
     // control center, popups, notifications): one color, so they join
     // without a seam
-    readonly property color frame: Qt.alpha(base, 0.72)
+    readonly property color frame: Qt.alpha(base, 0.42)
     readonly property color panel: frame
     readonly property color edge: Qt.alpha(fg, 0.11)
     // soft highlight along the top edge, like light on frosted glass

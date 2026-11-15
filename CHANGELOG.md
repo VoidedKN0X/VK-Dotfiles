@@ -2,6 +2,31 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-16
+
+### Changed
+- **Desktop Quickshell: more frosted glass.** The glass is more see-through
+  and the blur behind it stronger.
+  - `quickshell/common/Theme.qml`: the frame and everything that grows out of
+    it (control center, popups, notifications, the volume popup, the
+    switcher) from 72 % to 42 % opaque (`frame`, `panel`); the bar's islands
+    from 48 % to 28 % (`glass`).
+  - `hypr/hyprland/decoration.lua`: blur `size` 2 → 6 and `passes` 2 → 3 (a
+    much stronger, smooth blur), `noise` 0.02 → 0.03 (a bit more grain) and
+    `vibrancy` 0.17 → 0.2 (a bit more of the colors behind it). Hyprland's
+    blur settings are global, so see-through windows (foot) blur this much
+    too.
+  - `hypr/hyprland/rules.lua`: comment updated (the layer rule's
+    `ignore_alpha = 0.2` stays below the new opacities, so all glass is
+    still blurred).
+  - **foot** gets the same frosted glass: `alpha` 0.8 → 0.32 (a bit more
+    see-through than the frame) in `foot/foot.ini`, `foot/colors-dark.ini` and
+    `wallust/templates/foot.template`. `blur=yes` stays, so foot asks
+    Hyprland for the (now stronger) blur behind it.
+    New `alpha-mode=matching`: cells a program paints in foot's own
+    background color (btop, nvim, other full-screen programs) are
+    see-through too, instead of only the cells nothing is painted in.
+
 ## 2026-11-11 (4)
 
 ### Removed
