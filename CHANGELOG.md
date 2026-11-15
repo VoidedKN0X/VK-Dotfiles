@@ -2,6 +2,33 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-16 (2)
+
+### Changed
+- **Desktop Quickshell: the login screen follows the wallpaper, in pastel.**
+  tuigreet (on greetd, the text console) now starts through
+  `/usr/local/bin/vk-tuigreet`, which `Install.sh` writes (and points
+  `/etc/greetd/config.toml` at).
+  - **Colors:** wallust writes the wallpaper's 16 colors as plain hex to
+    `/var/lib/vk-greeter/palette` at every wallpaper change (new
+    `wallust/templates/console-palette.template` and its entry in
+    `wallust/wallust.toml`). `Install.sh` creates `/var/lib/vk-greeter`,
+    owned by you (wallust runs as you), readable by the greeter, and fills
+    the palette from your `quickshell/colors.json` (or the profile's) until
+    the first wallpaper change.
+  - **Pastel:** `vk-tuigreet` loads those colors into the console
+    (`ESC ] P`, console_codes(4)) made pastel with awk: every color keeps
+    its hue, with saturation at most 45 % and lightness at least 78 %
+    (white 90 %, the dark gray for hints 55 %). Color 0, the background,
+    is always black. A black and white wallpaper gives a gray login
+    screen. tuigreet's theme names the console colors (magenta =
+    color5, the accent), so it takes the wallpaper's.
+  - **Look:** `--time` (`21:47 · Mon 16 Nov`), the hostname as greeting,
+    `--remember` / `--remember-session`, a `•` per password character,
+    `--window-padding 2 --container-padding 2`, and the theme
+    `border=magenta;text=gray;prompt=magenta;time=gray;greet=gray;action=darkgray;button=magenta;input=white`.
+    The session is still `start-hyprland`.
+
 ## 2026-11-16
 
 ### Changed

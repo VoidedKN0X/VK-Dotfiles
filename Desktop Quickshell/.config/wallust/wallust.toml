@@ -28,3 +28,9 @@ btop.template = 'btop.template'
 btop.target = '~/.config/btop/themes/wallust.theme'
 btop.pywal = true
 
+# the login screen (tuigreet on the text console): the 16 colors as plain
+# hex, read by /usr/local/bin/vk-tuigreet before tuigreet starts. Outside
+# your home so the greeter can read it; Install.sh makes the folder yours.
+console-palette.template = 'console-palette.template'
+console-palette.target = '/var/lib/vk-greeter/palette'
+console-palette.pywal = true

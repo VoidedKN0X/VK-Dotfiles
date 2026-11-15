@@ -339,13 +339,88 @@ fi
 sudo systemctl enable greetd.service || warn "could not enable greetd.service"
 
 # === Login screen (greetd + tuigreet) ===
+# tuigreet on the text console, in the colors of your last wallpaper: wallust
+# writes them to /var/lib/vk-greeter/palette (wallust/templates/
+# console-palette.template) at every wallpaper change, and vk-tuigreet loads
+# them into the console before tuigreet starts. The folder is yours (wallust
+# runs as you), readable by the greeter.
+sudo install -d -o "$USER" -g "$(id -gn)" -m 755 /var/lib/vk-greeter
+# until the first wallpaper change: the colors this profile ships with
+# (yours if you have them, else the ones in this profile)
+colors_json="$HOME/.config/quickshell/colors.json"
+[[ -f "$colors_json" ]] || colors_json="$PROFILE_DIR/.config/quickshell/colors.json"
+if [[ ! -s /var/lib/vk-greeter/palette && -f "$colors_json" ]]; then
+    for i in $(seq 0 15); do
+        sed -n "s/.*\"color$i\": *\"#\([0-9A-Fa-f]\{6\}\)\".*/\1/p" "$colors_json"
+    done > /var/lib/vk-greeter/palette
+fi
+sudo tee /usr/local/bin/vk-tuigreet >/dev/null <<'TUIGREET'
+#!/bin/sh
+# tuigreet in the colors of the last wallpaper (installed by VK-Dotfiles),
+# made pastel: a light touch instead of the wallpaper's full colors.
+# The text console has 16 colors; ESC ] P <n> <rrggbb> sets color n
+# (console_codes(4)). tuigreet's theme names those colors (magenta = the
+# accent, wallust's color5), so they become the wallpaper's.
+palette=/var/lib/vk-greeter/palette
+if [ -r "$palette" ]; then
+    # each color keeps its hue; saturation at most 45 %, lightness at least
+    # 78 % (white: 90 %, dark gray for hints: 55 %). Color 0, the
+    # background, is always black. A black and white wallpaper stays gray.
+    awk '
+    function h(s,   v, i) {
+        v = 0; s = tolower(s)
+        for (i = 1; i <= 2; i++) v = v * 16 + index("0123456789abcdef", substr(s, i, 1)) - 1
+        return v / 255
+    }
+    function ch(p, q, t) {
+        if (t < 0) t += 1
+        if (t > 1) t -= 1
+        if (t < 1 / 6) return p + (q - p) * 6 * t
+        if (t < 1 / 2) return q
+        if (t < 2 / 3) return p + (q - p) * (2 / 3 - t) * 6
+        return p
+    }
+    NR <= 16 && length($0) == 6 && $0 !~ /[^0-9A-Fa-f]/ {
+        n = NR - 1
+        if (n == 0) { printf "\033]P0000000"; next }
+        r = h(substr($0, 1, 2)); g = h(substr($0, 3, 2)); b = h(substr($0, 5, 2))
+        mx = r; if (g > mx) mx = g; if (b > mx) mx = b
+        mn = r; if (g < mn) mn = g; if (b < mn) mn = b
+        l = (mx + mn) / 2; d = mx - mn; s = 0; hue = 0
+        if (d > 0) {
+            s = d / (1 - (2 * l - 1 < 0 ? 1 - 2 * l : 2 * l - 1))
+            if (mx == r) { hue = (g - b) / d; if (hue < 0) hue += 6 }
+            else if (mx == g) hue = (b - r) / d + 2
+            else hue = (r - g) / d + 4
+            hue /= 6
+        }
+        if (s > 0.45) s = 0.45
+        if (n == 8) l = 0.55
+        else if (n == 15) { if (l < 0.9) l = 0.9 }
+        else if (l < 0.78) l = 0.78
+        q = l < 0.5 ? l * (1 + s) : l + s - l * s; p = 2 * l - q
+        printf "\033]P%x%02x%02x%02x", n, int(ch(p, q, hue + 1 / 3) * 255 + 0.5), int(ch(p, q, hue) * 255 + 0.5), int(ch(p, q, hue - 1 / 3) * 255 + 0.5)
+    }' "$palette"
+fi
+# clock on top, the last user and session filled in, a dot per password
+# character, a thin box in the accent color
+exec tuigreet \
+    --time --time-format "%H:%M  ·  %a %d %b" \
+    --greeting "$(cat /etc/hostname 2>/dev/null)" \
+    --remember --remember-session \
+    --asterisks --asterisks-char "•" \
+    --window-padding 2 --container-padding 2 \
+    --theme "border=magenta;text=gray;prompt=magenta;time=gray;greet=gray;action=darkgray;button=magenta;input=white" \
+    --cmd start-hyprland
+TUIGREET
+sudo chmod 755 /usr/local/bin/vk-tuigreet
 sudo mkdir -p /etc/greetd
 sudo tee /etc/greetd/config.toml >/dev/null <<'GREETD'
 [terminal]
 vt = 1
 
 [default_session]
-command = "tuigreet --cmd start-hyprland"
+command = "/usr/local/bin/vk-tuigreet"
 user = "greeter"
 GREETD
 

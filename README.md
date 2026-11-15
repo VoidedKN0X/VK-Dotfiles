@@ -360,6 +360,10 @@ switcher float in the middle.
   gray shell (wallust fills the palette with shades, `fallback_generator` in `wallust.toml`).
   Window borders, foot, btop and the lock screen follow wallust too.
 - **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
+- **Login screen:** tuigreet (greetd) with a clock, your last user and session filled in and a dot
+  per password character, on black, in pastel versions of your wallpaper's colors: wallust writes them to
+  `/var/lib/vk-greeter/palette`, and `/usr/local/bin/vk-tuigreet` (written by `Install.sh`) softens
+  them and loads them into the text console before tuigreet starts.
 - **Blur:** Hyprland's layer rules blur everything named `vk-*` (`hypr/hyprland/rules.lua`).
 - **Files:** `shell.qml` (what runs, and the `qs ipc` commands), `common/Theme.qml` (colors, fonts,
   sizes, icons), `services/` (system info, audio, music, notifications, network/Bluetooth),
