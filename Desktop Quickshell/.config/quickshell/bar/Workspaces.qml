@@ -71,12 +71,10 @@ Island {
                 anchors.margins: -4
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (dot.workspace)
-                        dot.workspace.activate();
-                    else
-                        BarState.focusWorkspace(dot.modelData);
-                }
+                // (BarState always sends a Lua dispatcher; Quickshell's
+                // workspace.activate() only does when it detects the Lua
+                // config, and Hyprland 0.57 takes nothing else)
+                onClicked: BarState.focusWorkspace(dot.modelData)
             }
         }
     }

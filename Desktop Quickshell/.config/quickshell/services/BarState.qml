@@ -71,10 +71,25 @@ Singleton {
         return focused ?? screens.find(s => outputs[s.name] === "main") ?? screens.find(s => edgeFor(s.name) !== "") ?? screens[0] ?? null;
     }
 
-    // go to a workspace (also one that doesn't exist yet). Hyprland's Lua
-    // config takes Lua dispatchers, like the keybinds in hypr/hyprland/keybinds.lua
+    // go to a workspace (also one that doesn't exist yet). Always a Lua
+    // dispatcher, like the keybinds in hypr/hyprland/keybinds.lua: Hyprland
+    // 0.57 understands nothing else (and 0.56 takes it with a Lua config)
     function focusWorkspace(target) {
-        Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.focus({ workspace = "${target}" })` : `workspace ${target}`);
+        Hyprland.dispatch(`hl.dsp.focus({ workspace = "${target}" })`);
+    }
+
+    // Hyprland 0.57 names the workspace in its "focusedmon" event (focus
+    // moved to another monitor) by number, and Quickshell 0.3.2 looks it up
+    // by name: for a named or special workspace it finds none, and the
+    // monitor's active workspace stays empty until the next switch (no dot
+    // lit in the bar). Reading the monitors again right after fixes it
+    // (quickshell-mirror/quickshell#1427).
+    Connections {
+        target: Hyprland
+        function onRawEvent(event) {
+            if (event.name === "focusedmon")
+                Hyprland.refreshMonitors();
+        }
     }
 
     // ── popups: one open at a time, on one screen ─────────────────────────

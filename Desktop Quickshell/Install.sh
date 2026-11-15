@@ -44,7 +44,6 @@ unset _a
 
 # === Packages (official repos) ===
 PACMAN_PKGS=(
-    libayatana-indicator
     yt-dlp
     gst-plugin-gtk
     gst-libav
@@ -195,7 +194,7 @@ PACMAN_PKGS=(
 # The desktop itself needs these: installed on their own first, so a failed
 # build of one of the big optional apps below can't leave them out
 AUR_ESSENTIAL_PKGS=(
-    wallust-git
+    wallust
     bibata-cursor-theme-bin
     qt6ct-kde
 )
@@ -285,8 +284,12 @@ if ! command -v yay >/dev/null; then
 fi
 
 # Install apps from yay (a failed AUR build shouldn't stop the config copy below)
-yay -S --needed "${AUR_ESSENTIAL_PKGS[@]}" || warn "some essential AUR packages failed to install"
-yay -S --needed "${AUR_PKGS[@]}" || warn "some AUR packages failed to install"
+# No questions about reviewing or cleaning each build (--answerdiff/--answerclean
+# None); build-only dependencies are removed again afterwards (--removemake).
+# yay still asks before installing.
+YAY_FLAGS=(--needed --answerdiff None --answerclean None --removemake)
+yay -S "${YAY_FLAGS[@]}" "${AUR_ESSENTIAL_PKGS[@]}" || warn "some essential AUR packages failed to install"
+yay -S "${YAY_FLAGS[@]}" "${AUR_PKGS[@]}" || warn "some AUR packages failed to install"
 
 # === Shell + CLI tools (as your user) ===
 # Oh My Zsh: --keep-zshrc so the installer never replaces your .zshrc with its

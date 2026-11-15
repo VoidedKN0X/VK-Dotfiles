@@ -48,7 +48,13 @@ Scope {
         stdout: StdioCollector {
             onStreamFinished: {
                 try {
-                    shared.clients = JSON.parse(text).filter(c => c.mapped !== false && c.workspace?.id > 0);
+                    // the workspace as { id }, whether Hyprland gives an
+                    // object ({ id, name }) or just the number
+                    shared.clients = JSON.parse(text).map(c => Object.assign(c, {
+                            workspace: {
+                                id: Number(typeof c.workspace === "object" ? c.workspace?.id : c.workspace) || 0
+                            }
+                        })).filter(c => c.mapped !== false && c.workspace.id > 0);
                 } catch (e) {
                     // keep the last list
                 }
@@ -59,7 +65,8 @@ Scope {
         interval: 1000
         running: true
         repeat: true
-        onTriggered: if (!reader.running && shared.dragging === "") reader.running = true
+        onTriggered: if (!reader.running && shared.dragging === "")
+            reader.running = true
     }
     function refresh() {
         if (!reader.running)
@@ -119,7 +126,7 @@ Scope {
         id: moveLater
         interval: 60
         onTriggered: {
-            Hyprland.dispatch(Hyprland.usingLua ? `hl.dsp.window.move({ workspace = "${shared.moveTarget}" })` : `movetoworkspace ${shared.moveTarget}`);
+            Hyprland.dispatch(`hl.dsp.window.move({ workspace = "${shared.moveTarget}" })`);
             refreshSoon.restart();
         }
     }

@@ -2,6 +2,48 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-16 (3)
+
+### Fixed
+- **Desktop Quickshell: ready for Hyprland 0.57**, which only takes Lua
+  dispatchers over its IPC (the old `workspace N` / `movetoworkspace N`
+  syntax is gone).
+  - `bar/Workspaces.qml`: clicking a workspace dot uses
+    `BarState.focusWorkspace()`, which always sends a Lua dispatcher,
+    instead of Quickshell's `workspace.activate()`, which only does when it
+    detects the Lua config (it asks Hyprland which config it uses).
+  - `services/BarState.qml` (`focusWorkspace`) and `popups/Overview.qml`
+    (dragging a window to another workspace) always send Lua dispatchers
+    (`hl.dsp.focus(...)`, `hl.dsp.window.move(...)`) instead of falling back
+    to the old syntax when Quickshell doesn't detect the Lua config.
+  - `popups/Overview.qml`: the window list from `hyprctl clients -j` reads
+    each window's workspace whether Hyprland gives it as an object
+    (`{ id, name }`) or as the number (0.57 changed the IPC workspace data),
+    so the overview doesn't show every workspace as empty.
+  - `services/BarState.qml`: workaround for quickshell-mirror/quickshell#1427.
+    Hyprland 0.57 names the workspace in its `focusedmon` event (focus moved
+    to another monitor) by number, and Quickshell 0.3.2 looks it up by name,
+    so for a named or special workspace the monitor's active workspace stays
+    empty until the next switch (no dot lit in the bar, no active thumbnail
+    in the overview). On every `focusedmon` event the monitors are read
+    again (`Hyprland.refreshMonitors()`). The numbered workspaces 1-10 were
+    not affected.
+  - The Hyprland Lua config itself needs no changes for 0.57 (checked
+    against its changelog: no `dampening` springs, no `scroll_factor`,
+    numeric workspace rules, Lua `hyprctl dispatch` calls).
+
+### Changed
+- **Desktop Quickshell: smoother install** (`Install.sh`).
+  - `wallust-git` → `wallust` (AUR, the latest stable release instead of
+    the development version). On a PC that has `wallust-git`, yay asks to
+    replace it.
+  - yay no longer asks to review or clean every build
+    (`--answerdiff None --answerclean None`) and removes build-only
+    dependencies afterwards (`--removemake`); it still asks before
+    installing.
+  - Removed `libayatana-indicator`: a library for old-style tray panels;
+    the Quickshell tray doesn't use it.
+
 ## 2026-11-16 (2)
 
 ### Changed
