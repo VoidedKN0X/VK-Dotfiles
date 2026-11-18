@@ -2,6 +2,15 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (17)
+
+### Changed
+- **All profiles: pavucontrol is hidden from the app launcher** (new
+  `.local/share/applications/org.pulseaudio.pavucontrol.desktop`, with
+  `NoDisplay=true`, like Kvantum Manager). The volume popup's **pavucontrol**
+  button opens it (click the bar's volume icon or Ctrl + Alt + V);
+  `pavucontrol` still opens it from a terminal.
+
 ## 2026-11-18 (16)
 
 ### Changed

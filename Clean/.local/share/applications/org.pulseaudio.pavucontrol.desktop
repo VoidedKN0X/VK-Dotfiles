@@ -1,0 +1,14 @@
+[Desktop Entry]
+# Hides pavucontrol (the full volume mixer) from the app launcher: the volume
+# popup's pavucontrol button opens it (quickshell/popups/Mixer.qml; click the
+# bar's volume icon or Ctrl + Alt + V). This copy in
+# ~/.local/share/applications takes the place of the system one;
+# NoDisplay=true keeps it out of launchers and menus. To open it anyway, run
+# pavucontrol.
+Type=Application
+Name=Volume Control
+Comment=Adjust the volume level
+Exec=pavucontrol
+Icon=multimedia-volume-control
+Categories=AudioVideo;Audio;Mixer;GTK;Settings;X-XFCE-SettingsDialog;X-XFCE-HardwareSettings;
+NoDisplay=true
