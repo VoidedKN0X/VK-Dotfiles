@@ -84,7 +84,7 @@ vk_install_pacman() {
 # When free memory AND free swap (zram) both drop below 10%, earlyoom closes
 # the single process using the most memory - usually the game or app that
 # filled it - before the system locks up. The desktop itself (Hyprland, login
-# and the bar / notifications named in $1, e.g. "waybar|swaync") is never
+# and the bar / notifications named in $1, e.g. "qs|quickshell") is never
 # picked (--ignore). -r 0: no memory reports in the journal. (No quotes around
 # the regex: the service passes it on word by word, quotes would become part
 # of it.)

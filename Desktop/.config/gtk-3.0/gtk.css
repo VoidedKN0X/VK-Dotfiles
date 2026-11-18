@@ -1,0 +1,62 @@
+/* Frosted glass for GTK 3 apps (Thunar, Ristretto, the file chooser, ...), the
+   same look as the Quickshell frame: the window is 42 % opaque glass in the
+   wallpaper's colors (vk-colors.css, rewritten by wallust at every wallpaper
+   change) and Hyprland blurs what's behind it (hypr/hyprland/decoration.lua).
+   Menus and popovers keep the theme's solid look, so they stay easy to read.
+   To go back to the plain theme, delete this file and restart the app. */
+@import url("vk-colors.css");
+
+window.background {
+    background-color: alpha(@vk_base, 0.42);
+}
+
+/* the parts inside a window let the glass through */
+window.background headerbar,
+window.background .titlebar,
+window.background toolbar,
+window.background menubar,
+window.background statusbar,
+window.background notebook,
+window.background notebook > header,
+window.background notebook > stack,
+window.background scrolledwindow,
+window.background viewport,
+window.background paned,
+window.background .sidebar,
+window.background placessidebar,
+window.background placessidebar list,
+window.background list,
+window.background row:not(:hover):not(:selected),
+window.background treeview.view:not(:selected),
+window.background iconview:not(:selected),
+window.background .view:not(:selected),
+window.background textview text,
+.thunar .standard-view .view:not(:selected),
+.thunar .sidebar .view:not(:selected),
+.thunar grid paned grid,
+.thunar toolbar {
+    background-color: transparent;
+    background-image: none;
+}
+
+/* selection and hover in the wallpaper's accent */
+window.background .view:selected,
+window.background iconview:selected,
+window.background treeview.view:selected,
+window.background row:selected {
+    background-color: alpha(@vk_accent, 0.35);
+    color: @vk_fg;
+}
+window.background row:hover:not(:selected) {
+    background-color: alpha(@vk_fg, 0.06);
+}
+
+/* text fields: a light pane on the glass */
+window.background entry {
+    background-color: alpha(@vk_fg, 0.06);
+}
+
+/* no lines between Thunar's panes */
+.thunar scrolledwindow {
+    border-width: 0;
+}

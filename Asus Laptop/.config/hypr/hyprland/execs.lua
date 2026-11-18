@@ -1,9 +1,7 @@
 hl.on("hyprland.start", function()
-    hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("waybar")
-    -- swaync runs as a systemd user service, so D-Bus activation can't start a
-    -- second copy
-    hl.exec_cmd("systemctl --user start swaync")
+    -- the wallpaper, bar, control center, notifications, launcher and popups,
+    -- and the password dialog for admin rights (~/.config/quickshell)
+    hl.exec_cmd("qs")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme '" .. cursorTheme .. "'")
@@ -14,7 +12,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd('gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"')
 
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
-    hl.exec_cmd("systemctl --user start hyprpolkitagent")
 
     hl.exec_cmd("hypridle")
 
@@ -25,7 +22,7 @@ hl.on("hyprland.start", function()
     hl.exec_cmd("wl-paste --watch cliphist store")
 
     -- Claude Desktop in the tray: --startup starts it without opening its
-    -- window (click its tray icon in waybar to open it).
+    -- window (click its tray icon in the bar to open it).
     -- --password-store=gnome-libsecret keeps its login in the GNOME keyring
     -- (gnome-keyring is installed by Install.sh).
     -- Turned off for now, so the app can be set up first; remove the "-- "

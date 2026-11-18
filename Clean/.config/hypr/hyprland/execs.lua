@@ -1,9 +1,7 @@
 hl.on("hyprland.start", function()
-    hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("waybar")
-    -- swaync runs as a systemd user service, so D-Bus activation can't start a
-    -- second copy
-    hl.exec_cmd("systemctl --user start swaync")
+    -- the wallpaper, bar, control center, notifications, launcher and popups,
+    -- and the password dialog for admin rights (~/.config/quickshell)
+    hl.exec_cmd("qs")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme '" .. cursorTheme .. "'")
@@ -14,7 +12,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd('gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"')
 
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
-    hl.exec_cmd("systemctl --user start hyprpolkitagent")
 
     hl.exec_cmd("hypridle")
 

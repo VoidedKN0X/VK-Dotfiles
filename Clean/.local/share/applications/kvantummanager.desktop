@@ -1,0 +1,14 @@
+[Desktop Entry]
+# Hides Kvantum Manager (from the kvantum package, the Qt glass theme engine)
+# from the app launcher: the Qt theme is made by hypr/scripts/kvantum-glass.sh
+# at every wallpaper change, so there's nothing to set in it. This copy in
+# ~/.local/share/applications takes the place of the system one;
+# NoDisplay=true keeps it out of launchers and menus. To open it anyway, run
+# kvantummanager.
+Type=Application
+Name=Kvantum Manager
+Comment=A GUI for installing, selecting and customizing Kvantum themes
+Exec=kvantummanager
+Icon=kvantum
+Categories=Qt;Utility;DesktopSettings;
+NoDisplay=true

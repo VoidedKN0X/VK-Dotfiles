@@ -12,12 +12,14 @@ hl.config({
             new_optimizations = true,
             popups = true,
             input_methods = true,
-            -- softer blur plus a little grain (noise) and color (vibrancy):
-            -- frosted glass instead of a heavy smear (waybar, swaync, rofi, ...)
-            size = 2,
-            passes = 2,
-            noise = 0.02,
-            vibrancy = 0.17,
+            -- frosted glass (the frame, its popups, see-through windows): a
+            -- strong, smooth blur (3 passes of 6 px) with a little grain
+            -- (noise) and color (vibrancy), so the glass can be very
+            -- see-through and text on it still reads
+            size = 6,
+            passes = 3,
+            noise = 0.03,
+            vibrancy = 0.2,
         },
         shadow = {
             enabled = false,

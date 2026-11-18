@@ -24,29 +24,39 @@ hl.bind("SUPER + mouse_up", hl.dsp.focus({ workspace = "e-1" }))
 hl.bind("SUPER + mouse:272", hl.dsp.window.drag(), { mouse = true })
 hl.bind("SUPER + mouse:273", hl.dsp.window.resize(), { mouse = true })
 
--- osd.sh changes the level and shows it in the bar's popup
--- (waybar/scripts/osd.py) on the focused monitor (5% steps, max 100%)
+-- osd.sh changes the level and shows it in the volume popup
+-- (quickshell/popups/Osd.qml) on the focused monitor (5% steps, max 100%)
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume raise"), { locked = true, repeating = true })
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume lower"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume mute-toggle"), { locked = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --input-volume mute-toggle"), { locked = true })
--- Caps Lock popup: on release (the light has switched by then), and the key
--- still reaches the keyboard (non_consuming), so Caps Lock keeps working
-hl.bind("Caps_Lock", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --caps-lock"), { release = true, non_consuming = true, ignore_mods = true })
+-- (the Caps Lock popup needs no keybind: the volume popup watches the Caps
+-- Lock light itself, quickshell/popups/Osd.qml)
 
-hl.bind("Print", hl.dsp.exec_cmd('mkdir -p "$HOME/Pictures/Screenshots" && flameshot full --clipboard --path "$HOME/Pictures/Screenshots"'), { locked = true })
-hl.bind("SHIFT + Print", hl.dsp.exec_cmd('mkdir -p "$HOME/Pictures/Screenshots" && flameshot gui --clipboard --path "$HOME/Pictures/Screenshots"'))
+-- screenshot of both monitors: saved to ~/Pictures/Screenshots and copied
+hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh"), { locked = true })
+-- window switcher: hold Alt, Tab / Shift + Tab to pick, let go of Alt to switch
+-- (quickshell/popups/WindowSwitcher.qml). Alt's release also tells it, in case
+-- the switcher didn't get the key itself; non_consuming, so apps still see Alt.
+hl.bind("ALT + Tab", hl.dsp.exec_cmd("qs ipc call switcher next"))
+hl.bind("ALT + SHIFT + Tab", hl.dsp.exec_cmd("qs ipc call switcher prev"))
+hl.bind("ALT + Alt_L", hl.dsp.exec_cmd("qs ipc call switcher commit"), { release = true, non_consuming = true })
+-- workspace overview on both monitors: click to go, drag windows to move them,
+-- type to find one (quickshell/popups/Overview.qml)
+hl.bind("SUPER + Tab", hl.dsp.exec_cmd("qs ipc call overview toggle"))
 
-hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd("pavucontrol"))
+-- the volume mixer (outputs, inputs, a volume per app)
+hl.bind("CTRL + ALT + V", hl.dsp.exec_cmd("qs ipc call mixer toggle"))
 hl.bind("SUPER + W", hl.dsp.exec_cmd(browser))
-hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("rofi -show wallpaper -modi \"wallpaper:~/.config/hypr/scripts/wallpaper-picker.sh\" -theme ~/.config/rofi/wallpaper-picker.rasi -show-icons -p \"\""))
-hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("~/.config/hypr/scripts/clipboard.sh"))
+-- wallpaper picker and clipboard history (quickshell/popups)
+hl.bind("SUPER + SHIFT + W", hl.dsp.exec_cmd("qs ipc call wallpaper toggle"))
+hl.bind("SUPER + SHIFT + H", hl.dsp.exec_cmd("qs ipc call clipboard toggle"))
 hl.bind("SUPER + T", hl.dsp.exec_cmd(terminal))
 hl.bind("SUPER + E", hl.dsp.exec_cmd(fileManager))
 hl.bind("SUPER + Super_L", hl.dsp.exec_cmd(menu), { release = true })
-hl.bind("SUPER + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/restart-waybar-swaync.sh"))
+hl.bind("SUPER + R", hl.dsp.exec_cmd("~/.config/hypr/scripts/restart-quickshell.sh"))
 -- move the bar between the top and the left edge (OLED: no static bar)
-hl.bind("SUPER + B", hl.dsp.exec_cmd("~/.config/waybar/scripts/bar-position.sh"))
+hl.bind("SUPER + B", hl.dsp.exec_cmd("qs ipc call bar toggle"))
 
 hl.bind("CTRL + SUPER + left", hl.dsp.focus({ workspace = "-1" }))
 hl.bind("CTRL + SUPER + right", hl.dsp.focus({ workspace = "+1" }))
@@ -56,7 +66,8 @@ hl.bind("SUPER + X", hl.dsp.window.resize())
 hl.bind("SUPER + F", hl.dsp.window.fullscreen({ mode = 0 }))
 hl.bind("SUPER + ALT + F", hl.dsp.window.fullscreen({ mode = 1 }))
 
-hl.bind("SUPER + N", hl.dsp.exec_cmd("~/.config/waybar/scripts/notifications.sh"))
+-- the control center (notifications, toggles, system info), on the focused monitor
+hl.bind("SUPER + N", hl.dsp.exec_cmd("qs ipc call controlCenter toggle"))
 
 hl.bind("SUPER + L", hl.dsp.exec_cmd("hyprlock"))
 

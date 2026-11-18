@@ -1,21 +1,20 @@
 check_contrast = true
+# a wallpaper with few colors (black and white, one color) still gets a full
+# palette: wallust fills it with shades between the colors it finds instead
+# of stopping with "not enough colors". Quickshell keeps such a palette gray
+# (quickshell/common/Theme.qml).
+fallback_generator = "interpolate"
 
 [templates]
-colors-waybar.template = 'colors-waybar.template'
-colors-waybar.target = '~/.config/waybar/colors/colors.css'
-colors-waybar.pywal = true
-
-colors-swaync.template = 'colors-swaync.template'
-colors-swaync.target = '~/.config/swaync/colors/colors.css'
-colors-swaync.pywal = true
+# the bar, control center and popups (Quickshell watches this file and
+# recolors itself)
+colors-quickshell.template = 'colors-quickshell.template'
+colors-quickshell.target = '~/.config/quickshell/colors.json'
+colors-quickshell.pywal = true
 
 foot.template = 'foot.template'
 foot.target = '~/.config/foot/colors-dark.ini'
 foot.pywal = true
-
-colors-rofi.template = 'colors-rofi.template'
-colors-rofi.target = '~/.config/rofi/colors/colors.rasi'
-colors-rofi.pywal = true
 
 border-colors.template = 'border-colors.template'
 border-colors.target = '~/.config/hypr/hyprland/border-colors.lua'
@@ -29,7 +28,18 @@ btop.template = 'btop.template'
 btop.target = '~/.config/btop/themes/wallust.theme'
 btop.pywal = true
 
+# the login screen (tuigreet on the text console): the 16 colors as plain
+# hex, read by /usr/local/bin/vk-tuigreet before tuigreet starts. Outside
+# your home so the greeter can read it; Install.sh makes the folder yours.
+console-palette.template = 'console-palette.template'
+console-palette.target = '/var/lib/vk-greeter/palette'
+console-palette.pywal = true
 
-colors-nwg-drawer.template = 'colors-nwg-drawer.template'
-colors-nwg-drawer.target = '~/.config/nwg-drawer/colors.css'
-colors-nwg-drawer.pywal = true
+# the frosted glass of GTK 3 and GTK 4 apps (gtk-3.0/gtk.css, gtk-4.0/gtk.css)
+gtk3-colors.template = 'gtk-colors.template'
+gtk3-colors.target = '~/.config/gtk-3.0/vk-colors.css'
+gtk3-colors.pywal = true
+
+gtk4-colors.template = 'gtk-colors.template'
+gtk4-colors.target = '~/.config/gtk-4.0/vk-colors.css'
+gtk4-colors.pywal = true

@@ -15,3 +15,13 @@ hl.config({
         },
     },
 })
+
+-- the mouse pointer stays where it is when the workspace changes (scrolling
+-- over the bar's workspaces, a keybind, a click in the overview) instead of
+-- jumping to the middle of the monitor. In pcall: a Hyprland version without
+-- the option skips it instead of stopping here.
+pcall(hl.config, {
+    cursor = {
+        no_warps = true,
+    },
+})

@@ -22,11 +22,12 @@ vk_ask_yubikey
 
 # === Packages (official repos) ===
 PACMAN_PKGS=(
-    libayatana-indicator
     yt-dlp
     gst-plugin-gtk
     gst-libav
     brightnessctl
+    # the battery in the bar and the control center (Quickshell reads it from UPower)
+    upower
     feishin
     btrfs-progs
     dosfstools
@@ -42,7 +43,6 @@ PACMAN_PKGS=(
     android-tools
     android-udev
     darktable
-    flameshot
     qbittorrent
     gamemode
     gimp
@@ -88,10 +88,8 @@ PACMAN_PKGS=(
     hyprland
     hyprlock
     hypridle
-    hyprpolkitagent
     btop
     fastfetch
-    awww
     thunar
     thunar-volman
     gvfs
@@ -108,18 +106,12 @@ PACMAN_PKGS=(
     pacman-contrib
     zsh
     pkgfile
+    # the bar, control center, notifications and popups (~/.config/quickshell)
+    quickshell
     tailscale
-    rofi
-    nwg-drawer
-    waybar
-    playerctl
     # wpctl: the volume keys (hypr/scripts/osd.sh)
     wireplumber
     cava
-    # calendar, music and volume popups of the bar (waybar/scripts/*.py)
-    python-gobject
-    gtk4-layer-shell
-    swaync
     earlyoom
     noto-fonts
     ristretto
@@ -131,8 +123,10 @@ PACMAN_PKGS=(
     nwg-look
     orchis-theme
     papirus-icon-theme
-    otf-codenewroman-nerd
     qt5ct
+    # Qt theme engine: the frosted glass for Qt apps (hypr/scripts/kvantum-glass.sh)
+    kvantum
+    kvantum-qt5
     qt5-wayland
     qt6-wayland
     breeze-icons
@@ -144,7 +138,6 @@ PACMAN_PKGS=(
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
     discord
-    blueman
     yubikey-manager
     pam-u2f
     libfido2
@@ -163,7 +156,8 @@ PACMAN_PKGS=(
     auto-cpufreq
     claude-desktop
     claude-code
-    # Wi-Fi/network tools used by the swaync Wi-Fi button and waybar (nmcli, nmtui)
+    # the bar's network icon, the network panel and the control center (state
+    # and Wi-Fi from NetworkManager; nmtui comes with it, for VPN / static IP)
     networkmanager
 )
 
@@ -213,7 +207,7 @@ SERVICES=(
 vk_enable_multilib
 vk_cachyos_repos
 vk_install_pacman
-vk_earlyoom "waybar|swaync"
+vk_earlyoom "qs|quickshell"
 vk_install_aur
 vk_oh_my_zsh
 vk_cleanup
@@ -226,7 +220,12 @@ vk_enable_services
 sudo tailscale set --operator="$USER" || warn "could not make $USER the Tailscale operator"
 # tablet: logged in automatically at boot (no keyboard needed)
 AUTOLOGIN=1
-vk_greetd
+# tuigreet in pastel colors of your wallpaper (until the first wallpaper
+# change: yours if you have them, else the ones this profile ships with)
+colors_json="$HOME/.config/quickshell/colors.json"
+[[ -f "$colors_json" ]] || colors_json="$PROFILE_DIR/.config/quickshell/colors.json"
+vk_tuigreet_pastel "$colors_json"
+vk_greetd /usr/local/bin/vk-tuigreet
 
 # === Steam Deck hardware ===
 # Power button: short press = sleep, like SteamOS (systemd's default is power off).
@@ -257,29 +256,29 @@ xdg-user-dirs-update
 # === Configs ===
 KEEP_IF_EXISTS=(
     hypr/colors/current-wallpaper.conf
-    waybar/colors/colors.css
-    waybar/layouts/current.jsonc
-    swaync/colors/colors.css
+    quickshell/colors.json
+    quickshell/bar-position
     foot/colors-dark.ini
-    rofi/colors/colors.rasi
-    nwg-drawer/colors.css
     hypr/hyprland/border-colors.lua
     hypr/colors/hyprlock-colors.conf
     btop/themes/wallust.theme
-    xfce4/xfconf/xfce-perchannel-xml/thunar.xml
     btop/btop.conf
+    gtk-3.0/vk-colors.css
+    gtk-4.0/vk-colors.css
+    xfce4/xfconf/xfce-perchannel-xml/thunar.xml
 )
 vk_copy_configs
-# the kept bar position (top/left) also sets where the notification panel
-# goes: write those files to match it
-"$HOME/.config/waybar/scripts/bar-position.sh" --files-only
 vk_hyprlock_password
-vk_app_entries
+# LibreWolf without the GTK glass: it takes its address bar colors
+# from GTK, so its suggestions would have no background
+vk_app_entries librewolf
 vk_prism_icons
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
-         "$HOME"/.config/swaync/scripts/*.sh
+         "$HOME"/.config/quickshell/scripts/*.sh
+# frosted glass for Qt apps (Orchis for Kvantum, in the wallpaper's colors)
+vk_kvantum_glass
 
 # === Post install: kernel, boot and tuning, then the YubiKey setup (if chosen) ===
 vk_post run-all-steamdeck.sh

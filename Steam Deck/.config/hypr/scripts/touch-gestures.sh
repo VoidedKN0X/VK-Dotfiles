@@ -9,7 +9,7 @@
 #
 # Gestures:
 #   1 finger, swipe up from the bottom edge     app launcher
-#   1 finger, swipe down from the top edge      notification center
+#   1 finger, swipe down from the top edge      control center
 #   3 fingers, swipe left / right               next / previous workspace
 #   3 fingers, swipe up                         fullscreen on/off
 #   3 fingers, swipe down                       close the window
@@ -30,8 +30,8 @@ ROTATION=$(cat "$HOME/.local/state/hypr/rotation" 2>/dev/null)
 hypr() { hyprctl dispatch "$1" >/dev/null; }
 
 case "${1:-start}" in
-    notifications)  swaync-client -t -sw ;;
-    launcher)       "$SCRIPTS/app-drawer.sh" ;;
+    notifications)  qs ipc call controlCenter toggle ;;
+    launcher)       qs ipc call launcher toggle ;;
     next-workspace) hypr 'hl.dsp.focus({ workspace = "e+1" })' ;;
     prev-workspace) hypr 'hl.dsp.focus({ workspace = "e-1" })' ;;
     fullscreen)     hypr 'hl.dsp.window.fullscreen({ mode = 0 })' ;;

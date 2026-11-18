@@ -1,7 +1,9 @@
 #!/bin/bash
-# Apply a wallpaper and regenerate the wallust colors.
+# Apply a wallpaper and regenerate the wallust colors. Quickshell shows the
+# wallpaper named in hypr/colors/current-wallpaper.conf (quickshell/background),
+# so writing that file is what changes it on screen.
 #   wallpaper.sh           -> re-apply the last wallpaper (used at login)
-#   wallpaper.sh <file>    -> apply <file> (used by wallpaper-picker.sh)
+#   wallpaper.sh <file>    -> apply <file> (used by the wallpaper picker)
 
 WALLPAPER_DIR="$HOME/Pictures/Wallpapers"
 LAST_WALLPAPER="$HOME/.config/hypr/colors/current-wallpaper.conf"
@@ -12,8 +14,8 @@ if [ -z "$WALLPAPER" ] && [ -f "$LAST_WALLPAPER" ]; then
     WALLPAPER=$(sed 's/^\$current_wallpaper = //' "$LAST_WALLPAPER")
 fi
 
-# At login the colors made from the saved wallpaper are already in place, so
-# only the wallpaper itself is shown (no wallust run, no bar/OSD restarts).
+# At login the wallpaper and the colors made from it are already in place
+# (Quickshell shows the saved one by itself): nothing to do.
 # The colors are made again if the saved wallpaper is gone, or if a wallust
 # template or wallust.toml changed since (e.g. after Install.sh copied new ones).
 RESTORE_ONLY=0
@@ -32,34 +34,19 @@ if [ -z "$WALLPAPER" ]; then
     exit 1
 fi
 
-# At login this runs at the same time as awww-daemon: wait (max ~5s) until the
-# daemon answers, otherwise `awww img` fails and no wallpaper is set.
-for _ in $(seq 50); do
-    awww query >/dev/null 2>&1 && break
-    sleep 0.1
-done
-
-awww img "$WALLPAPER"
 [ "$RESTORE_ONLY" = 1 ] && exit 0
+
+# Show it: Quickshell watches this file (the lock screen reads it too). Written
+# before wallust runs, so the wallpaper changes at once and the colors follow.
+mkdir -p "$(dirname "$LAST_WALLPAPER")"
+echo "\$current_wallpaper = $WALLPAPER" > "$LAST_WALLPAPER"
 
 # Generate and apply accent colors
 wallust run "$WALLPAPER"
 
-# Update hyprlock wallpaper path
-mkdir -p "$(dirname "$LAST_WALLPAPER")"
-echo "\$current_wallpaper = $WALLPAPER" > "$LAST_WALLPAPER"
+# the Qt apps' glass theme in the new colors (Kvantum; started Qt apps pick it
+# up when they're opened again)
+"$HOME/.config/hypr/scripts/kvantum-glass.sh" >/dev/null 2>&1 || true
 
-# Reload swaync CSS
-swaync-client --reload-css >/dev/null 2>&1 || true
-
-# Reload waybar
-killall -SIGUSR2 waybar >/dev/null 2>&1 || true
-
-# The volume popup only reads its colors when it starts: stop it, the next
-# volume key starts it again with the new ones
-pkill -f 'waybar/scripts/osd.py' >/dev/null 2>&1 || true
-
-# Restart the app menu so it picks up the new colors (if it's running)
-if pgrep -x nwg-drawer >/dev/null; then
-    "$HOME/.config/hypr/scripts/app-drawer.sh" start
-fi
+# Nothing to reload: Quickshell watches quickshell/colors.json (written by
+# wallust above) and recolors the bar and its popups by itself

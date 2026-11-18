@@ -45,11 +45,11 @@ PACMAN_PKGS=(
     pacman-contrib
     xdg-user-dirs
 
-    # Hyprland and its lock screen, idle timers and password prompts
+    # Hyprland and its lock screen and idle timers (the password prompts are
+    # Quickshell's)
     hyprland
     hyprlock
     hypridle
-    hyprpolkitagent
     xdg-desktop-portal
     xdg-desktop-portal-hyprland
     xdg-desktop-portal-gtk
@@ -61,30 +61,26 @@ PACMAN_PKGS=(
     greetd
     greetd-tuigreet
 
-    # the bar, its popups and the notification center
-    waybar
-    swaync
+    # the bar, control center, notifications, launcher and popups
+    # (~/.config/quickshell)
+    quickshell
     libnotify
+    # the media keys
     playerctl
     # wpctl: the volume keys (hypr/scripts/osd.sh)
     wireplumber
+    # the music visualizer in the bar and the control center
     cava
-    # calendar, music, power menu and volume popups (waybar/scripts/*.py)
-    python-gobject
-    gtk4-layer-shell
     # brightness keys and the dimming in hypridle.conf (no-op without a backlight)
     brightnessctl
     # battery in the bar and on the lock screen (hidden without a battery)
     upower
 
-    # launcher, terminal, wallpaper, clipboard, screenshots
-    rofi
+    # terminal, clipboard history, screenshots
     foot
-    awww
     cliphist
     wl-clipboard
     grim
-    flameshot
 
     # apps the keybinds and bar buttons open
     firefox
@@ -98,10 +94,10 @@ PACMAN_PKGS=(
     ffmpegthumbnailer
     btop
     pavucontrol
-    blueman
     bluez
     bluez-utils
-    # Wi-Fi/network: the swaync Wi-Fi button and the bar (nmcli, nmtui)
+    # the bar's network icon, the network panel and the control center (nmtui
+    # comes with it, for VPN / static IP)
     networkmanager
 
     # shell
@@ -117,6 +113,9 @@ PACMAN_PKGS=(
     breeze
     breeze-icons
     qt5ct
+    # Qt theme engine: the frosted glass for Qt apps (hypr/scripts/kvantum-glass.sh)
+    kvantum
+    kvantum-qt5
     adwaita-fonts
     noto-fonts
     noto-fonts-emoji
@@ -124,7 +123,6 @@ PACMAN_PKGS=(
     ttf-nerd-fonts-symbols
     ttf-jetbrains-mono-nerd
     otf-geist-mono-nerd
-    otf-codenewroman-nerd
 
     # audio: realtime priority for PipeWire
     rtkit
@@ -162,14 +160,19 @@ SERVICES=(
 vk_enable_multilib
 vk_cachyos_repos
 vk_install_pacman
-vk_earlyoom "waybar|swaync"
+vk_earlyoom "qs|quickshell"
 vk_install_aur
 vk_oh_my_zsh
 vk_cleanup
 
 # === Services and login screen ===
 vk_enable_services
-vk_greetd
+# tuigreet in pastel colors of your wallpaper (until the first wallpaper
+# change: yours if you have them, else the ones this profile ships with)
+colors_json="$HOME/.config/quickshell/colors.json"
+[[ -f "$colors_json" ]] || colors_json="$PROFILE_DIR/.config/quickshell/colors.json"
+vk_tuigreet_pastel "$colors_json"
+vk_greetd /usr/local/bin/vk-tuigreet
 
 # === Firewall and disks ===
 # blocks everything that comes in unless you allow it (ufw's default). Add
@@ -184,30 +187,28 @@ mkdir -p "$HOME/Pictures/Wallpapers"
 # === Configs ===
 KEEP_IF_EXISTS=(
     hypr/colors/current-wallpaper.conf
-    waybar/colors/colors.css
-    waybar/layouts/current.jsonc
-    swaync/colors/colors.css
+    quickshell/colors.json
+    quickshell/bar-position
     foot/colors-dark.ini
-    rofi/colors/colors.rasi
     hypr/hyprland/border-colors.lua
     hypr/colors/hyprlock-colors.conf
     btop/themes/wallust.theme
     btop/btop.conf
+    gtk-3.0/vk-colors.css
+    gtk-4.0/vk-colors.css
 )
 ZSHRC_BACKUP=1
 vk_copy_configs
-# the kept bar position (top/left) also sets where the notification panel
-# goes: write those files to match it
-"$HOME/.config/waybar/scripts/bar-position.sh" --files-only
-# hide helper apps (settings tools, foot server, ...) from the launcher
-vk_app_entries
+# hide helper apps (settings tools, foot server, ...) from the launcher, and
+# Firefox without the GTK glass (it takes its address bar colors from GTK, so
+# its suggestions would have no background)
+vk_app_entries firefox
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
-         "$HOME"/.config/swaync/scripts/*.sh \
-         "$HOME"/.config/waybar/scripts/*.sh \
-         "$HOME"/.config/waybar/scripts/*.py \
-         "$HOME"/.config/rofi/launchers/type-2/launcher.sh
+         "$HOME"/.config/quickshell/scripts/*.sh
+# frosted glass for Qt apps (Orchis for Kvantum, in the wallpaper's colors)
+vk_kvantum_glass
 
 # === Post install: CachyOS kernel, boot splash and tuning ===
 vk_post run-all-clean.sh "$GAMING_FLAG"

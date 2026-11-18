@@ -3,9 +3,8 @@
 
 -- Small utility windows: float, sized, centered
 hl.window_rule({ match = { class = "nmtui" }, float = true, size = "60% 70%", center = true })
-hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol" }, float = true, size = "60% 70%", center = true })
 hl.window_rule({ match = { class = "nwg-look" }, float = true, size = "50% 60%", center = true })
-hl.window_rule({ match = { class = "blueman-manager" }, float = true })
+hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol" }, float = true, size = "60% 70%", center = true })
 
 -- Steam / Moonlight
 hl.window_rule({ match = { class = "steam" }, rounding = 10 })
@@ -49,42 +48,35 @@ hl.window_rule({
     float = true,
 })
 
--- Layer rules (blur + animations for waybar, swaync, the bar's popups and rofi)
--- waybar: the bar is transparent, only its islands are see-through glass, so
--- ignore_alpha keeps the empty gaps between islands unblurred. Waybar uses its
--- config's "name" as the layer namespace: vk-top / vk-left / vk-right
--- (waybar/layouts)
-local bar = "^(waybar|vk-top|vk-left|vk-right)$"
-hl.layer_rule({ match = { namespace = bar }, blur = true, ignore_alpha = 0.2 })
--- also blur waybar's tooltips (calendar, track info) and tray menus. In pcall,
--- so a Hyprland version without this option skips it instead of stopping here
-pcall(hl.layer_rule, { match = { namespace = bar }, blur_popups = true })
-pcall(hl.layer_rule, { match = { namespace = bar }, xray = false })
--- swaync draws its panel inside an invisible full-screen layer: ignore_alpha
--- 0.1 leaves that empty part alone and blurs everything that's visible (the
--- glass panel is 50% opaque).
--- Blur gets a rule of its own, like the bar's: a rule with a setting Hyprland
--- doesn't accept (the animation) is dropped whole, without a config error,
--- which is why swaync and rofi weren't blurred before. The extras (xray off,
--- animations) are separate and in pcall.
-local notifications = "^swaync-(control-center|notification-window)$"
-hl.layer_rule({ match = { namespace = notifications }, blur = true, ignore_alpha = 0.1 })
-pcall(hl.layer_rule, { match = { namespace = notifications }, xray = false })
-pcall(hl.layer_rule, { match = { namespace = "swaync-control-center" }, animation = "slide left" })
+-- Layer rules (blur + animations for the Quickshell frame and its popups)
+-- Quickshell's layers are see-through except for their glass: ignore_alpha
+-- leaves the transparent parts alone (the desktop inside the frame, the
+-- invisible full-screen layer around a popup) and blurs the glass (28-42 %
+-- opaque). Blur gets a rule of its own: a rule with a setting Hyprland
+-- doesn't accept (an animation) is dropped whole, without a config error. The
+-- extras (xray off, animations) are separate and in pcall, so a Hyprland
+-- version without them skips them instead of stopping here.
+-- The names: vk-top / vk-left / vk-right are the frame around the screen with
+-- the bar on that side. The popups that grow out of the frame (control
+-- center, calendar, power menu, mixer, Bluetooth, network, launcher,
+-- wallpaper picker, clipboard), the notifications and the volume popup are
+-- drawn in that same layer, so they share its blur; they animate themselves
+-- (growing out of the frame). vk-polkit-* and vk-switcher-* float in the
+-- middle of the screen, vk-overview covers the focused monitor. frame-zone is
+-- the invisible space the frame keeps free.
+-- The wallpaper itself is "wallpaper" (nothing to blur). See quickshell/shell.qml.
+local shell = "^vk-.*$"
+hl.layer_rule({ match = { namespace = shell }, blur = true, ignore_alpha = 0.2 })
+pcall(hl.layer_rule, { match = { namespace = shell }, blur_popups = true })
+pcall(hl.layer_rule, { match = { namespace = shell }, xray = false })
 
--- the bar's popups (waybar/scripts/calendar.py, music.py, power.py, osd.py)
--- blur themselves (GTK4, like swaync). The calendar, music and power popups
--- slide in and out from the top with the bar on top, from the side with a
--- side bar (left or right)
-pcall(hl.layer_rule, { match = { namespace = "vk-calendar-top" }, animation = "slide top" })
-pcall(hl.layer_rule, { match = { namespace = "vk-calendar-left" }, animation = "slide left" })
-pcall(hl.layer_rule, { match = { namespace = "vk-music-top" }, animation = "slide top" })
-pcall(hl.layer_rule, { match = { namespace = "vk-music-left" }, animation = "slide left" })
-pcall(hl.layer_rule, { match = { namespace = "vk-calendar-right" }, animation = "slide right" })
-pcall(hl.layer_rule, { match = { namespace = "vk-music-right" }, animation = "slide right" })
-pcall(hl.layer_rule, { match = { namespace = "vk-power-top" }, animation = "slide top" })
-pcall(hl.layer_rule, { match = { namespace = "vk-power-left" }, animation = "slide left" })
-pcall(hl.layer_rule, { match = { namespace = "vk-power-right" }, animation = "slide right" })
+-- the frame never animates (it moves above fullscreen apps while a popup is
+-- open, which must not look like it opens again)
+pcall(hl.layer_rule, { match = { namespace = "^vk-(top|left|right)$" }, no_anim = true })
 
-hl.layer_rule({ match = { namespace = "rofi" }, blur = true, ignore_alpha = 0 })
-pcall(hl.layer_rule, { match = { namespace = "rofi" }, animation = "slide bottom" })
+-- the password dialog rises from the bottom, in the middle of the screen
+pcall(hl.layer_rule, { match = { namespace = "^vk-polkit-.*$" }, animation = "slide bottom" })
+-- the workspace overview zooms in a little
+pcall(hl.layer_rule, { match = { namespace = "vk-overview" }, animation = "popin 95%" })
+-- the window switcher fades, so a quick Alt + Tab doesn't fly across the screen
+pcall(hl.layer_rule, { match = { namespace = "^vk-switcher-.*$" }, animation = "fade" })

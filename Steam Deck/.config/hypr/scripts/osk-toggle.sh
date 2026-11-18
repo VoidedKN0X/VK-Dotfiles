@@ -1,6 +1,6 @@
 #!/bin/bash
 # Show or hide the on-screen keyboard (squeekboard), from the keyboard button
-# in waybar. squeekboard doesn't pop up by itself in text fields (turned off
+# in the bar (quickshell/bar/Bar.qml). squeekboard doesn't pop up by itself in text fields (turned off
 # in hypr/hyprland/execs.lua), so this is the only way to open it.
 #   osk-toggle.sh          toggle
 #   osk-toggle.sh show     show

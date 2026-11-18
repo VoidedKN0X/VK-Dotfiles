@@ -17,29 +17,26 @@ and YubiKey login.
 > a machine you care about. **Want the desktop without my stuff? Use the
 > [Clean profile](#clean-profile).**
 
-## Five profiles
+## Four profiles
 
-The repo has **five independent profiles**. Everything is duplicated on purpose, so each profile
-stays self-contained and works on its own.
+The repo has **four independent profiles**, all with the same desktop shell made in
+[Quickshell](https://quickshell.org) (see [The desktop shell](#the-desktop-shell-quickshell)).
+The configs are duplicated on purpose, so each profile stays self-contained and works on its
+own; the install steps they share are in `Post Install/install-common.sh`.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
-| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
-| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the whole desktop shell made in [Quickshell](https://quickshell.org): bar, control center, notifications, app launcher, wallpaper (picker), clipboard history, volume mixer, Bluetooth and network panels, window switcher, screenshots and the polkit password dialog, instead of waybar, swaync, rofi, awww, blueman, flameshot and hyprpolkitagent (pavucontrol stays, for showing and hiding sound devices; see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
-| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
+| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets that switch with the output), AMD GPU with LACT overclocking |
+| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery in the bar and on the lock screen, brightness slider in the control center, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
-| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
+| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, battery in the bar and on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), rotate button in the control center, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
 
 | Part | Used for |
 | --- | --- |
 | [Hyprland](https://hypr.land) | Window manager (Lua config in `.config/hypr/`) |
-| waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
-| swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
-| Bar popups (`waybar/scripts/*.py`) | Calendar, music and power menu popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
-| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications, popups, app launcher, wallpaper and wallpaper picker, clipboard history, volume mixer and polkit dialog, instead of waybar, swaync, the bar popups, rofi, awww and hyprpolkitagent |
-| rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
+| [Quickshell](https://quickshell.org) | The whole desktop shell: wallpaper, bar, control center, notifications, popups, app launcher, wallpaper picker, clipboard history, volume mixer, window switcher, workspace overview, screenshots and the password dialog (see [The desktop shell](#the-desktop-shell-quickshell)) |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
 | greetd + tuigreet | Login screen |
@@ -71,7 +68,7 @@ once at the start and keeps sudo active until the end, so the long AUR builds an
 don't ask again). It works from any directory.
 
 ```sh
-"VK-Dotfiles/Desktop/Install.sh"        # or "Desktop Quickshell/Install.sh" / "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
+"VK-Dotfiles/Desktop/Install.sh"        # or "Asus Laptop/Install.sh" / "Steam Deck/Install.sh"
 ```
 
 It does the following:
@@ -188,8 +185,8 @@ password and run `pkill -USR1 hyprlock`.
 
 ## Clean profile
 
-`Clean/` is the same desktop (Hyprland, the bar and its popups, swaync, rofi, foot, hyprlock,
-wallust colors) for anyone's machine, without my personal apps and settings. It's based on the
+`Clean/` is the same desktop (Hyprland, the Quickshell shell, foot, hyprlock, wallust colors)
+for anyone's machine, without my personal apps and settings. It's based on the
 laptop profile, so it works with any monitor and shows the battery when there is one.
 
 ```sh
@@ -202,12 +199,12 @@ for both), and pick your graphics driver in archinstall: the Clean profile doesn
 
 **What it installs and sets up:**
 
-- **Programs:** only what the config uses: Hyprland, hyprlock, hypridle, waybar, swaync, rofi,
-  foot, awww (wallpaper), wallust, cava, playerctl, cliphist, flameshot, Thunar, btop,
-  pavucontrol, blueman, NetworkManager, zsh + Oh My Zsh, fastfetch, the GTK/Qt themes, icons,
-  cursor and fonts, and Firefox (for <kbd>Super</kbd> + <kbd>W</kbd>; change `browser` in
+- **Programs:** only what the config uses: Hyprland, hyprlock, hypridle, Quickshell, foot,
+  wallust, cava, playerctl, cliphist, grim, Thunar, btop, pavucontrol, NetworkManager, zsh + Oh
+  My Zsh, fastfetch, the GTK/Qt themes (with Kvantum for the Qt glass), icons, cursor and fonts,
+  and Firefox (for <kbd>Super</kbd> + <kbd>W</kbd>; change `browser` in
   `hypr/variables.lua` to use another).
-- **Login:** greetd + tuigreet.
+- **Login:** greetd + tuigreet, in pastel colors of your wallpaper.
 - **Gaming extras (you choose):** `Install.sh` asks once at the start. Answer **y** for Steam,
   gamemode and MangoHud (with their 32-bit versions), Proton-CachyOS, Heroic and the `ntsync`
   module (smoother frame times with Proton). The Mesa shader cache is 12 GB either way
@@ -217,9 +214,10 @@ for both), and pick your graphics driver in archinstall: the Clean profile doesn
   lower PipeWire latency), earlyoom, disk health notifications (smartd) and the ufw firewall
   (everything incoming blocked, no extra rules).
 - **Configs:** `.config` and `.zshrc` (an existing `.zshrc` is saved as `.zshrc.bak` first).
-  Settings that depend on your hardware are left on auto: every monitor at its preferred mode,
-  the network interface, the CPU temperature sensor (the first thermal zone; see the comment in
-  `waybar/modules.jsonc` to pick your CPU sensor), US keyboard layout (`hypr/hyprland/input.lua`).
+  Settings that depend on your hardware are left on auto: every monitor at its preferred mode
+  with a bar on each, the network interface (the first connected one), the CPU temperature
+  sensor (found by its driver: AMD k10temp/zenpower or Intel coretemp), the battery and
+  brightness (shown only when there are any), US keyboard layout (`hypr/hyprland/input.lua`).
 
 **Not included** (compared to my profiles): my apps, Syncthing, the NAS share, the printer,
 firewall rules for my apps, EasyEffects, the `/media` folders, Secure Boot and the
@@ -231,59 +229,16 @@ first). Run on its own, `sudo "Post Install/run-all-clean.sh"` asks about the ga
 When it's done: put wallpapers in `~/Pictures/Wallpapers`, reboot, log in and pick one with
 <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. Everything takes its colors from it.
 
-## The bar
+## The desktop shell (Quickshell)
 
-Waybar as separate "islands" of dark, blurred glass, with the wallpaper's accent color:
+Every profile's desktop shell is one [Quickshell](https://quickshell.org) config
+(`.config/quickshell/`): the wallpaper, bar, notifications and control center, the popups, app
+launcher, wallpaper picker, clipboard history, volume mixer (pavucontrol stays for the full
+mixer), Bluetooth and network panels, window switcher, workspace overview, screenshots and the
+password dialog when an app asks for admin rights. nmtui (part of NetworkManager) stays for VPNs
+and static addresses, but the bar and control center open the network panel instead.
 
-- **Islands:** workspaces (dots; the active one is a pill), music, clock, CPU / temperature / RAM,
-  tray + Bluetooth + network + volume (+ battery, and on the Steam Deck the on-screen keyboard
-  button), idle inhibitor, notifications, power.
-- **Music:** a visualizer ([cava](https://github.com/karlstav/cava)) and the track title; it
-  shows while a player has a title. Hovering slides out the artist and previous / play-pause /
-  next. Clicking opens the **music popup** (cover, progress bar you can drag, controls).
-- **Clock:** click for the **calendar popup**. Click outside it or press <kbd>Esc</kbd> to close.
-- **CPU, temperature, RAM:** click for btop.
-- **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the
-  last three need a second click to confirm).
-- **Notifications:** click for the notification panel (it opens under or next to the bell),
-  right-click for do not disturb. Popups appear in the same spot.
-- **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> moves the bar between the top and the
-  left edge (on an OLED screen, so it doesn't stay in one place). The notification panel,
-  calendar, music and volume popups move with it. The choice survives a reinstall.
-  On the desktop this is the main monitor's bar: the rotated DP-2 always has its bar on the
-  right edge (too narrow for a top bar), and the popups and notification panel open next to
-  whichever bar you click.
-- **Blur:** Hyprland's layer rules blur the bar (`hypr/hyprland/rules.lua`). swaync and the popups
-  are GTK4 apps: they mark the areas to blur themselves with `backdrop-filter` in their CSS
-  (Hyprland 0.56 follows the app, not the layer rules). The strength is `decoration.blur` in
-  `hypr/hyprland/decoration.lua`, the same for everything.
-- **Files:** `waybar/config.jsonc` only includes the others (on the desktop, per monitor):
-  `layouts/top.jsonc` / `layouts/left.jsonc` / `layouts/right.jsonc` (what differs per edge),
-  `layouts/current.jsonc` (the main bar's edge, written by `scripts/bar-position.sh`) and
-  `modules.jsonc` (everything else). `scripts/notifications.sh` opens the notification panel
-  next to the bell of the bar you're on. The popups are
-  `waybar/scripts/calendar.py`, `music.py`, `power.py` and `osd.py`; `popup_common.py` holds their shared
-  look and the gap between them and the bar (`GAP`, in px).
-- **Fonts:** text in Ubuntu, icons from Symbols Nerd Font, so the icons line up with the numbers.
-
-## Desktop Quickshell
-
-`Desktop Quickshell/` is the `Desktop/` profile with one difference: the desktop shell is one
-[Quickshell](https://quickshell.org) config (`.config/quickshell/`). It replaces waybar, swaync
-and the Python popups (bar, notifications, popups), rofi (app launcher, wallpaper picker,
-clipboard history), awww (the wallpaper), pavucontrol (volume mixer), blueman (Bluetooth),
-flameshot (screenshots) and hyprpolkitagent (the password dialog when an app asks for admin
-rights); those aren't installed. nmtui (part of NetworkManager) stays for VPNs and static
-addresses, but the bar and control center open the network panel instead. Monitors, apps,
-services, tuning, the shell (zsh with the same plugins, aliases and fastfetch), foot, the lock
-screen and the wallust colors are exactly the same; `Install.sh` runs the same
-`run-all-desktop.sh`.
-
-```sh
-"VK-Dotfiles/Desktop Quickshell/Install.sh"
-```
-
-It has the waybar bar's glass islands, icons, fonts and sizes, set in a **frame**: one piece of
+The bar is a row of glass islands, set in a **frame**: one piece of
 glass around each screen with a bar. The bar's side holds the islands, the other three sides are a
 thin border (8 px), and the desktop inside has round corners. Windows stay inside the frame.
 Every popup grows out of the frame's inner edge with rounded joins: the calendar, power menu,
@@ -296,11 +251,12 @@ close by going back into it.
 While one is open the frame moves above fullscreen apps too. The password dialog and the window
 switcher float in the middle.
 
-- **Islands:** workspaces (dots, the active one a pill; each monitor shows its own), music
+- **Islands:** workspaces (dots; at least 1 to 6, further up to the highest with windows; the
+  focused one a pill), music
   (visualizer + title, hover for the artist and the buttons), clock, CPU / temperature / memory
   (as percentages; the control center shows memory used / total), tray + Bluetooth + network +
-  volume, stay awake,
-  notifications, power.
+  volume (+ the battery on a laptop, and on the Steam Deck the on-screen keyboard button), stay
+  awake, notifications, power.
 - **Every icon opens its program or panel:** CPU, temperature and memory open btop, Bluetooth
   opens the Bluetooth panel (right click: Bluetooth on/off), network opens the network panel,
   volume opens the mixer (scroll: volume, right click: mute), tray icons open their app (right
@@ -340,14 +296,17 @@ switcher float in the middle.
   that floats over everything. Session buttons (lock, suspend, restart, shut down), quick toggles
   (network, Bluetooth, do not disturb, stay awake, bar position, wallpaper), CPU usage and memory
   as ring gauges with the CPU temperature between them (click for btop), volume and microphone
-  sliders, the music player, and the notifications (one row; click it for the list). Right-click
+  sliders (and on a laptop or the Steam Deck screen brightness, with the battery's charge and
+  time left), the music player, and the notifications (one row; click it for the list). Right-click
   the bell for do not disturb.
 - **Notifications:** Quickshell is the notification daemon. Popups appear next to the bell on the
   focused monitor, stay 8 s (low: 6 s, critical: until closed; hovering keeps them) and stay in
   the control center's list. Clicking one runs its default action. With do not disturb on, only
   critical ones (like a failing disk) pop up.
 - **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> (or the control center's toggle), saved
-  in `quickshell/bar-position` (kept by a reinstall). DP-2 always has its bar on the right edge.
+  in `quickshell/bar-position` (kept by a reinstall). The bar goes back into the frame and grows
+  out of its new edge. On the desktop, DP-2 always has its bar on the right edge; the other
+  profiles have a bar on every monitor.
 - **App launcher** (tap <kbd>Super</kbd>): type to search (names, descriptions, keywords),
   <kbd>↑</kbd> / <kbd>↓</kbd> and <kbd>Enter</kbd>, or click. Always in alphabetical order, also
   while searching. To hide an app: copy its `.desktop` file from `/usr/share/applications` to
@@ -388,10 +347,10 @@ switcher float in the middle.
   they're started again, and Kvantum keeps video apps such as VLC and Kdenlive solid on purpose.
   Electron apps draw their own windows and can't be made see-through this way; foot has its own
   glass setting.
-- **AMD GPU overclocking:** LACT is installed and its service enabled, and the post-install adds
-  `amdgpu.ppfeaturemask=0xfff7ffff` to the kernel command line (the kernel's default plus
-  OverDrive) on a desktop with an AMD card, so LACT can change clocks, voltage offset and power
-  limit (Desktop and Desktop Quickshell).
+- **AMD GPU overclocking (desktop):** LACT is installed and its service enabled, and the
+  post-install adds `amdgpu.ppfeaturemask=0xfff7ffff` to the kernel command line (the kernel's
+  default plus OverDrive) on a desktop with an AMD card, so LACT can change clocks, voltage
+  offset and power limit.
 - **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
 - **Login screen:** tuigreet (greetd) with a clock, your last user and session filled in and a dot
   per password character, on black, in pastel versions of your wallpaper's colors: wallust writes them to
@@ -402,14 +361,15 @@ switcher float in the middle.
   sizes, icons), `services/` (system info, audio, music, notifications, network/Bluetooth),
   `bar/`, `controlcenter/`, `popups/`, `background/` (the wallpaper), and `scripts/stats.sh` (CPU, memory and temperature,
   every 2 s) and `scripts/cava.sh` (the visualizer). The monitors, their bar edges and their
-  workspaces are at the top of `services/BarState.qml`; the network interface (`eno1`) is in
-  `services/Connectivity.qml`; the temperature sensor path is in `scripts/stats.sh`.
+  workspaces, and whether it's a touch tablet, are at the top of `services/BarState.qml`; the
+  network interface (desktop: `eno1`, the others: the first connected one) is in
+  `services/Connectivity.qml`.
 
 ## Keybinds
 
 | Keys | Action |
 | --- | --- |
-| <kbd>Super</kbd> (tap) | App launcher (tap again to close; the nwg-drawer app menu on the Steam Deck) |
+| <kbd>Super</kbd> (tap) | App launcher (tap again to close) |
 | <kbd>Super</kbd> + <kbd>T</kbd> / <kbd>E</kbd> / <kbd>W</kbd> | Terminal / file manager / browser |
 | <kbd>Super</kbd> + <kbd>D</kbd> | Discord |
 | <kbd>Super</kbd> + <kbd>Q</kbd> | Close window |
@@ -423,9 +383,9 @@ switcher float in the middle.
 | <kbd>Super</kbd> + left / right mouse drag, or <kbd>Z</kbd> / <kbd>X</kbd> | Move / resize window |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd> | Wallpaper picker (also recolors everything) |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd> | Clipboard history (<kbd>Ctrl</kbd> + <kbd>Delete</kbd> removes an entry) |
-| <kbd>Super</kbd> + <kbd>N</kbd> | Notification center |
+| <kbd>Super</kbd> + <kbd>N</kbd> | Control center |
 | <kbd>Super</kbd> + <kbd>L</kbd> | Lock screen |
-| <kbd>Super</kbd> + <kbd>R</kbd> | Restart the bar and notifications |
+| <kbd>Super</kbd> + <kbd>R</kbd> | Restart Quickshell |
 | <kbd>Super</kbd> + <kbd>B</kbd> | Move the bar between the top and the left edge (desktop: the main monitor's bar) |
 | <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd> *(desktop)* | HDR on/off on the main monitor (needed for HDR on YouTube in Chromium: turn it on, then reload the video) |
 | <kbd>Super</kbd> + <kbd>M</kbd> | Log out |
@@ -445,8 +405,8 @@ It's based on the laptop profile.
 
 | Gesture | Action |
 | --- | --- |
-| Swipe up from the bottom edge | App menu |
-| Swipe down from the top edge | Notification center |
+| Swipe up from the bottom edge | App launcher |
+| Swipe down from the top edge | Control center |
 | 3 fingers left / right | Next / previous workspace |
 | 3 fingers up | Fullscreen on/off |
 | 3 fingers down | Close the window |
@@ -455,14 +415,12 @@ It's based on the laptop profile.
   opened and closed only with the keyboard button (󰌌) in the bar. It doesn't pop
   up by itself when you tap a text field, so it never covers the screen unasked (and a USB or
   Bluetooth keyboard needs no special handling).
-- **App menu:** [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead of rofi: a
-  full-screen grid of big icons, without search bar or categories (typing on a physical keyboard
-  still filters). Opens with the Super key or a swipe up from the bottom edge. Rofi is only used for the
-  clipboard history and the wallpaper picker.
+- **App launcher:** the Quickshell launcher, the same as on the other profiles: opens with the
+  Super key or a swipe up from the bottom edge.
 - **Thunar:** a tap opens a folder or file (single-click mode, set in
   `xfce4/xfconf/xfce-perchannel-xml/thunar.xml`), because two taps don't count as a double-click.
   To select files without opening them, drag a box around them from an empty spot, or use Ctrl+A.
-- **Screen rotation:** the rotate button in the notification center switches between landscape
+- **Screen rotation:** the rotate button in the control center switches between landscape
   and portrait; the touchscreen and gestures turn with it, and the choice is kept after a
   reboot.
 - **Power button:** a short press puts the Deck to sleep, like SteamOS.
@@ -470,15 +428,14 @@ It's based on the laptop profile.
   so the lock screen is there when it wakes up; it isn't locked while you're just idle. hyprlock
   only unlocks with a YubiKey touch, so no keyboard is needed (the same key the Deck already needs
   to boot).
-- **Tailscale:** installed and running, with a tray icon in waybar to log in, connect/disconnect
+- **Tailscale:** installed and running, with a tray icon in the bar to log in, connect/disconnect
   and pick an exit node. The first time, log in from the tray icon (or run `tailscale up`). The
   firewall allows everything that comes in over your tailnet.
 - **Disk unlock:** on the Deck, `yubikey-setup.sh` enrolls your YubiKey for LUKS **without a PIN**
   (plug it in and touch it at boot), since there's no keyboard before the desktop starts. A key
   enrolled with a PIN (for example by archinstall's HSM option) can be enrolled again without one;
   the script then offers to remove the PIN slots. Desktop and laptop keep the PIN.
-- **Brightness:** set it with the slider in the notification center (it's pointed at the Deck's
-  backlight automatically at every login).
+- **Brightness:** set it with the slider in the control center.
 - **Fan:** Valve's own fan curve (`jupiter-fan-control`).
 - **BIOS updates:** checked 2 minutes after boot and every hour. With the charger connected (and
   at least 20% battery) a new BIOS is **prepared automatically but never installed with a forced
@@ -498,14 +455,15 @@ After the first boot, test the gestures once. If a swipe goes the wrong way in l
 
 Put your wallpapers in `~/Pictures/Wallpapers` (subfolders work too) and pick one with
 <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>. [wallust](https://codeberg.org/explosion-mental/wallust)
-then regenerates the colors for Hyprland, waybar and its popups, swaync, rofi, foot, hyprlock and btop.
+then regenerates the colors for Hyprland, Quickshell, the GTK and Qt glass, foot, hyprlock, btop
+and the login screen.
 The last wallpaper is re-applied at every login.
 
 All generated color files are included in the repo as working defaults, so a fresh install
 looks right before you've picked a wallpaper:
 `hypr/colors/hyprlock-colors.conf`, `hypr/hyprland/border-colors.lua`,
-`rofi/colors/colors.rasi`, `swaync/colors/colors.css`, `waybar/colors/colors.css`,
-`foot/colors-dark.ini`, `btop/themes/wallust.theme`, and on the Steam Deck `nwg-drawer/colors.css`. wallust overwrites
+`quickshell/colors.json`, `gtk-3.0/vk-colors.css`, `gtk-4.0/vk-colors.css`,
+`foot/colors-dark.ini` and `btop/themes/wallust.theme`. wallust overwrites
 them as soon as you set a wallpaper.
 Until then, `hypr/colors/current-wallpaper.conf` makes the lock screen show a blurred screenshot.
 
@@ -522,28 +480,23 @@ If you're not me, look at these before running anything:
 - **`hypr/hyprland/monitors.lua`:** monitor names, resolutions, positions and which workspace goes
   where.
 - **`hypr/hyprland/input.lua`:** keyboard layout.
-- **`waybar/modules.jsonc`:** the network interface name (`eno1` / `wl*`), the CPU temperature
-  sensor (also set in `btop/btop.conf`) and, on the desktop, which workspaces each monitor's bar
-  shows.
+- **`quickshell/services/BarState.qml`:** which monitor gets which bar, and their workspaces
+  (desktop); **`quickshell/services/Connectivity.qml`:** the network interface (desktop: `eno1`).
 - **`hypr/hypridle.conf` (laptop):** the keyboard backlight device is `asus::kbd_backlight`.
 - **Steam Deck:** `Post Install/run-all-steamdeck.sh` only installs the Valve packages on an LCD
   Steam Deck (board "Valve Jupiter"); on anything else it skips them.
-- **Desktop Quickshell:** the monitors, their bar edges and workspaces
-  (`quickshell/services/BarState.qml`), the network interface
-  (`quickshell/services/Connectivity.qml`) and the CPU temperature sensor
-  (`quickshell/scripts/stats.sh`).
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.
 
 ## Structure
 
 ```
-<profile>/                 # Desktop/, Desktop Quickshell/, Asus Laptop/, Steam Deck/ or Clean/
-├── .config/               # Hyprland, waybar, swaync, rofi, wallust, foot, btop, fastfetch, ...
+<profile>/                 # Desktop/, Asus Laptop/, Steam Deck/ or Clean/
+├── .config/               # Hyprland, Quickshell, wallust, foot, btop, fastfetch, GTK/Qt themes, ...
 ├── .zshrc                 # Shell config
 └── Install.sh             # The profile's apps, services and own steps; the rest via install-common.sh
 
 Post Install/
-├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop (both desktop profiles)
+├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop
 ├── run-all-laptop.sh      # Kernel, boot and tuning for the laptop
 ├── run-all-steamdeck.sh   # Kernel (deckify), boot, tuning + Valve hardware support for the Steam Deck
 ├── run-all-clean.sh       # Kernel, boot and tuning for the Clean profile (no Secure Boot, gaming extras optional)

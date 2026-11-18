@@ -1,9 +1,7 @@
 hl.on("hyprland.start", function()
-    hl.exec_cmd("awww-daemon")
-    hl.exec_cmd("waybar")
-    -- swaync runs as a systemd user service, so D-Bus activation can't start a
-    -- second copy (on the Deck the brightness slider's device is set first)
-    hl.exec_cmd("~/.config/hypr/scripts/backlight-device.sh; systemctl --user start swaync")
+    -- the wallpaper, bar, control center, notifications, launcher and popups,
+    -- and the password dialog for admin rights (~/.config/quickshell)
+    hl.exec_cmd("qs")
 
     hl.exec_cmd("hyprctl setcursor " .. cursorTheme .. " " .. cursorSize)
     hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-theme '" .. cursorTheme .. "'")
@@ -14,7 +12,6 @@ hl.on("hyprland.start", function()
     hl.exec_cmd('gsettings set org.gnome.desktop.interface icon-theme "Papirus-Dark"')
 
     hl.exec_cmd("gnome-keyring-daemon --start --components=secrets")
-    hl.exec_cmd("systemctl --user start hyprpolkitagent")
 
     hl.exec_cmd("hypridle")
 
@@ -27,18 +24,16 @@ hl.on("hyprland.start", function()
     -- ===== Steam Deck / tablet =====
     -- On-screen keyboard: squeekboard never pops up by itself in text fields
     -- (this GNOME accessibility setting is turned off); it's shown and hidden
-    -- with the keyboard button in waybar (osk-toggle.sh).
+    -- with the keyboard button in the bar (osk-toggle.sh).
     hl.exec_cmd("gsettings set org.gnome.desktop.a11y.applications screen-keyboard-enabled false")
     hl.exec_cmd("squeekboard")
-    -- Touch-friendly app menu, kept in memory so it opens instantly
-    hl.exec_cmd("~/.config/hypr/scripts/app-drawer.sh start")
     -- Touchscreen gestures (edge swipes, 3-finger swipes)
     hl.exec_cmd("~/.config/hypr/scripts/touch-gestures.sh")
     -- Tell me about BIOS updates (status written by steamdeck-bios-update)
     hl.exec_cmd("~/.config/hypr/scripts/bios-update-notify.sh --watch")
 
     -- Claude Desktop in the tray: --startup starts it without opening its
-    -- window (click its tray icon in waybar to open it).
+    -- window (click its tray icon in the bar to open it).
     -- --password-store=gnome-libsecret keeps its login in the GNOME keyring
     -- (gnome-keyring is installed by Install.sh).
     -- Turned off for now, so the app can be set up first; remove the "-- "

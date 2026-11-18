@@ -1,0 +1,43 @@
+/* Frosted glass for GTK 4 / libadwaita apps (Papers, File Roller, ...), the
+   same look as the Quickshell frame and the GTK 3 apps (gtk-3.0/gtk.css): the
+   window is 42 % opaque glass in the wallpaper's colors (vk-colors.css,
+   rewritten by wallust at every wallpaper change) and Hyprland blurs what's
+   behind it. Menus and popovers keep a solid look, so they stay easy to read.
+   To go back to the plain theme, delete this file and restart the app. */
+@import url("vk-colors.css");
+
+/* libadwaita's own colors (both the older @define-color names and the CSS
+   variables of libadwaita 1.6+) */
+@define-color window_bg_color alpha(@vk_base, 0.42);
+@define-color view_bg_color transparent;
+@define-color headerbar_bg_color transparent;
+@define-color headerbar_backdrop_color transparent;
+@define-color sidebar_bg_color transparent;
+@define-color secondary_sidebar_bg_color transparent;
+@define-color card_bg_color alpha(@vk_fg, 0.05);
+@define-color accent_bg_color @vk_accent;
+
+:root {
+    --window-bg-color: alpha(@vk_base, 0.42);
+    --view-bg-color: transparent;
+    --headerbar-bg-color: transparent;
+    --headerbar-backdrop-color: transparent;
+    --sidebar-bg-color: transparent;
+    --secondary-sidebar-bg-color: transparent;
+    --card-bg-color: alpha(@vk_fg, 0.05);
+    --accent-bg-color: @vk_accent;
+}
+
+/* plain GTK 4 apps without libadwaita */
+window.background {
+    background-color: alpha(@vk_base, 0.42);
+}
+window.background headerbar,
+window.background .sidebar,
+window.background .navigation-sidebar,
+window.background .view:not(:selected),
+window.background scrolledwindow,
+window.background viewport {
+    background-color: transparent;
+    background-image: none;
+}

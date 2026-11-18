@@ -1,6 +1,6 @@
 -- Screen rotation of the built-in panel, shared by monitors.lua (display) and
 -- input.lua (touchscreen). scripts/rotate.sh (the rotate button in the
--- notification center) switches it live and saves it in
+-- control center) switches it live and saves it in
 -- ~/.local/state/hypr/rotation, which is read here, so it survives reloads and
 -- reboots. 3 = landscape (default), 0 = portrait.
 screenTransform = 3

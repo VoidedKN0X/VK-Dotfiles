@@ -2,6 +2,60 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (16)
+
+### Changed
+- **One desktop for every profile: Quickshell.** The waybar `Desktop/`
+  profile is removed and `Desktop Quickshell/` is now `Desktop/`. The Asus
+  Laptop, Steam Deck and Clean profiles get the same Quickshell shell instead
+  of waybar, swaync, the Python bar popups, rofi, awww, blueman, flameshot and
+  hyprpolkitagent: the frame with the bar, control center, notifications,
+  popups, app launcher, wallpaper picker, clipboard history, mixer, window
+  switcher, workspace overview, screenshots, password dialog, the pastel login
+  screen and the GTK/Qt glass (Kvantum). Their own settings stay: monitors,
+  keyboard layout, touchpad gestures, lid lock, backlight dimming, media and
+  brightness keys, the battery on the lock screen, and on the Steam Deck the
+  rotation, touch gestures, on-screen keyboard, Tailscale and autologin.
+  (Merged per file from the old Desktop → Desktop Quickshell changes onto each
+  profile, so their own changes were kept.)
+- **Quickshell works on any machine** (all profiles):
+  - `services/BarState.qml`: with an empty `outputs` map every monitor gets
+    a bar (Asus Laptop, Steam Deck, Clean); the desktop keeps DP-1 (main)
+    and DP-2 (right).
+  - `services/Connectivity.qml`: the network icon follows the first
+    connected interface when the named one isn't there (laptop, Steam Deck
+    and Clean name none; the desktop keeps `eno1`).
+  - `scripts/stats.sh`: the CPU temperature sensor is found by its driver
+    (k10temp, zenpower or coretemp) instead of a fixed AMD path.
+- **New: battery and brightness** (all profiles, shown only where there is
+  one): a battery module in the bar (new `services/Battery.qml`, UPower;
+  in the accent color from 30 %, red from 15 %) and a brightness slider in the control
+  center with the battery's charge and time left (new
+  `services/Brightness.qml`, brightnessctl). The brightness keys already
+  showed the on-screen popup.
+- **New: tablet mode** (`BarState.tablet`, on for the Steam Deck): an
+  on-screen keyboard button in the bar (`osk-toggle.sh`) and a rotate button
+  in the control center (`rotate.sh`), which were waybar's and swaync's.
+- **Steam Deck:** the Quickshell launcher replaces nwg-drawer (Super, or a
+  swipe up from the bottom edge); a swipe down opens the control center. The
+  scripts `app-drawer.sh` and `backlight-device.sh` (swaync's brightness
+  slider) are gone.
+- **Clean:** Firefox starts without the GTK glass (like LibreWolf: its
+  address bar suggestions would have no background).
+- `Install.sh` (Asus Laptop, Steam Deck, Clean): the Quickshell packages
+  (`quickshell`, `kvantum`, `kvantum-qt5`) instead of `waybar`, `swaync`,
+  `rofi`, `awww`, `flameshot`, `blueman`, `hyprpolkitagent`,
+  `python-gobject`, `gtk4-layer-shell`, `libayatana-indicator`,
+  `nwg-drawer` (Steam Deck), `otf-codenewroman-nerd` and the Steam Deck's
+  unused `playerctl`; the same install steps as the desktop (pastel tuigreet,
+  the files kept on a re-run, the Kvantum glass).
+- Steam Deck: `upower` added to `Install.sh`, so the battery shows in the
+  bar and the control center (Quickshell reads it from UPower; the laptop and
+  Clean already had it).
+- README: four profiles, one "The desktop shell (Quickshell)" section instead
+  of "The bar" and "Desktop Quickshell"; keybinds, Steam Deck, colors and
+  "Things to change" updated.
+
 ## 2026-11-18 (15)
 
 ### Changed

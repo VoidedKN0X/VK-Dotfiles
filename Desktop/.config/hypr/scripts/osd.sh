@@ -1,12 +1,16 @@
 #!/bin/bash
 # Volume / mic / brightness / Caps Lock keys: change the level, then show it
-# in the bar's popup (waybar/scripts/osd.py) on the focused monitor.
+# in the volume popup (quickshell/popups/Osd.qml) on the focused monitor.
 #   osd.sh --output-volume raise|lower|mute-toggle   (5% steps, max 100%)
 #   osd.sh --input-volume mute-toggle
 #   osd.sh --brightness raise|lower                  (5% steps, min 5%)
 #   osd.sh --caps-lock
 
-OSD="$HOME/.config/waybar/scripts/osd.py"
+# the popup takes three values: kind, value, extra. The popup also shows the
+# volume, the mic's mute and Caps Lock by itself (quickshell/popups/Osd.qml);
+# these calls are for the keys (and brightness on a laptop).
+# (never an empty argument: "-" when unused)
+osd() { qs ipc call osd show "$1" "${2:--}" "${3:--}" >/dev/null 2>&1; }
 SINK=@DEFAULT_AUDIO_SINK@
 SOURCE=@DEFAULT_AUDIO_SOURCE@
 
@@ -33,16 +37,16 @@ esac
 case "$1" in
     --output-volume)
         read -r level muted < <(volume_of "$SINK")
-        exec "$OSD" volume "$level" "$muted"
+        osd volume "$level" "$muted"
         ;;
     --input-volume)
         read -r _ muted < <(volume_of "$SOURCE")
-        exec "$OSD" mic "$muted"
+        osd mic "$muted"
         ;;
     --brightness)
         # brightnessctl -m: device,class,current,percent%,max
         level=$(brightnessctl -m | cut -d, -f4 | tr -d %)
-        exec "$OSD" brightness "${level:-0}"
+        osd brightness "${level:-0}"
         ;;
     --caps-lock)
         # the key is bound on release, so the Caps Lock light has switched by now
@@ -50,6 +54,6 @@ case "$1" in
         for led in /sys/class/leds/*::capslock/brightness; do
             [ -r "$led" ] && [ "$(cat "$led")" != 0 ] && on=1
         done
-        exec "$OSD" caps "$on"
+        osd caps "$on"
         ;;
 esac
