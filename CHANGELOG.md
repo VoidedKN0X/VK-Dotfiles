@@ -2,6 +2,13 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (18)
+
+### Changed
+- **All profiles: pavucontrol opens as a normal tiled window**
+  (`hypr/hyprland/rules.lua`): the rule that made it float, centered at
+  60 % x 70 %, is removed.
+
 ## 2026-11-18 (17)
 
 ### Changed
