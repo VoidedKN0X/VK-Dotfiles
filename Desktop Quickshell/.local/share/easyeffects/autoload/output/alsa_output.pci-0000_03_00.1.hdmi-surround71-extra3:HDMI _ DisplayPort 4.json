@@ -1,0 +1,6 @@
+{
+    "device": "alsa_output.pci-0000_03_00.1.hdmi-surround71-extra3",
+    "device-description": "Navi 48 HDMI/DP Audio Controller Digital Surround 7.1 (HDMI 4) [Audio System]",
+    "device-profile": "HDMI / DisplayPort 4",
+    "preset-name": "Soundbar Bass Boost"
+}

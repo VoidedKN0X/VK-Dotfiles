@@ -501,6 +501,12 @@ mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
+# EasyEffects' presets (Soundbar Bass Boost, Earbuds Flat) and its autoload
+# rules: which preset goes with which output (the soundbar on HDMI, the USB
+# audio interface's speakers); presets with the same name are replaced
+mkdir -p "$HOME/.local/share/easyeffects"
+cp -r "$PROFILE_DIR/.local/share/easyeffects/." "$HOME/.local/share/easyeffects/"
+
 # Prism Launcher's icons: the icon packs made for Prism Launcher (its official
 # Themes repository: Fluent Dark, Ore UI, OSX, iOS, Twemoji) in Prism's own
 # icon theme folder, with Fluent Dark picked in Prism's settings: flat, light

@@ -2,6 +2,27 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (13)
+
+### Changed
+- **Desktop and Desktop Quickshell: EasyEffects presets that switch with the
+  output** (new `.local/share/easyeffects/`, `easyeffects/db/easyeffectsrc`,
+  `Install.sh`).
+  - Two output presets, each an equalizer: **Soundbar Bass Boost** (the
+    low-end boost, +16 dB at 22 Hz to +7 dB at 102 Hz) and **Earbuds Flat**
+    (`.local/share/easyeffects/output/`).
+  - Autoload rules (`.local/share/easyeffects/autoload/output/`): the HDMI
+    7.1 output (the soundbar, `hdmi-surround71-extra3`, profile "HDMI /
+    DisplayPort 4") loads Soundbar Bass Boost, the USB audio interface's
+    speakers (`Generic_USB_Audio ... HiFi__Speaker__sink`) load Earbuds Flat.
+    Any other output falls back to Earbuds Flat
+    (`outputAutoloadingFallbackPreset` in `easyeffectsrc`).
+  - `easyeffectsrc`: the input is the SteelSeries Alias again, and it keeps
+    which preset was loaded last.
+  - `Install.sh` copies the presets and rules into
+    `~/.local/share/easyeffects`, where EasyEffects keeps them (presets with
+    the same name are replaced).
+
 ## 2026-11-18 (12)
 
 ### Changed
