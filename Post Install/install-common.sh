@@ -121,6 +121,13 @@ vk_install_aur() {
 AUR_ESSENTIAL_PKGS=()
 AUR_PKGS=()
 
+# The Belgian eID middleware and viewer (AUR: eid-mw), built by its own script
+# with a temporary fix: the AUR version doesn't build against OpenSSL 4.0 yet
+# (see "Post Install/eid-mw.sh"). Skipped when it's already installed.
+vk_eid_mw() {
+    "$POST_DIR/eid-mw.sh" || warn "eid-mw (Belgian eID) failed to install; run \"Post Install/eid-mw.sh\" again later"
+}
+
 # Oh My Zsh (as your user): --keep-zshrc so the installer never replaces your
 # .zshrc with its template, --unattended so it doesn't stop to ask questions.
 # The installer refuses to run if ~/.oh-my-zsh exists, so it's skipped then.

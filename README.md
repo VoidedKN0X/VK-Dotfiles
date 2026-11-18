@@ -505,6 +505,8 @@ Post Install/
 ├── install-common.sh      # The install steps every Install.sh shares (shell, login screen, firewall,
 │                          #   configs, ...); sourced by them, don't run it directly
 ├── cachyos-repo.sh        # Adds the CachyOS repos (run by Install.sh first, and by run-all-common.sh)
+├── eid-mw.sh              # Belgian eID middleware (AUR eid-mw) with a temporary OpenSSL 4.0 fix
+├── eid-mw-openssl4.patch  #   (the upstream fix it applies; run by Install.sh)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```
 

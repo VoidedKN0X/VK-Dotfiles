@@ -2,6 +2,29 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (19)
+
+### Fixed
+- **Desktop, Asus Laptop, Steam Deck: the Belgian eID middleware installs
+  again** (new `Post Install/eid-mw.sh` and
+  `Post Install/eid-mw-openssl4.patch`; `vk_eid_mw` in
+  `Post Install/install-common.sh`; `Install.sh`). The AUR package
+  (`eid-mw` 5.1.31) no longer builds against OpenSSL 4.0: the eID Viewer's
+  `verify.c` reads ASN1 strings directly ("invalid use of incomplete typedef
+  'ASN1_IA5STRING'"). The eID team fixed it upstream in commit 58875f5 (in
+  5.1.32 and 5.2.x), but the AUR package isn't updated yet. `eid-mw` is no
+  longer in the profiles' AUR list; `Install.sh` runs `eid-mw.sh` right after
+  the AUR apps instead, fully unattended. It downloads the AUR package
+  (`yay -G`), unpacks the source (`makepkg -so`, importing the eID signing
+  key if it's missing; if the keyserver fails, the PGP check is skipped and
+  the sha256 check still applies), applies the upstream patch only while the
+  source still has the old code, then builds and installs it
+  (`makepkg -seir`). Already installed: skipped. Once the AUR package has a
+  fixed version the patch step skips itself; then the script can go and
+  `eid-mw` can return to the AUR list. The patch is kept in the repo (7
+  lines, LGPL-3.0 like eid-mw), so the build doesn't depend on downloading
+  it.
+
 ## 2026-11-18 (18)
 
 ### Changed

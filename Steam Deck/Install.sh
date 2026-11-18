@@ -174,7 +174,6 @@ AUR_PKGS=(
     rapidraw-bin
     amethyst-mod-manager
     github-desktop-bin
-    eid-mw
     orca-slicer-bin
     mangojuice-bin
     localsend-bin
@@ -209,6 +208,8 @@ vk_cachyos_repos
 vk_install_pacman
 vk_earlyoom "qs|quickshell"
 vk_install_aur
+# the Belgian eID middleware (eid-mw), with a temporary OpenSSL 4.0 fix
+vk_eid_mw
 vk_oh_my_zsh
 vk_cleanup
 
