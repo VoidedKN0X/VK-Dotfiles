@@ -9,6 +9,9 @@ Changes to VK-Dotfiles, newest first.
   bars show only the workspaces that have windows, plus the focused one
   (still the same on both bars, all monitors' workspaces in order, the
   focused one the pill), instead of always 1 to 10.
+- **Desktop Quickshell: six workspace dots at least** (`bar/Workspaces.qml`):
+  the bars always show workspaces 1 to 6 (`minDots`), and further up to the
+  highest workspace that has windows or the focus (four dots were too few).
 - **Desktop Quickshell: the overview (Super + Tab) shows only the focused
   monitor's workspaces** (`popups/OverviewScreen.qml`, `popups/Overview.qml`,
   README), instead of a row for each monitor. Without a second row its
