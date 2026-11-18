@@ -2,6 +2,15 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (27)
+
+### Added
+- **All profiles: nvtop** (`Install.sh`), a terminal GPU monitor like btop
+  for the graphics card: usage, memory, clocks, temperature and the processes
+  using it (AMD, Intel and NVIDIA). Run `nvtop` in a terminal; like btop it's
+  hidden from the app launcher (new `.local/share/applications/nvtop.desktop`
+  with `NoDisplay=true`).
+
 ## 2026-11-18 (26)
 
 ### Removed

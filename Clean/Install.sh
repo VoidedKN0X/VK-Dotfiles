@@ -93,6 +93,8 @@ PACMAN_PKGS=(
     tumbler
     ffmpegthumbnailer
     btop
+    # GPU monitor (usage, memory, temperature, per-process; AMD, Intel and NVIDIA)
+    nvtop
     pavucontrol
     bluez
     bluez-utils

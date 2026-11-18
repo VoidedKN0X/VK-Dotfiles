@@ -86,6 +86,8 @@ PACMAN_PKGS=(
     hyprlock
     hypridle
     btop
+    # GPU monitor (usage, memory, temperature, per-process; AMD, Intel and NVIDIA)
+    nvtop
     fastfetch
     thunar
     thunar-volman

@@ -1,0 +1,12 @@
+[Desktop Entry]
+# Hides nvtop (the GPU monitor) from the app launcher, like btop: run nvtop in
+# a terminal. This copy in ~/.local/share/applications takes the place of the
+# system one; NoDisplay=true keeps it out of launchers and menus.
+Type=Application
+Name=nvtop
+Comment=GPU process monitor
+Exec=nvtop
+Terminal=true
+Icon=nvtop
+Categories=System;Monitor;
+NoDisplay=true
