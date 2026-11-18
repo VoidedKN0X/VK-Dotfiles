@@ -49,18 +49,11 @@ PACMAN_PKGS=(
     gst-libav
     brightnessctl
     feishin
-    bcachefs-tools
     btrfs-progs
     dosfstools
     exfatprogs
-    f2fs-tools
     e2fsprogs
-    jfsutils
-    mtd-utils
-    nilfs-utils
     ntfs-3g
-    udftools
-    xfsprogs
     plymouth
     fwupd
     adobe-source-han-sans-otc-fonts

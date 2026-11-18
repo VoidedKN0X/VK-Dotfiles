@@ -2,6 +2,29 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (14)
+
+### Removed
+- **All profiles but Clean: rarely used filesystem tools** (`Install.sh` in
+  Desktop, Desktop Quickshell, Asus Laptop, Steam Deck). Only the common ones
+  stay: `btrfs-progs` (Btrfs), `e2fsprogs` (ext4), `dosfstools` (FAT),
+  `exfatprogs` (exFAT) and `ntfs-3g` (NTFS). Removed: `bcachefs-tools`,
+  `f2fs-tools`, `jfsutils`, `mtd-utils`, `nilfs-utils`, `udftools` and
+  `xfsprogs` (without them, Partition Manager can't create, check or
+  resize those filesystems).
+- **Desktop and Desktop Quickshell: `auto-cpufreq`** (`Install.sh`): a laptop
+  power tool with little use on a desktop. The package, its service and the
+  step that masked the other power daemons (power-profiles-daemon, tuned,
+  TLP) for it are gone from these two profiles; the Asus Laptop and Steam
+  Deck keep it.
+- **Desktop, Desktop Quickshell, Asus Laptop: `calf`** (`Install.sh`).
+  EasyEffects only uses the LSP plugins now (the equalizer); calf's effects
+  (limiter, exciter, bass enhancer) aren't used.
+
+### Changed
+- **Asus Laptop: `lsp-plugins-lv2`** (`Install.sh`), so EasyEffects'
+  equalizer works there too, like on the desktop profiles.
+
 ## 2026-11-18 (13)
 
 ### Changed

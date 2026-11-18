@@ -48,18 +48,11 @@ PACMAN_PKGS=(
     gst-plugin-gtk
     gst-libav
     feishin
-    bcachefs-tools
     btrfs-progs
     dosfstools
     exfatprogs
-    f2fs-tools
     e2fsprogs
-    jfsutils
-    mtd-utils
-    nilfs-utils
     ntfs-3g
-    udftools
-    xfsprogs
     plymouth
     fwupd
     adobe-source-han-sans-otc-fonts
@@ -178,7 +171,6 @@ PACMAN_PKGS=(
     sane-airscan
     rtkit
     easyeffects
-    calf
     # EasyEffects' equalizer, compressor, delay and loudness (without it the
     # equalizer can't be added or does nothing)
     lsp-plugins-lv2
@@ -190,7 +182,6 @@ PACMAN_PKGS=(
     # in the CachyOS repo (were installed through yay before)
     faugus-launcher
     jdownloader2
-    auto-cpufreq
     claude-desktop
     claude-code
     # the bar's network icon, the network panel and the control center (state
@@ -232,7 +223,6 @@ SERVICES=(
     NetworkManager.service
     pcscd.service
     cups.service
-    auto-cpufreq.service
     "syncthing@$USER.service"
     fwupd-refresh.timer
     fstrim.timer
@@ -327,13 +317,6 @@ if [[ ${#ORPHANS[@]} -gt 0 ]]; then
     sudo pacman -Rns "${ORPHANS[@]}" || warn "orphan removal skipped or failed"
 fi
 yay -Sc --noconfirm || warn "cache cleanup failed"
-
-# auto-cpufreq sets the CPU governor and power profile itself: stop and mask the
-# other daemons that do the same (the CachyOS installer can add them), so they
-# don't fight over it. Units that aren't installed are skipped.
-for unit in power-profiles-daemon.service tuned.service tuned-ppd.service tlp.service; do
-    systemctl list-unit-files "$unit" >/dev/null 2>&1 && sudo systemctl mask --now "$unit"
-done
 
 # Enable services one by one, so one missing unit doesn't skip all the others
 for unit in "${SERVICES[@]}"; do

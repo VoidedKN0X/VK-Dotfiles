@@ -49,18 +49,11 @@ PACMAN_PKGS=(
     gst-libav
     brightnessctl
     feishin
-    bcachefs-tools
     btrfs-progs
     dosfstools
     exfatprogs
-    f2fs-tools
     e2fsprogs
-    jfsutils
-    mtd-utils
-    nilfs-utils
     ntfs-3g
-    udftools
-    xfsprogs
     plymouth
     fwupd
     adobe-source-han-sans-otc-fonts
@@ -173,7 +166,9 @@ PACMAN_PKGS=(
     sane-airscan
     rtkit
     easyeffects
-    calf
+    # EasyEffects' equalizer, compressor, delay and loudness (without it the
+    # equalizer can't be added or does nothing)
+    lsp-plugins-lv2
     librewolf
     otf-geist-mono-nerd
     bluez
