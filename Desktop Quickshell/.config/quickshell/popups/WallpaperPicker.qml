@@ -21,7 +21,7 @@ PopupLayer {
     typing: true
     panelWidth: 720
     targetScreen: BarState.wallpaperScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.wallpaperScreen = null
 
     readonly property int columns: 3

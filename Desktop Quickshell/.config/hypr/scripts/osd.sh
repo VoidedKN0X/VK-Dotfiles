@@ -6,8 +6,11 @@
 #   osd.sh --brightness raise|lower                  (5% steps, min 5%)
 #   osd.sh --caps-lock
 
-# the popup takes three values: kind, value, extra ("" when unused)
-osd() { qs ipc call osd show "$1" "$2" "${3:-}" >/dev/null 2>&1; }
+# the popup takes three values: kind, value, extra. The popup also shows the
+# volume, the mic's mute and Caps Lock by itself (quickshell/popups/Osd.qml);
+# these calls are for the keys (and brightness on a laptop).
+# (never an empty argument: "-" when unused)
+osd() { qs ipc call osd show "$1" "${2:--}" "${3:--}" >/dev/null 2>&1; }
 SINK=@DEFAULT_AUDIO_SINK@
 SOURCE=@DEFAULT_AUDIO_SOURCE@
 

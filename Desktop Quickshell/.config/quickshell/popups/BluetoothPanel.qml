@@ -23,7 +23,7 @@ PopupLayer {
     place: "end"
     panelWidth: 400
     targetScreen: BarState.bluetoothScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.bluetoothScreen = null
 
     readonly property var adapter: Connectivity.adapter

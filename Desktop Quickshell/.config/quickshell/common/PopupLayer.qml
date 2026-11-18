@@ -2,9 +2,12 @@
 // launcher, ...). It isn't a window of its own: it's drawn in the frame's own
 // window (bar/Bar.qml) of its screen, so it is the same piece of glass with
 // exactly the same blur, and it opens by growing out of the frame's edge
-// instead of sliding in. While it's open the frame takes the clicks of the
-// whole screen, so a click outside the panel (also on the button that opened
-// it) or Escape closes it.
+// instead of sliding in, and closes by going back into it. While it's open
+// the frame takes the clicks of the whole screen, so a click outside the
+// panel (also on the button that opened it) or Escape closes it.
+// targetScreen is where it should be open (null: closed). It stays on
+// shownScreen while it closes; its loader in shell.qml keeps it loaded while
+// leaving is true.
 //   attach  the frame side it grows out of; the bar's side unless set
 //           ("bottom" for the launcher, wallpaper picker and clipboard)
 //   place   along that side: "start", "center" or "end" (top bar: left,
@@ -19,7 +22,12 @@ Item {
     id: popupLayer
 
     required property var targetScreen
-    // the edge of that screen's bar: "top", "left" or "right"
+    // where it is: targetScreen, and the last one while it closes
+    property var shownScreen: null
+    readonly property bool open: !!targetScreen
+    onTargetScreenChanged: if (targetScreen)
+        shownScreen = targetScreen
+    // the edge of shownScreen's bar: "top", "left" or "right"
     // (BarState.edgeFor; this file is in common/, which services/ imports)
     required property string edge
     // a name for it (logs, debugging)
@@ -40,13 +48,16 @@ Item {
     // the whole panel at its full size (its content measures against it)
     readonly property alias panel: body
 
-    // read by the frame: while open it takes every click on the screen
-    readonly property bool blocksScreen: true
+    // read by the frame: while open it takes every click on the screen (not
+    // while it closes: then clicks reach what's under it again)
+    readonly property bool blocksScreen: open
+    // read by its loader: still going back into the frame
+    readonly property bool leaving: !open && progress > 0
 
     signal closeRequested
 
     // in the frame's window of the target screen (bar/Bar.qml registers it)
-    parent: FrameHosts.hostFor(targetScreen?.name ?? "")
+    parent: FrameHosts.hostFor(shownScreen?.name ?? "")
     visible: parent !== null
     width: parent?.width ?? 0
     height: parent?.height ?? 0
@@ -63,20 +74,25 @@ Item {
     readonly property real base: side === "top" ? holeTop : side === "bottom" ? holeBottom : side === "left" ? holeLeft : holeRight
 
     // ── growing out of the frame ─────────────────────────────────────────
-    // 0 = hidden in the frame, 1 = all the way out
+    // 0 = hidden in the frame, 1 = all the way out. Out quickly and slowing
+    // down at the end; back in starting slowly and speeding up.
     property real progress: 0
-    NumberAnimation on progress {
-        id: grow
-        running: false
-        from: 0
-        to: 1
-        duration: 260
-        easing.type: Easing.OutCubic
+    Behavior on progress {
+        NumberAnimation {
+            duration: popupLayer.open ? 280 : 220
+            easing.type: popupLayer.open ? Easing.OutQuint : Easing.InCubic
+        }
+    }
+    onOpenChanged: {
+        progress = open ? 1 : 0;
+        if (open)
+            inner.forceActiveFocus();
     }
 
     // a click outside the panel
     MouseArea {
         anchors.fill: parent
+        enabled: popupLayer.open
         acceptedButtons: Qt.AllButtons
         onClicked: popupLayer.closeRequested()
     }
@@ -158,7 +174,9 @@ Item {
     }
 
     Component.onCompleted: {
-        grow.start();
+        if (targetScreen)
+            shownScreen = targetScreen;
+        progress = open ? 1 : 0;
         inner.forceActiveFocus();
     }
 }

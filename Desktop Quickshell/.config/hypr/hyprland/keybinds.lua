@@ -30,9 +30,8 @@ hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh -
 hl.bind("XF86AudioLowerVolume", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume lower"), { locked = true, repeating = true })
 hl.bind("XF86AudioMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --output-volume mute-toggle"), { locked = true })
 hl.bind("XF86AudioMicMute", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --input-volume mute-toggle"), { locked = true })
--- Caps Lock popup: on release (the light has switched by then), and the key
--- still reaches the keyboard (non_consuming), so Caps Lock keeps working
-hl.bind("Caps_Lock", hl.dsp.exec_cmd("~/.config/hypr/scripts/osd.sh --caps-lock"), { release = true, non_consuming = true, ignore_mods = true })
+-- (the Caps Lock popup needs no keybind: the volume popup watches the Caps
+-- Lock light itself, quickshell/popups/Osd.qml)
 
 -- screenshot of both monitors: saved to ~/Pictures/Screenshots and copied
 hl.bind("Print", hl.dsp.exec_cmd("~/.config/hypr/scripts/screenshot.sh"), { locked = true })

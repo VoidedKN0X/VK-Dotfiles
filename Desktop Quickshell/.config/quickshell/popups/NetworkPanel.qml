@@ -23,7 +23,7 @@ PopupLayer {
     place: "end"
     panelWidth: 400
     targetScreen: BarState.networkScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.networkScreen = null
 
     readonly property var devices: Networking.devices.values

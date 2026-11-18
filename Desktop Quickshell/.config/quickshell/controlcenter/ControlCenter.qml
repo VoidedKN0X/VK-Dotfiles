@@ -24,7 +24,7 @@ PopupLayer {
     fullHeight: true
     panelWidth: 410
     targetScreen: BarState.controlCenterScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.controlCenterScreen = null
 
     // the session action waiting for its second click

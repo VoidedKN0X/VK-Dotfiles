@@ -7,8 +7,9 @@
 // On the focused monitor, a small panel growing out of the right side of the
 // frame, in the middle: the icon, a level bar going up and the value. It's
 // drawn in the frame's own window (common/FrameHosts.qml), so it's the same
-// glass with the same blur. It also shows when the volume changes any other
-// way (the bar, the mixer, an app, a headset's buttons). Gone after 1.2 s;
+// glass with the same blur. It watches for itself, so it shows whatever
+// changed it: the volume and mute (keys, the bar, the mixer, an app, a
+// headset's buttons), the microphone's mute and Caps Lock. Gone after 1.2 s;
 // holding a key keeps it.
 
 import QtQuick
@@ -146,6 +147,42 @@ Item {
         function onMutedChanged() {
             if (osd.ready)
                 osd.showVolume(Audio.percent, Audio.muted);
+        }
+        function onMicMutedChanged() {
+            if (osd.ready)
+                osd.showMic(Audio.micMuted);
+        }
+    }
+
+    function showMic(isMuted) {
+        osd.muted = isMuted;
+        osd.icon = isMuted ? Theme.iconMicOff : Theme.iconMic;
+        osd.level = -1;
+        osd.valueText = isMuted ? "Off" : "On";
+        present();
+    }
+
+    function showCaps(on) {
+        osd.muted = !on;
+        osd.icon = Theme.iconCaps;
+        osd.level = -1;
+        osd.valueText = on ? "On" : "Off";
+        present();
+    }
+
+    // Caps Lock: the keyboards' Caps Lock lights, read five times a second
+    // with bash's own read (only sleep runs in between), printed only when
+    // it changes: "1" on, "0" off. The first line is the state at start.
+    property bool capsKnown: false
+    Process {
+        running: true
+        command: ["bash", "-c", "prev=; while :; do on=0; for f in /sys/class/leds/*::capslock/brightness; do [ -r \"$f\" ] && read -r b < \"$f\" && [ \"$b\" != 0 ] && on=1; done; [ \"$on\" != \"$prev\" ] && echo \"$on\" && prev=$on; sleep 0.2; done"]
+        stdout: SplitParser {
+            onRead: line => {
+                if (osd.capsKnown && osd.ready)
+                    osd.showCaps(line.trim() === "1");
+                osd.capsKnown = true;
+            }
         }
     }
 

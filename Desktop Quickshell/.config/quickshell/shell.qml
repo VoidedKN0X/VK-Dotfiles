@@ -92,39 +92,57 @@ ShellRoot {
 
     // ── popups, created while open ────────────────────────────────────────
     LazyLoader {
-        active: BarState.controlCenterScreen !== null
+        id: controlCenterLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.controlCenterScreen !== null || (controlCenterLoader.item?.leaving ?? false)
         ControlCenter {}
     }
     LazyLoader {
-        active: BarState.calendarScreen !== null
+        id: calendarLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.calendarScreen !== null || (calendarLoader.item?.leaving ?? false)
         CalendarPopup {}
     }
     LazyLoader {
-        active: BarState.powerMenuScreen !== null
+        id: powerMenuLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.powerMenuScreen !== null || (powerMenuLoader.item?.leaving ?? false)
         PowerMenu {}
     }
     LazyLoader {
-        active: BarState.mixerScreen !== null
+        id: mixerLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.mixerScreen !== null || (mixerLoader.item?.leaving ?? false)
         Mixer {}
     }
     LazyLoader {
-        active: BarState.launcherScreen !== null
+        id: launcherLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.launcherScreen !== null || (launcherLoader.item?.leaving ?? false)
         Launcher {}
     }
     LazyLoader {
-        active: BarState.wallpaperScreen !== null
+        id: wallpaperLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.wallpaperScreen !== null || (wallpaperLoader.item?.leaving ?? false)
         WallpaperPicker {}
     }
     LazyLoader {
-        active: BarState.clipboardScreen !== null
+        id: clipboardLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.clipboardScreen !== null || (clipboardLoader.item?.leaving ?? false)
         Clipboard {}
     }
     LazyLoader {
-        active: BarState.bluetoothScreen !== null
+        id: bluetoothLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.bluetoothScreen !== null || (bluetoothLoader.item?.leaving ?? false)
         BluetoothPanel {}
     }
     LazyLoader {
-        active: BarState.networkScreen !== null
+        id: networkLoader
+        // stays loaded while it closes (it goes back into the frame)
+        active: BarState.networkScreen !== null || (networkLoader.item?.leaving ?? false)
         NetworkPanel {}
     }
     LazyLoader {

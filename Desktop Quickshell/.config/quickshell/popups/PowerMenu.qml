@@ -17,7 +17,7 @@ PopupLayer {
     panelWidth: 230
     padding: 8
     targetScreen: BarState.powerMenuScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.powerMenuScreen = null
 
     // the action waiting for its second click

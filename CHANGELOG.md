@@ -2,6 +2,55 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (4)
+
+### Fixed
+- **Desktop Quickshell: the Caps Lock and mic popups show again**
+  (`popups/Osd.qml`). The volume popup worked because it watches the volume
+  itself; the Caps Lock and mic popups depended on `qs ipc call` from
+  `hypr/scripts/osd.sh`, which didn't reach it. Now the popup watches those
+  too: the microphone's mute through PipeWire (`Audio.micMuted`), and Caps
+  Lock through the keyboards' Caps Lock lights
+  (`/sys/class/leds/*::capslock/brightness`, read 5 times a second by a
+  small bash loop that only prints a change).
+- `hypr/hyprland/keybinds.lua`: the Caps Lock keybind is gone (nothing
+  needs it any more).
+- `hypr/scripts/osd.sh`: never passes an empty argument to
+  `qs ipc call` ("-" instead), in case an empty one was what kept the calls
+  from arriving.
+- **Desktop Quickshell: popups close smoothly** (`common/PopupLayer.qml`,
+  `shell.qml`). They used to vanish at once; now they go back into the frame
+  the way they came out (220 ms, speeding up), and open a bit more smoothly
+  (280 ms, slowing down at the end). A popup keeps its screen and side while
+  it closes (`shownScreen`), stops taking clicks and the keyboard at once,
+  and its loader in `shell.qml` keeps it loaded until it's back in
+  (`leaving`). Opening it again while it closes turns it around.
+- **Desktop Quickshell: faster mouse-wheel scrolling in the app launcher**
+  (`popups/Launcher.qml`): three apps per wheel notch, at once (Qt's own
+  wheel scrolling moved only a few pixels); touchpads scroll by their own
+  distance.
+
+### Changed
+- **Desktop Quickshell: the workspace overview shows both monitors again,
+  together** (`popups/OverviewScreen.qml`, `popups/Overview.qml`). It still
+  opens only on the focused monitor, but shows every monitor's workspaces
+  there, a row per monitor (left to right as the monitors are placed), each
+  thumbnail in its monitor's shape, all the same height. Up / Down jump to
+  the same place in the other monitor's row; dragging a window onto the
+  other monitor's workspaces works again.
+- **Desktop Quickshell: frosted glass for Qt apps** through Kvantum. New
+  `hypr/scripts/kvantum-glass.sh` writes "KvArcDark#" (Kvantum's KvArcDark
+  with see-through windows: `translucent_windows=true`,
+  `reduce_window_opacity=58`, i.e. 42 % opaque like the frame; solid menus;
+  no Kvantum blur, Hyprland blurs) in the wallpaper's colors (window the
+  background at 55 %, views clear, text the foreground, selection and links
+  the accent) to `~/.config/Kvantum`, and makes it the Kvantum theme. It runs
+  from `Install.sh` and after wallust in `hypr/scripts/wallpaper.sh`.
+  `qt5ct.conf` / `qt6ct.conf`: `style=kvantum`, `custom_palette=false` (was
+  Fusion / Breeze with their own palettes). `Install.sh` installs `kvantum`
+  and `kvantum-qt5`. Kvantum keeps video players and editors (VLC, Kdenlive,
+  ...) solid on purpose (its `opaque` list).
+
 ## 2026-11-18 (3)
 
 ### Fixed

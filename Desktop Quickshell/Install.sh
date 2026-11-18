@@ -154,6 +154,9 @@ PACMAN_PKGS=(
     papirus-icon-theme
     otf-codenewroman-nerd
     qt5ct
+    # Qt theme engine: the frosted glass for Qt apps (hypr/scripts/kvantum-glass.sh)
+    kvantum
+    kvantum-qt5
     qt5-wayland
     qt6-wayland
     breeze-icons
@@ -587,6 +590,10 @@ fi
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/quickshell/scripts/*.sh
+
+# Frosted glass for Qt apps: the Kvantum theme in the current colors (it's
+# made again at every wallpaper change)
+"$HOME/.config/hypr/scripts/kvantum-glass.sh" || warn "could not set up the Kvantum glass theme"
 
 # === Post install: kernel, boot and tuning, then the YubiKey setup (if chosen) ===
 # Both run as root (sudo is still active from the start of this script). Each one

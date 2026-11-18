@@ -23,7 +23,7 @@ PopupLayer {
     typing: true
     panelWidth: 480
     targetScreen: BarState.launcherScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.launcherScreen = null
 
     readonly property int rows: 8
@@ -83,6 +83,16 @@ PopupLayer {
             currentIndex: 0
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 120
+
+            // the mouse wheel: three apps per notch, at once (Qt's own wheel
+            // scrolling moves only a few pixels per notch); touchpads scroll
+            // by their own distance
+            WheelHandler {
+                onWheel: event => {
+                    const dy = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y / 120 * 3 * launcher.rowHeight;
+                    list.contentY = Math.max(0, Math.min(list.contentHeight - list.height, list.contentY - dy));
+                }
+            }
 
             highlight: Rectangle {
                 radius: 16

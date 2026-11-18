@@ -287,7 +287,8 @@ mixer, Bluetooth and network panels out of the bar's side, the control center al
 right side (with a side bar: the bar's side), notifications out of the right side under a top bar
 (the bar's side at the bottom with a side bar), the volume popup out of the right side, and the
 launcher, wallpaper picker and clipboard out of the bottom. They're drawn in the frame's own layer,
-so they're the same glass with the same blur, and they open by growing out of the frame's edge.
+so they're the same glass with the same blur, and they open by growing out of the frame's edge and
+close by going back into it.
 While one is open the frame moves above fullscreen apps too. The password dialog and the window
 switcher float in the middle.
 
@@ -311,9 +312,10 @@ switcher float in the middle.
   recently used first. Keep <kbd>Alt</kbd> down, <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>
   to pick, let go to switch; a quick <kbd>Alt</kbd> + <kbd>Tab</kbd> flips between the last two.
 - **Workspace overview** (<kbd>Super</kbd> + <kbd>Tab</kbd>, or middle-click the workspaces
-  island): on the monitor that has the focus, every workspace of that monitor as a thumbnail with
-  its windows as live previews at their real place. Click a workspace to go there, click a window
-  to focus it, drag a window onto another workspace to move it,
+  island): on the monitor that has the focus, the workspaces of both monitors (a row per monitor)
+  as thumbnails with their windows as live previews at their real place. Click a workspace to go
+  there, click a window to focus it, drag a window onto another workspace (also one of the other
+  monitor) to move it,
   middle-click a window to close it. Type to find a window (the others dim, <kbd>Enter</kbd> goes
   to it); arrow keys + <kbd>Enter</kbd> pick a workspace; <kbd>Esc</kbd> clears the search, then
   closes it.
@@ -355,9 +357,9 @@ switcher float in the middle.
   <kbd>Ctrl</kbd> + <kbd>Delete</kbd> removes it.
 - **Admin rights (polkit):** when an app asks for your password, a dialog in the same glass
   (what's asking, a password field; with the YubiKey login also "touch your key").
-- **Volume popup:** grows out of the frame's right side whenever the volume changes (the keys,
-  scrolling on the volume icon, the mixer, an app); the mic and Caps Lock keys show it too
-  (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`). It's part of the frame, so it doesn't
+- **Volume popup:** grows out of the frame's right side whenever the volume, the mic's mute or
+  Caps Lock changes, whatever changed it (the keys, scrolling on the volume icon, the mixer, an
+  app): it watches them itself. The volume keys still go through `hypr/scripts/osd.sh`. It's part of the frame, so it doesn't
   show over fullscreen apps.
 - **Colors:** everything follows the wallpaper. wallust writes `quickshell/colors.json`
   (`wallust/templates/colors-quickshell.template`); Quickshell watches it and recolors at once,
@@ -372,8 +374,12 @@ switcher float in the middle.
   apps (Papers, File Roller) get the same 42 % glass in the wallpaper's colors, blurred by
   Hyprland (`gtk-3.0/gtk.css`, `gtk-4.0/gtk.css`; wallust writes their colors to
   `vk-colors.css`). Menus stay solid. Delete those `gtk.css` files to go back to the plain theme.
-  Qt, Electron and other apps draw their own windows and can't be made see-through this way; foot
-  has its own glass setting.
+  Qt apps get it through Kvantum (`hypr/scripts/kvantum-glass.sh`, run at every wallpaper change):
+  a modified KvArcDark ("KvArcDark#" in `~/.config/Kvantum`) with 42 % opaque windows in the
+  wallpaper's colors; qt5ct and qt6ct use the `kvantum` style. Open Qt apps take new colors when
+  they're started again, and Kvantum keeps video apps such as VLC and Kdenlive solid on purpose.
+  Electron apps draw their own windows and can't be made see-through this way; foot has its own
+  glass setting.
 - **AMD GPU overclocking:** LACT is installed and its service enabled, and the post-install adds
   `amdgpu.ppfeaturemask=0xfff7ffff` to the kernel command line (the kernel's default plus
   OverDrive) on a desktop with an AMD card, so LACT can change clocks, voltage offset and power

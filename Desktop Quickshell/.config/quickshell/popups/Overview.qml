@@ -1,10 +1,11 @@
 // Workspace overview (Super + Tab, or a middle click on the bar's workspaces):
-// on the monitor that has the focus when it opens, every workspace of that
-// monitor as a thumbnail with its windows as live previews at their real
-// place and size.
+// on the monitor that has the focus when it opens, the workspaces of both
+// monitors (a row per monitor) as thumbnails with their windows as live
+// previews at their real place and size.
 //   click a workspace       go there
 //   click a window          focus it (and go to its workspace)
-//   drag a window           onto another workspace to move it there
+//   drag a window           onto another workspace (also one of the other
+//                           monitor) to move it there
 //   middle-click a window   close it
 //   type                    filter the windows by title or app (the others
 //                           dim); Enter goes to the first match
@@ -140,8 +141,8 @@ Scope {
         onTriggered: shared.refresh()
     }
 
-    // the view, on that monitor (only one with a bar: the mirrored HDMI-A-1
-    // has none)
+    // the view, on that monitor (one with a bar: the mirrored HDMI-A-1 has
+    // none), showing every monitor's workspaces
     Variants {
         model: [shared.shownScreen].filter(s => s && BarState.edgeFor(s.name) !== "")
 

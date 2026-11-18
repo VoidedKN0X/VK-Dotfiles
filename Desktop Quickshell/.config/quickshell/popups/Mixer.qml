@@ -25,7 +25,7 @@ PopupLayer {
     place: "end"
     panelWidth: 400
     targetScreen: BarState.mixerScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.mixerScreen = null
 
     // showing every device, to hide or show them

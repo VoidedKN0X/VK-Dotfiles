@@ -19,7 +19,7 @@ PopupLayer {
     typing: true
     panelWidth: 560
     targetScreen: BarState.clipboardScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.clipboardScreen = null
 
     readonly property int rows: 9

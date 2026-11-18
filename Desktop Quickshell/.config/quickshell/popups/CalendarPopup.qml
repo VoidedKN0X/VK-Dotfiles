@@ -16,7 +16,7 @@ PopupLayer {
     place: "center"
     panelWidth: 320
     targetScreen: BarState.calendarScreen
-    edge: BarState.edgeFor(targetScreen?.name ?? "") || "top"
+    edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.calendarScreen = null
 
     SystemClock {
