@@ -327,10 +327,11 @@ switcher float in the middle.
   (Open / Show in folder). `hypr/scripts/screenshot.sh`, with grim.
 - **Volume:** click the volume icon (or <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd>) for the
   **mixer**: pick the output and input device, their volume, and a volume slider for every app
-  playing sound. Its **Devices** button opens pavucontrol on its Configuration tab: set a sound
-  card's profile to **Off** to hide its outputs and inputs (a GPU's HDMI outputs, a webcam mic)
-  from the mixer, the bar and every app, or pick a profile again to show them. WirePlumber
-  remembers it.
+  playing sound. Its **Edit** button hides devices you never use (a GPU's HDMI outputs, a webcam
+  mic) from the popup's lists, remembered per PC; click them again to show them. That only hides
+  them in the popup, so it also works for devices pavucontrol can't turn off. The **pavucontrol**
+  button opens the full mixer, separately: there a sound card's profile **Off** turns its
+  outputs and inputs off everywhere.
 - **Clock:** click for the **calendar** (month view, Monday first; arrows or scrolling change the
   month, clicking the month's name goes back to today).
 - **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the last

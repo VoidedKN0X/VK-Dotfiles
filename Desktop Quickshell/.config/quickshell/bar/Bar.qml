@@ -60,11 +60,39 @@ Scope {
         readonly property string edge: root.edge
         readonly property bool vertical: edge !== "top"
 
-        // the frame's thickness on each side, and the desktop inside it
-        readonly property int sizeTop: Theme.frameSize(edge, "top")
-        readonly property int sizeBottom: Theme.frameSize(edge, "bottom")
-        readonly property int sizeLeft: Theme.frameSize(edge, "left")
-        readonly property int sizeRight: Theme.frameSize(edge, "right")
+        // ── growing out of the edge / going back into it ──────────────────
+        // 0: the bar's side is as thin as the rest of the frame, 1: all the
+        // way out. A new bar grows (when Quickshell starts, or after Super + B
+        // moved it); the main bar goes back in before it moves
+        // (BarState.switchingTo).
+        property real reveal: 0
+        readonly property bool hiding: BarState.switchingTo !== "" && BarState.outputs[modelData.name] === "main"
+        NumberAnimation {
+            id: revealAnim
+            target: bar
+            property: "reveal"
+        }
+        function revealTo(value) {
+            revealAnim.stop();
+            revealAnim.from = reveal;
+            revealAnim.to = value;
+            revealAnim.duration = value > reveal ? 320 : BarState.barHideTime;
+            revealAnim.easing.type = value > reveal ? Easing.OutCubic : Easing.InCubic;
+            revealAnim.start();
+        }
+        onHidingChanged: revealTo(hiding ? 0 : 1)
+        Component.onCompleted: revealTo(1)
+
+        // the frame's thickness on each side (the bar's side as far out as it
+        // is), and the desktop inside it
+        function sideSize(side) {
+            const full = Theme.frameSize(edge, side);
+            return side === edge ? Theme.frameBorder + (full - Theme.frameBorder) * reveal : full;
+        }
+        readonly property real sizeTop: sideSize("top")
+        readonly property real sizeBottom: sideSize("bottom")
+        readonly property real sizeLeft: sideSize("left")
+        readonly property real sizeRight: sideSize("right")
 
         // the popups in this window right now (popupHost below)
         readonly property var hosted: Array.from(popupHost.children)
@@ -150,10 +178,14 @@ Scope {
             }
         }
 
-        // the islands, in the bar's side of the frame
+        // the islands, in the bar's side of the frame (sliding in and out with
+        // it, and fading)
         Item {
-            x: bar.edge === "top" ? Theme.barEndMargin : bar.edge === "left" ? Theme.barEdgeMargin : bar.width - Theme.barEdgeMargin - Theme.barWidth
-            y: bar.edge === "top" ? Theme.barEdgeMargin : Theme.barEndMargin
+            // how far the islands are pushed out past the screen edge
+            readonly property real tucked: (1 - bar.reveal) * (Theme.frameSize(bar.edge, bar.edge) - Theme.frameBorder)
+            opacity: Math.min(1, bar.reveal * 1.5)
+            x: bar.edge === "top" ? Theme.barEndMargin : bar.edge === "left" ? Theme.barEdgeMargin - tucked : bar.width - Theme.barEdgeMargin - Theme.barWidth + tucked
+            y: bar.edge === "top" ? Theme.barEdgeMargin - tucked : Theme.barEndMargin
             width: bar.vertical ? Theme.barWidth : bar.width - 2 * Theme.barEndMargin
             height: bar.vertical ? bar.height - 2 * Theme.barEndMargin : Theme.barHeight
 

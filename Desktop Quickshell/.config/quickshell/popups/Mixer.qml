@@ -1,13 +1,16 @@
-// Volume mixer: click the bar's volume icon, or Ctrl + Alt + V. Next to the
-// volume icon, like the other popups.
+// Volume mixer: click the bar's volume icon, or Ctrl + Alt + V. Next to the volume icon, like the other popups.
 //   output: pick the speakers / headphones, and their volume
 //   apps:   a volume slider per app that's playing sound
 //   input:  pick the microphone, and its volume
 // Click an icon to mute, drag or scroll a slider for the volume.
-// Devices (top right) opens pavucontrol on its Configuration tab: there a
-// sound card's profile "Off" hides its outputs and inputs (a GPU's HDMI
-// outputs, a webcam mic, ...) from this mixer, the bar and every app, and
-// picking a profile again shows them. PipeWire (WirePlumber) remembers it.
+// Edit (top right) lists every device with an eye: click one to hide it from
+// the lists (a GPU's HDMI outputs, a webcam mic, ...), again to show it.
+// Hidden devices are remembered (services/Audio.qml); the one in use always
+// shows. This only hides them here: the bar, pavucontrol and apps still see
+// them, so it also works for devices pavucontrol can't turn off.
+// pavucontrol (the button next to Edit) is the full mixer, separate from this:
+// there a sound card's profile "Off" turns its outputs and inputs off
+// everywhere.
 
 import QtQuick
 import QtQuick.Layouts
@@ -28,8 +31,11 @@ PopupLayer {
     edge: BarState.edgeFor(shownScreen?.name ?? "") || "top"
     onCloseRequested: BarState.mixerScreen = null
 
+    // showing every device, to hide or show them
+    property bool editing: false
+
     // pavucontrol on a tab: 1 playback, 2 recording, 3 outputs, 4 inputs,
-    // 5 configuration (the sound cards' profiles: "Off" hides a card)
+    // 5 configuration (the sound cards' profiles)
     function openPavucontrol(tab) {
         Quickshell.execDetached(["pavucontrol", "--tab=" + tab]);
         BarState.mixerScreen = null;
@@ -45,17 +51,19 @@ PopupLayer {
         font.letterSpacing: 0.8
     }
 
-    // one device (outputs / inputs): a radio row to pick it
+    // one device (outputs / inputs): a radio row to pick it, or while
+    // editing an eye to hide / show it
     component DeviceRow: Rectangle {
         id: device
         required property var node
         property bool chosen: false
+        readonly property bool hiddenNow: Audio.isHidden(node)
         signal picked
 
         Layout.fillWidth: true
         implicitHeight: 40
         radius: 14
-        color: chosen ? Qt.alpha(Theme.accent, 0.18) : mouse.containsMouse ? Theme.hover : "transparent"
+        color: !mixer.editing && chosen ? Qt.alpha(Theme.accent, 0.18) : mouse.containsMouse && !(mixer.editing && chosen) ? Theme.hover : "transparent"
 
         RowLayout {
             anchors.fill: parent
@@ -63,7 +71,9 @@ PopupLayer {
             anchors.rightMargin: 12
             spacing: 10
 
+            // picking: a radio button
             Rectangle {
+                visible: !mixer.editing
                 implicitWidth: 16
                 implicitHeight: 16
                 radius: 8
@@ -79,21 +89,42 @@ PopupLayer {
                     color: Theme.accent
                 }
             }
+            // editing: an eye, crossed out when hidden
+            Glyph {
+                visible: mixer.editing
+                glyph: device.hiddenNow && !device.chosen ? String.fromCodePoint(0xf0209) : String.fromCodePoint(0xf0208)
+                color: device.hiddenNow && !device.chosen ? Theme.faint : Theme.accent
+                font.pixelSize: 16
+                Layout.preferredWidth: 16
+            }
             Label {
                 Layout.fillWidth: true
                 text: Audio.nameOf(device.node)
-                color: Theme.fg
+                color: mixer.editing && device.hiddenNow && !device.chosen ? Theme.faint : Theme.fg
                 font.pixelSize: 13
                 font.weight: device.chosen ? Font.Bold : Font.Medium
                 elide: Text.ElideRight
+            }
+            Label {
+                visible: mixer.editing
+                text: device.chosen ? "In use" : device.hiddenNow ? "Hidden" : "Shown"
+                color: device.chosen ? Theme.dim : device.hiddenNow ? Theme.faint : Theme.fg
+                font.pixelSize: 11
             }
         }
         MouseArea {
             id: mouse
             anchors.fill: parent
             hoverEnabled: true
+            // the device in use can't be hidden
+            enabled: !(mixer.editing && device.chosen)
             cursorShape: Qt.PointingHandCursor
-            onClicked: device.picked()
+            onClicked: {
+                if (mixer.editing)
+                    Audio.setHidden(device.node, !device.hiddenNow);
+                else
+                    device.picked();
+            }
         }
     }
 
@@ -107,40 +138,63 @@ PopupLayer {
             Heading {
                 text: "OUTPUT"
             }
-            // Devices: show or hide outputs and inputs in pavucontrol
+            // pavucontrol: the full mixer
             Rectangle {
-                implicitWidth: devicesRow.implicitWidth + 24
+                implicitWidth: pavuLabel.implicitWidth + 24
                 implicitHeight: 28
                 radius: 14
-                color: devicesMouse.containsMouse ? Theme.hover : Theme.card
-                Row {
-                    id: devicesRow
+                color: pavuMouse.containsMouse ? Theme.hover : Theme.card
+                Label {
+                    id: pavuLabel
                     anchors.centerIn: parent
-                    spacing: 6
-                    Glyph {
-                        anchors.verticalCenter: parent.verticalCenter
-                        glyph: String.fromCodePoint(0xf0208)
-                        color: Theme.accent
-                        font.pixelSize: 14
-                    }
-                    Label {
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: "Devices"
-                        color: Theme.fg
-                        font.pixelSize: 12
-                        font.weight: Font.Bold
-                    }
+                    text: "pavucontrol"
+                    color: Theme.fg
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
                 }
                 MouseArea {
-                    id: devicesMouse
+                    id: pavuMouse
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: mixer.openPavucontrol(5)
+                    onClicked: mixer.openPavucontrol(3)
                 }
                 Accessible.role: Accessible.Button
-                Accessible.name: "Show or hide devices in pavucontrol"
+                Accessible.name: "Open pavucontrol"
             }
+            // Edit / Done: hide or show devices (here only)
+            Rectangle {
+                implicitWidth: editLabel.implicitWidth + 24
+                implicitHeight: 28
+                radius: 14
+                color: mixer.editing ? Theme.accent : editMouse.containsMouse ? Theme.hover : Theme.card
+                Label {
+                    id: editLabel
+                    anchors.centerIn: parent
+                    text: mixer.editing ? "Done" : "Edit"
+                    color: mixer.editing ? Theme.onAccent : Theme.fg
+                    font.pixelSize: 12
+                    font.weight: Font.Bold
+                }
+                MouseArea {
+                    id: editMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: mixer.editing = !mixer.editing
+                }
+                Accessible.role: Accessible.Button
+                Accessible.name: mixer.editing ? "Done hiding devices" : "Hide or show devices"
+            }
+        }
+        Label {
+            Layout.fillWidth: true
+            Layout.leftMargin: 4
+            visible: mixer.editing
+            text: "Click a device to hide it from the lists, again to show it."
+            color: Theme.dim
+            font.pixelSize: 12
+            wrapMode: Text.Wrap
         }
         PillSlider {
             Layout.fillWidth: true
@@ -152,8 +206,9 @@ PopupLayer {
             onIconClicked: Audio.toggleMute()
         }
         Repeater {
-            // the devices (if there's more than one to pick from)
-            model: Audio.sinks.length > 1 ? Audio.sinks : []
+            // every device while editing; otherwise the shown ones (if
+            // there's more than one to pick from)
+            model: mixer.editing ? Audio.sinks : Audio.shownSinks.length > 1 ? Audio.shownSinks : []
             DeviceRow {
                 required property var modelData
                 node: modelData
@@ -233,7 +288,7 @@ PopupLayer {
             onIconClicked: Audio.toggleMicMute()
         }
         Repeater {
-            model: Audio.sources.length > 1 ? Audio.sources : []
+            model: mixer.editing ? Audio.sources : Audio.shownSources.length > 1 ? Audio.shownSources : []
             DeviceRow {
                 required property var modelData
                 node: modelData

@@ -5,6 +5,7 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
+import Quickshell.Io
 import Quickshell.Services.Pipewire
 import qs.common
 
@@ -52,8 +53,45 @@ Singleton {
         objects: root.sinks.concat(root.sources, root.streams)
     }
 
-    // (devices you never use are hidden in pavucontrol: the mixer's Devices
-    // button; a card with the profile "Off" has no nodes here at all)
+    // ── hidden devices ────────────────────────────────────────────────────
+    // devices you never use (HDMI outputs of the GPU, a webcam mic, ...):
+    // hidden from the mixer's lists (its Edit button), by their PipeWire node
+    // name, which stays the same between boots. The device in use always
+    // shows. Kept in Quickshell's state folder (~/.local/state/quickshell),
+    // so it's per PC and survives a reinstall of the dotfiles.
+    property var hidden: []
+
+    FileView {
+        id: hiddenFile
+        path: Quickshell.statePath("hidden-audio-devices.json")
+        printErrors: false
+        onLoaded: {
+            try {
+                const list = JSON.parse(text());
+                root.hidden = Array.isArray(list) ? list : [];
+            } catch (e) {
+                root.hidden = [];
+            }
+        }
+    }
+
+    function isHidden(node) {
+        return hidden.includes(node?.name ?? "");
+    }
+    function setHidden(node, hide) {
+        const name = node?.name ?? "";
+        if (name === "")
+            return;
+        const list = hidden.filter(n => n !== name);
+        if (hide)
+            list.push(name);
+        hidden = list;
+        hiddenFile.setText(JSON.stringify(list, null, 2) + "\n");
+    }
+
+    // what the mixer lists: all but the hidden ones (the one in use stays)
+    readonly property var shownSinks: sinks.filter(n => !isHidden(n) || n === Pipewire.defaultAudioSink)
+    readonly property var shownSources: sources.filter(n => !isHidden(n) || n === Pipewire.defaultAudioSource)
 
     function setDefaultSink(node) {
         Pipewire.preferredDefaultAudioSink = node;

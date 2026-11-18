@@ -153,7 +153,7 @@ fi
 
 # === Packages (AUR, via yay) ===
 AUR_PKGS=(
-    wallust-git
+    wallust
     bibata-cursor-theme-bin
     qt6ct-kde
 )

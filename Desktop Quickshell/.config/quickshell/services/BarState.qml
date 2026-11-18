@@ -50,11 +50,28 @@ Singleton {
         return edge === "main" ? mainEdge : edge;
     }
 
+    // switching the main bar's edge: first the bar goes back into the frame
+    // (Bar.qml: reveal to 0, while switchingTo is set), then the new one grows
+    // out of its new edge (reveal from 0 when it's created)
+    property string switchingTo: ""
+    readonly property int barHideTime: 220
+    Timer {
+        id: switchLater
+        interval: root.barHideTime
+        onTriggered: {
+            root.mainEdge = root.switchingTo;
+            positionFile.setText(root.switchingTo + "\n");
+            root.switchingTo = "";
+        }
+    }
+
     function setMainEdge(edge) {
+        if (edge === mainEdge || switchingTo !== "")
+            return;
         // the popups were placed next to the old bar: close them
         closeAll();
-        mainEdge = edge;
-        positionFile.setText(edge + "\n");
+        switchingTo = edge;
+        switchLater.restart();
     }
 
     function toggleMainEdge() {

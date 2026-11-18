@@ -2,6 +2,37 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (12)
+
+### Changed
+- **All profiles: `wallust` instead of `wallust-git`** (`Install.sh` in
+  Desktop, Desktop Quickshell, Asus Laptop, Steam Deck and Clean). The
+  stable AUR package downloads its source from Codeberg, which was down when
+  it last failed to resolve (the 2026-11-18 entry); Codeberg is back, so every
+  profile installs the latest stable wallust again instead of the
+  development version. On a PC that has `wallust-git`, yay asks to replace
+  it.
+- Desktop Quickshell: `wallust/wallust.toml` uses
+  `fallback_generator = "interpolate"`, the name the stable wallust knows
+  (`"interpolation"` is the development version's name; stable wallust
+  stopped with "unknown variant `interpolation`" and made no colors).
+- **Desktop Quickshell: the volume popup hides devices itself again,
+  separate from pavucontrol** (`popups/Mixer.qml`, `services/Audio.qml`,
+  README). Its **Edit** button is back: click a device to hide it from the
+  popup's lists (remembered in
+  `~/.local/state/quickshell/.../hidden-audio-devices.json`), again to show
+  it. That only hides it in the popup, so it also works for devices
+  pavucontrol can't turn off (one output of a card whose other outputs are
+  used). Next to it a **pavucontrol** button opens pavucontrol (on its
+  Output Devices tab) as the separate, full mixer.
+- **Desktop Quickshell: the bar moves smoothly between top and left**
+  (`bar/Bar.qml`, `services/BarState.qml`). Super + B used to make the bar
+  jump. Now the bar first goes back into the frame (its side thins down to
+  the frame's border while the islands slide out past the screen edge and
+  fade, 220 ms), then grows out of its new edge (320 ms, slowing down at the
+  end). A bar also grows out like that when Quickshell starts. A second
+  Super + B during the switch is ignored.
+
 ## 2026-11-18 (11)
 
 ### Changed

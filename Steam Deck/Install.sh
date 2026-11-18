@@ -201,7 +201,7 @@ PACMAN_PKGS=(
 # build of one of the big optional apps below can't leave them out
 AUR_ESSENTIAL_PKGS=(
     lisgd
-    wallust-git
+    wallust
     bibata-cursor-theme-bin
     qt6ct-kde
 )

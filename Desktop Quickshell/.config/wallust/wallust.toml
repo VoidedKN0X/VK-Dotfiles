@@ -3,7 +3,7 @@ check_contrast = true
 # palette: wallust fills it with shades between the colors it finds instead
 # of stopping with "not enough colors". Quickshell keeps such a palette gray
 # (quickshell/common/Theme.qml).
-fallback_generator = "interpolation"
+fallback_generator = "interpolate"
 
 [templates]
 # the bar, control center and popups (Quickshell watches this file and
