@@ -200,9 +200,10 @@ KEEP_IF_EXISTS=(
 ZSHRC_BACKUP=1
 vk_copy_configs
 # hide helper apps (settings tools, foot server, ...) from the launcher, and
-# Firefox without the GTK glass (it takes its address bar colors from GTK, so
-# its suggestions would have no background)
-vk_app_entries firefox
+# File Roller (Hyprland doesn't blur behind it) and Firefox (it takes its
+# address bar colors from GTK, so its suggestions would have no background)
+# without the GTK glass
+vk_app_entries org.gnome.FileRoller firefox
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \

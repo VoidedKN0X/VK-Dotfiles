@@ -458,17 +458,20 @@ vk_hyprlock_password() {
 # App entries that override the installed ones (.local/share/applications):
 # hide helper apps from the launcher, and RapidRAW opens RAW photos passed to
 # it (for mimeapps.list). The apps named as arguments start without the GTK
-# glass, through hypr/scripts/solid-gtk.sh: their own .desktop files with that
-# in front of every command.
+# glass, through hypr/scripts/solid-gtk.sh: their .desktop files (the
+# profile's own if it has one, e.g. File Roller's hidden entry, else the
+# app's) with that in front of every command.
 vk_app_entries() {
     local app src
     mkdir -p "$HOME/.local/share/applications"
     cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
     for app in "$@"; do
-        src="/usr/share/applications/$app.desktop"
+        src="$PROFILE_DIR/.local/share/applications/$app.desktop"
+        [[ -r "$src" ]] || src="/usr/share/applications/$app.desktop"
         if [[ -r "$src" ]]; then
             sed "s|^Exec=|Exec=$HOME/.config/hypr/scripts/solid-gtk.sh |" "$src" \
-                > "$HOME/.local/share/applications/$app.desktop"
+                > "$HOME/.local/share/applications/$app.desktop.tmp" &&
+                mv "$HOME/.local/share/applications/$app.desktop.tmp" "$HOME/.local/share/applications/$app.desktop"
         else
             warn "$src not found: $app keeps the GTK glass"
         fi
@@ -484,28 +487,42 @@ vk_easyeffects_presets() {
     cp -r "$PROFILE_DIR/.local/share/easyeffects/." "$HOME/.local/share/easyeffects/"
 }
 
-# Prism Launcher's icons: the icon packs made for Prism Launcher (its official
-# Themes repository: Fluent Dark, Ore UI, OSX, iOS, Twemoji) in Prism's own
-# icon theme folder, with Fluent Dark picked in Prism's settings: flat, light
-# line icons that fit the dark desktop (Settings > Appearance switches
-# between them).
+# Prism Launcher's look:
+# - its icons: the icon packs made for Prism Launcher (its official Themes
+#   repository: Fluent Dark, Ore UI, OSX, iOS, Twemoji) in Prism's own icon
+#   theme folder, with Fluent Dark picked: flat, light line icons that fit the
+#   dark desktop (Settings > Appearance switches between them)
+# - its widget theme "System": the Qt style of the desktop (Kvantum, with the
+#   frosted glass). Prism's own "Dark" / "Bright" themes and the plain Qt
+#   styles bring their own solid colors, so its window has no glass then.
+# Set in prismlauncher.cfg (key=value lines). Prism writes that file when it
+# closes, so close Prism Launcher before running this.
 vk_prism_icons() {
     local dir="$HOME/.local/share/PrismLauncher" tmp
+    mkdir -p "$dir"
     tmp=$(mktemp -d)
     if git clone -q --depth 1 https://github.com/PrismLauncher/Themes.git "$tmp/themes" &&
         mkdir -p "$dir/iconthemes" &&
         cp -r "$tmp/themes/icons/." "$dir/iconthemes/"; then
         # (the Papirus theme an earlier version of this script made)
         rm -rf "$dir/iconthemes/papirus"
-        if grep -q '^IconTheme=' "$dir/prismlauncher.cfg" 2>/dev/null; then
-            sed -i 's/^IconTheme=.*/IconTheme=Fluent-Dark/' "$dir/prismlauncher.cfg"
-        else
-            echo 'IconTheme=Fluent-Dark' >> "$dir/prismlauncher.cfg"
-        fi
+        vk_prism_set IconTheme Fluent-Dark
     else
         warn "could not download Prism Launcher's icon packs"
     fi
     rm -rf "$tmp"
+    vk_prism_set ApplicationTheme system
+}
+# set a key in prismlauncher.cfg: replaced if it's there, else added on a line
+# of its own (also when the file doesn't end with a newline)
+vk_prism_set() {
+    local cfg="$HOME/.local/share/PrismLauncher/prismlauncher.cfg"
+    if grep -q "^$1=" "$cfg" 2>/dev/null; then
+        sed -i "s|^$1=.*|$1=$2|" "$cfg"
+    else
+        [[ -s "$cfg" && -n "$(tail -c1 "$cfg")" ]] && echo >>"$cfg"
+        echo "$1=$2" >>"$cfg"
+    fi
 }
 
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so

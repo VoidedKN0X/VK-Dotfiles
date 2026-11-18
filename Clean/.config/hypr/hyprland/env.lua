@@ -1,5 +1,9 @@
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 hl.env("QT_WAYLAND_DISABLE_WINDOWDECORATION", "1")
+-- every Qt app in the Kvantum style (the frosted glass, hypr/scripts/
+-- kvantum-glass.sh), also the ones that don't take it from qt6ct: Qt 5 apps
+-- (qt6ct is Qt 6 only) and apps that pick a style themselves (Prism Launcher)
+hl.env("QT_STYLE_OVERRIDE", "kvantum")
 hl.env("XCURSOR_THEME", cursorTheme)
 hl.env("XCURSOR_SIZE", cursorSize)
 

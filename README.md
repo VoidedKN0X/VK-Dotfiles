@@ -92,7 +92,8 @@ It does the following:
    folder, so it works for any username; bookmarks you already have are kept).
    Prism Launcher gets the icon packs made for it (Fluent Dark, Ore UI, OSX, iOS and Twemoji,
    from its official [Themes](https://github.com/PrismLauncher/Themes) repository) in
-   `~/.local/share/PrismLauncher/iconthemes`, with Fluent Dark picked; switch in Prism's
+   `~/.local/share/PrismLauncher/iconthemes`, with Fluent Dark picked, and Prism's "System" theme,
+   so it gets the frosted glass of the other Qt apps; switch either in Prism's
    Settings > Appearance.
 9. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.

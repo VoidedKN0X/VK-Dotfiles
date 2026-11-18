@@ -249,9 +249,10 @@ KEEP_IF_EXISTS=(
 )
 vk_copy_configs
 vk_hyprlock_password
-# LibreWolf without the GTK glass: it takes its address bar colors
-# from GTK, so its suggestions would have no background
-vk_app_entries librewolf
+# File Roller (Hyprland doesn't blur behind it) and LibreWolf (it takes its
+# address bar colors from GTK, so its suggestions would have no background)
+# start without the GTK glass
+vk_app_entries org.gnome.FileRoller librewolf
 vk_prism_icons
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)

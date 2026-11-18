@@ -2,6 +2,34 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (22)
+
+### Fixed
+- **All profiles but Clean: Prism Launcher gets the frosted glass again**
+  (`vk_prism_icons` in `Post Install/install-common.sh`, README). Prism only
+  uses the desktop's Qt style (Kvantum, with the glass) with its "System"
+  widget theme; its own "Dark" / "Bright" themes and the plain Qt styles bring
+  their own solid colors. The install now sets `ApplicationTheme=system` in
+  `prismlauncher.cfg`, next to the icon theme.
+- The same step added `IconTheme=` to `prismlauncher.cfg` right after the
+  file's last character, so a file without a newline at the end got the key
+  glued to its last line, breaking both settings. Keys are now
+  set by a helper (`vk_prism_set`) that replaces the line, or adds it on a
+  line of its own.
+- **All profiles: every Qt app gets the Kvantum style**
+  (`hypr/hyprland/env.lua`: `QT_STYLE_OVERRIDE=kvantum`). Prism Launcher
+  still had no glass with its "System" theme: it didn't get the Kvantum style
+  from qt6ct, and only `QT_STYLE_OVERRIDE=kvantum` brought the glass back.
+  Set for the whole session, it also reaches Qt 5 apps, which can't use
+  qt6ct (`QT_QPA_PLATFORMTHEME=qt6ct` is Qt 6 only).
+- **All profiles: File Roller starts without the GTK glass**, like LACT
+  (`Install.sh`, `vk_app_entries` in `Post Install/install-common.sh`,
+  `hypr/scripts/solid-gtk.sh`): it was see-through without blur. Its entry
+  (hidden from the launcher; it opens archives) now runs it through
+  `solid-gtk.sh`. `vk_app_entries` starts from the profile's own entry when
+  it has one (File Roller's hidden one), else from the app's, so the hidden
+  entry stays hidden.
+
 ## 2026-11-18 (21)
 
 ### Fixed
