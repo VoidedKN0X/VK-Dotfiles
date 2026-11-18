@@ -1,7 +1,6 @@
 // The workspace overview's view (popups/Overview.qml): over the whole focused
-// monitor, a dimmed and blurred desktop with the workspaces of both monitors,
-// a row per monitor (BarState.workspaces), each thumbnail in its monitor's
-// shape, with the wallpaper and every window at its real place as a live
+// monitor, a dimmed and blurred desktop with that monitor's workspaces
+// (BarState.workspaces), each thumbnail in its shape, with the wallpaper and every window at its real place as a live
 // preview. It has the search field and takes the keyboard.
 
 import QtQuick
@@ -22,9 +21,10 @@ PanelWindow {
     readonly property var shellScreen: modelData
     readonly property bool focusedHere: true
 
-    // one row per monitor with a bar (left to right as they're placed), each
-    // with its workspaces: { screen, ids, aspect, activeId }
-    readonly property var monitors: Array.from(Quickshell.screens).filter(s => BarState.edgeFor(s.name) !== "").sort((a, b) => a.x - b.x || a.y - b.y).map(s => ({
+    // the row of the focused monitor (the one the overview opened on) with
+    // its workspaces: { screen, ids, aspect, activeId }. (A list, so it can
+    // hold more monitors' rows again.)
+    readonly property var monitors: [shellScreen].filter(s => s && BarState.edgeFor(s.name) !== "").map(s => ({
                 screen: s,
                 ids: BarState.workspaces[s.name] ?? Hyprland.workspaces.values.filter(w => w.monitor?.name === s.name && w.id > 0).map(w => w.id),
                 aspect: s.width / Math.max(1, s.height),
@@ -60,7 +60,8 @@ PanelWindow {
     readonly property real thumbHeight: {
         const areaW = width - margin * 2;
         const areaH = height - headerHeight - margin;
-        let h = (areaH - monitors.length * (labelHeight + rowLabelHeight + gap)) / Math.max(1, monitors.length);
+        const rowLabel = monitors.length > 1 ? rowLabelHeight : 0;
+        let h = (areaH - monitors.length * (labelHeight + rowLabel + gap)) / Math.max(1, monitors.length);
         for (const m of monitors) {
             const n = Math.max(1, m.ids.length);
             h = Math.min(h, (areaW - (n - 1) * gap) / (n * m.aspect));
@@ -162,7 +163,9 @@ PanelWindow {
                 Layout.alignment: Qt.AlignHCenter
                 spacing: 8
 
+                // the monitor's name, when there's more than one row
                 Label {
+                    visible: view.monitors.length > 1
                     Layout.preferredHeight: view.rowLabelHeight - 8
                     text: monitorRow.shown.name
                     color: Theme.dim

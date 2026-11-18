@@ -142,7 +142,7 @@ Scope {
     }
 
     // the view, on that monitor (one with a bar: the mirrored HDMI-A-1 has
-    // none), showing every monitor's workspaces
+    // none), showing that monitor's workspaces
     Variants {
         model: [shared.shownScreen].filter(s => s && BarState.edgeFor(s.name) !== "")
 

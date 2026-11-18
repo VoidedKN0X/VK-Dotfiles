@@ -316,10 +316,9 @@ switcher float in the middle.
   recently used first. Keep <kbd>Alt</kbd> down, <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>
   to pick, let go to switch; a quick <kbd>Alt</kbd> + <kbd>Tab</kbd> flips between the last two.
 - **Workspace overview** (<kbd>Super</kbd> + <kbd>Tab</kbd>, or middle-click the workspaces
-  island): on the monitor that has the focus, the workspaces of both monitors (a row per monitor)
-  as thumbnails with their windows as live previews at their real place. Click a workspace to go
-  there, click a window to focus it, drag a window onto another workspace (also one of the other
-  monitor) to move it,
+  island): on the monitor that has the focus, that monitor's workspaces as thumbnails with their
+  windows as live previews at their real place. Click a workspace to go there, click a window to
+  focus it, drag a window onto another workspace to move it,
   middle-click a window to close it. Type to find a window (the others dim, <kbd>Enter</kbd> goes
   to it); arrow keys + <kbd>Enter</kbd> pick a workspace; <kbd>Esc</kbd> clears the search, then
   closes it.

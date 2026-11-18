@@ -3,9 +3,9 @@
 // ones, urgent ones turn red. Click a dot to go there, scroll to move to the
 // next / previous one (like Super + scroll), middle-click for the workspace
 // overview (like Super + Tab). Every bar shows the workspaces of all monitors
-// (1 to 10, BarState.workspaces), in order; only the focused workspace (the
-// one with the keyboard, on either monitor) is the pill, the same on both
-// bars.
+// that have windows, plus the focused one (the one with the keyboard, on
+// either monitor), in order; only the focused one is the pill, the same on
+// both bars.
 
 import QtQuick
 import QtQuick.Layouts
@@ -21,14 +21,12 @@ Island {
     padding: 9
     spacing: 0
 
-    // every monitor's workspaces, plus any other open one, in order
+    // the workspaces with windows, plus the focused one, in order
     readonly property var ids: {
-        let list = [];
-        for (const name in BarState.workspaces)
-            list = list.concat(BarState.workspaces[name]);
-        for (const w of Hyprland.workspaces.values)
-            if (w.id > 0 && !list.includes(w.id))
-                list.push(w.id);
+        const focused = Hyprland.focusedWorkspace?.id ?? -1;
+        const list = Hyprland.workspaces.values.filter(w => w.id > 0 && (w.id === focused || (w.toplevels?.values?.length ?? 0) > 0)).map(w => w.id);
+        if (focused > 0 && !list.includes(focused))
+            list.push(focused);
         return list.sort((a, b) => a - b);
     }
 
