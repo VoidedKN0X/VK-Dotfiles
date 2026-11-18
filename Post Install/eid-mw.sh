@@ -32,8 +32,27 @@ if pacman -Q eid-mw >/dev/null 2>&1; then
     exit 0
 fi
 
+# Everything happens in one temporary folder, removed when the script ends
+# (also after a failure), so nothing is left behind: makepkg's build, source,
+# package and log folders all point into it, whatever makepkg.conf says. The
+# build-only dependencies it installs are removed again at the end.
 build="$(mktemp -d)"
-trap 'rm -rf "$build"' EXIT
+export BUILDDIR="$build" PKGDEST="$build" SRCDEST="$build" SRCPKGDEST="$build" LOGDEST="$build"
+# the packages installed before, to find the build dependencies afterwards
+before="$build/installed-before"
+pacman -Qq >"$before"
+cleanup() {
+    # build-only dependencies this script installed (new, installed as a
+    # dependency, needed by nothing): removed
+    local deps
+    mapfile -t deps < <(comm -13 "$before" <(pacman -Qq) | grep -vx eid-mw | grep -Fxf - <(pacman -Qdtq))
+    if [[ ${#deps[@]} -gt 0 ]]; then
+        echo "eid-mw: removing the build dependencies: ${deps[*]}"
+        sudo pacman -Rns --noconfirm "${deps[@]}" >/dev/null || echo "eid-mw: could not remove ${deps[*]}" >&2
+    fi
+    cd / && rm -rf "$build"
+}
+trap cleanup EXIT
 cd "$build" || exit 1
 
 # the AUR package's build files (PKGBUILD)
@@ -71,9 +90,9 @@ else
     echo "eid-mw: the source doesn't need the OpenSSL 4.0 fix (any more)"
 fi
 
-# build from the (patched) source without unpacking it again (-e), install
-# it, and remove the build-only dependencies again (-r)
-if ! makepkg -seir --noconfirm; then
+# build from the (patched) source without unpacking it again (-e) and install
+# it (the build-only dependencies go in cleanup, at the end)
+if ! makepkg -sei --noconfirm; then
     echo "eid-mw: build or install failed" >&2
     exit 1
 fi

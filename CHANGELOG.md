@@ -2,6 +2,19 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (20)
+
+### Changed
+- **`Post Install/eid-mw.sh` leaves nothing behind.** Everything happens in
+  one temporary folder that's removed when the script ends, also after a
+  failure: makepkg's build, source, package and log folders
+  (`BUILDDIR`, `SRCDEST`, `PKGDEST`, `SRCPKGDEST`, `LOGDEST`) all point into
+  it, whatever `makepkg.conf` says. The build-only dependencies it installs
+  (like `autoconf-archive`) are removed at the end: only the packages that
+  are new since the script started, installed as a dependency and needed by
+  nothing (orphans you already had are left alone). Before, the `makepkg -so`
+  step's build dependencies stayed installed.
+
 ## 2026-11-18 (19)
 
 ### Fixed
