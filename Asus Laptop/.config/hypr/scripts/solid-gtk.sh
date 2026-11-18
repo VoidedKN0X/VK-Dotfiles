@@ -4,6 +4,7 @@
 # work in:
 #   LACT       Hyprland doesn't blur behind it, so the wallpaper showed
 #              through its window sharp
+#   Faugus Launcher  the same as LACT
 #   LibreWolf  takes its address bar colors from GTK, so the suggestions under
 #              the address bar had no background
 # Their .desktop files in ~/.local/share/applications start them through this

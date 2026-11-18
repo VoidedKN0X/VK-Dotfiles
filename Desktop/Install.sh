@@ -253,9 +253,11 @@ KEEP_IF_EXISTS=(
 )
 vk_copy_configs
 vk_hyprlock_password
-# LACT (Hyprland doesn't blur behind it) and LibreWolf (its address bar
-# suggestions had no background) start without the GTK glass
-vk_app_entries io.github.ilya_zlobintsev.LACT librewolf
+# LACT (Hyprland doesn't blur behind it), Faugus Launcher (the same) and
+# LibreWolf (its address bar suggestions had no background) start without the
+# GTK glass
+vk_app_entries io.github.ilya_zlobintsev.LACT io.github.Faugus.faugus-launcher \
+    io.github.Faugus.faugus-launcher.shortcut librewolf
 vk_easyeffects_presets
 vk_prism_icons
 vk_thunar_bookmarks

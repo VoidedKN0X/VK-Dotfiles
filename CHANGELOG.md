@@ -2,6 +2,16 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (21)
+
+### Fixed
+- **Desktop: Faugus Launcher starts without the GTK glass**, like LACT
+  (`Install.sh`, `hypr/scripts/solid-gtk.sh`): its window showed the
+  wallpaper through it without blur. `Install.sh` now also makes its two
+  launcher entries (`io.github.Faugus.faugus-launcher` and its `.shortcut`
+  entry) from the app's own, with `solid-gtk.sh` in front of the command, so
+  it opens in its normal, solid dark theme.
+
 ## 2026-11-18 (20)
 
 ### Changed
