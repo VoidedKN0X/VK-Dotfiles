@@ -1,32 +1,28 @@
-// A popup (control center, calendar, power menu, launcher, ...): an overlay,
-// not a window. Hyprland doesn't tile it or move windows aside for it; it
-// floats over everything (fullscreen apps too). It's an invisible layer over
-// the whole screen with a panel in it, so a click outside the panel (also on
-// the button that opened it) or Escape closes it.
-// The panel grows out of the frame around the screen (Theme "the frame"):
+// A popup that grows out of the frame (control center, calendar, power menu,
+// launcher, ...). It isn't a window of its own: it's drawn in the frame's own
+// window (bar/Bar.qml) of its screen, so it is the same piece of glass with
+// exactly the same blur, and it opens by growing out of the frame's edge
+// instead of sliding in. While it's open the frame takes the clicks of the
+// whole screen, so a click outside the panel (also on the button that opened
+// it) or Escape closes it.
 //   attach  the frame side it grows out of; the bar's side unless set
 //           ("bottom" for the launcher, wallpaper picker and clipboard)
 //   place   along that side: "start", "center" or "end" (top bar: left,
 //           middle, right; side bars and the bottom: top, middle, bottom)
 //   fullHeight  it fills that whole side (the control center)
-// With centered set (password dialog, window switcher) it floats in the
-// middle of the screen instead, a rounded panel of its own. With typing set
-// it takes the keyboard as soon as it opens.
+// With typing set it takes the keyboard as soon as it opens.
+// (The popups in the middle of the screen are common/FloatingPopup.qml.)
 
 import QtQuick
-import Quickshell
-import Quickshell.Wayland
 
-PanelWindow {
+Item {
     id: popupLayer
 
     required property var targetScreen
     // the edge of that screen's bar: "top", "left" or "right"
     // (BarState.edgeFor; this file is in common/, which services/ imports)
     required property string edge
-    // the layer's name; the side it grows out of ("-top", "-bottom", "-left",
-    // "-right") is added. Hyprland picks the slide-in direction and blur by it
-    // (hypr/hyprland/rules.lua)
+    // a name for it (logs, debugging)
     required property string name
     // the frame side it grows out of ("" = the bar's side)
     property string attach: ""
@@ -37,26 +33,25 @@ PanelWindow {
     // across the side it grows out of (left/right), along it (top/bottom)
     property int panelWidth: 380
     property int padding: 16
-    // in the middle of the screen, not next to the bar
-    property bool centered: false
     // takes the keyboard at once (a search field): typing goes here until it
-    // closes. Otherwise it only gets the keyboard once clicked.
+    // closes. Otherwise it gets the keyboard once clicked.
     property bool typing: false
     default property alias content: inner.data
-    readonly property alias panel: panel
+    // the whole panel at its full size (its content measures against it)
+    readonly property alias panel: body
+
+    // read by the frame: while open it takes every click on the screen
+    readonly property bool blocksScreen: true
 
     signal closeRequested
 
-    screen: targetScreen
-    color: "transparent"
-    anchors {
-        top: true
-        bottom: true
-        left: true
-        right: true
-    }
-    exclusionMode: ExclusionMode.Ignore
-    readonly property string side: centered ? edge : attach !== "" ? attach : edge
+    // in the frame's window of the target screen (bar/Bar.qml registers it)
+    parent: FrameHosts.hostFor(targetScreen?.name ?? "")
+    visible: parent !== null
+    width: parent?.width ?? 0
+    height: parent?.height ?? 0
+
+    readonly property string side: attach !== "" ? attach : edge
     readonly property bool acrossLeftRight: side === "left" || side === "right"
 
     // the desktop inside the frame
@@ -64,10 +59,20 @@ PanelWindow {
     readonly property real holeTop: Theme.frameSize(edge, "top")
     readonly property real holeRight: width - Theme.frameSize(edge, "right")
     readonly property real holeBottom: height - Theme.frameSize(edge, "bottom")
+    // where the frame's inner edge is on the side it grows out of
+    readonly property real base: side === "top" ? holeTop : side === "bottom" ? holeBottom : side === "left" ? holeLeft : holeRight
 
-    WlrLayershell.namespace: name + "-" + side
-    WlrLayershell.layer: WlrLayer.Overlay
-    WlrLayershell.keyboardFocus: typing ? WlrKeyboardFocus.Exclusive : WlrKeyboardFocus.OnDemand
+    // ── growing out of the frame ─────────────────────────────────────────
+    // 0 = hidden in the frame, 1 = all the way out
+    property real progress: 0
+    NumberAnimation on progress {
+        id: grow
+        running: false
+        from: 0
+        to: 1
+        duration: 260
+        easing.type: Easing.OutCubic
+    }
 
     // a click outside the panel
     MouseArea {
@@ -76,19 +81,53 @@ PanelWindow {
         onClicked: popupLayer.closeRequested()
     }
 
-    // the glass, joined to the frame
+    // the glass, joined to the frame, as far out as it has grown
     FramePanel {
-        visible: !popupLayer.centered
         side: popupLayer.side
-        base: side === "top" ? popupLayer.holeTop : side === "bottom" ? popupLayer.holeBottom : side === "left" ? popupLayer.holeLeft : popupLayer.holeRight
-        from: popupLayer.acrossLeftRight ? panel.y : panel.x
-        to: popupLayer.acrossLeftRight ? panel.y + panel.height : panel.x + panel.width
-        depth: popupLayer.acrossLeftRight ? panel.width : panel.height
+        base: popupLayer.base
+        from: popupLayer.acrossLeftRight ? body.y : body.x
+        to: popupLayer.acrossLeftRight ? body.y + body.height : body.x + body.width
+        depth: Math.max(1, body.depth * popupLayer.progress)
         span: popupLayer.fullHeight
     }
 
-    Rectangle {
-        id: panel
+    // what's out of the frame so far: the content slides out with the edge
+    Item {
+        id: shown
+        clip: true
+        readonly property real depth: body.depth * popupLayer.progress
+        x: popupLayer.side === "right" ? popupLayer.base - depth : popupLayer.side === "left" ? popupLayer.base : body.x
+        y: popupLayer.side === "bottom" ? popupLayer.base - depth : popupLayer.side === "top" ? popupLayer.base : body.y
+        width: popupLayer.acrossLeftRight ? depth : body.width
+        height: popupLayer.acrossLeftRight ? body.height : depth
+
+        // clicks inside the panel stay inside
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.AllButtons
+        }
+
+        // the panel at its full size, its far edge at the edge of what's shown
+        Item {
+            x: (popupLayer.side === "left" ? shown.width - body.width : 0)
+            y: (popupLayer.side === "top" ? shown.height - body.height : 0)
+            width: body.width
+            height: body.height
+
+            FocusScope {
+                id: inner
+                anchors.fill: parent
+                anchors.margins: popupLayer.padding
+                focus: true
+                implicitHeight: childrenRect.height
+                Keys.onEscapePressed: popupLayer.closeRequested()
+            }
+        }
+    }
+
+    // the panel's place and full size (in the frame's window)
+    Item {
+        id: body
 
         // along the side: where it may go, and how long it is
         readonly property real lo: popupLayer.acrossLeftRight ? popupLayer.holeTop : popupLayer.holeLeft
@@ -112,62 +151,14 @@ PanelWindow {
             return hi - Theme.cornerClearance - length;
         }
 
-        width: popupLayer.centered ? popupLayer.panelWidth : popupLayer.acrossLeftRight ? depth : length
-        // (centered: from the size alone, as y depends on the height there)
-        height: popupLayer.centered ? Math.min(contentLength, popupLayer.height - 2 * Theme.barEndMargin) : popupLayer.acrossLeftRight ? length : depth
-        x: {
-            if (popupLayer.centered)
-                return (popupLayer.width - width) / 2;
-            if (popupLayer.side === "left")
-                return popupLayer.holeLeft;
-            if (popupLayer.side === "right")
-                return popupLayer.holeRight - width;
-            return along;
-        }
-        y: {
-            if (popupLayer.centered)
-                return Math.max(Theme.barEndMargin, (popupLayer.height - height) / 2);
-            if (popupLayer.side === "top")
-                return popupLayer.holeTop;
-            if (popupLayer.side === "bottom")
-                return popupLayer.holeBottom - height;
-            return along;
-        }
-
-        // joined to the frame, the glass is the FramePanel above; centered,
-        // a rounded panel of its own
-        color: popupLayer.centered ? Theme.panel : "transparent"
-        border.color: Theme.edge
-        border.width: popupLayer.centered ? 1 : 0
-        radius: Theme.panelRadius
-        clip: true
-
-        // clicks inside the panel stay inside
-        MouseArea {
-            anchors.fill: parent
-            acceptedButtons: Qt.AllButtons
-        }
-
-        // soft highlight along the top edge, like the bar's islands
-        Rectangle {
-            visible: popupLayer.centered
-            anchors.top: parent.top
-            anchors.topMargin: 1
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: parent.width - 40
-            height: 1
-            color: Theme.highlight
-        }
-
-        FocusScope {
-            id: inner
-            anchors.fill: parent
-            anchors.margins: popupLayer.padding
-            focus: true
-            implicitHeight: childrenRect.height
-            Keys.onEscapePressed: popupLayer.closeRequested()
-        }
+        width: popupLayer.acrossLeftRight ? depth : length
+        height: popupLayer.acrossLeftRight ? length : depth
+        x: popupLayer.side === "left" ? popupLayer.holeLeft : popupLayer.side === "right" ? popupLayer.holeRight - width : along
+        y: popupLayer.side === "top" ? popupLayer.holeTop : popupLayer.side === "bottom" ? popupLayer.holeBottom - height : along
     }
 
-    Component.onCompleted: inner.forceActiveFocus()
+    Component.onCompleted: {
+        grow.start();
+        inner.forceActiveFocus();
+    }
 }

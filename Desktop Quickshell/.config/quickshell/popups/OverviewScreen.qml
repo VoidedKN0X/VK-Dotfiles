@@ -131,14 +131,8 @@ PanelWindow {
                 else
                     view.overview.close();
             }
-            Component.onCompleted: if (view.focusedHere) focusInput()
-        }
-        Label {
-            Layout.alignment: Qt.AlignHCenter
-            visible: !view.focusedHere
-            text: "Drag a window here to move it to this monitor"
-            color: Theme.dim
-            font.pixelSize: 13
+            Component.onCompleted: if (view.focusedHere)
+                focusInput()
         }
     }
 

@@ -1,17 +1,17 @@
 // Workspace overview (Super + Tab, or a middle click on the bar's workspaces):
-// on both monitors at once, every workspace of that monitor as a thumbnail
-// with its windows as live previews at their real place and size.
+// on the monitor that has the focus when it opens, every workspace of that
+// monitor as a thumbnail with its windows as live previews at their real
+// place and size.
 //   click a workspace       go there
 //   click a window          focus it (and go to its workspace)
-//   drag a window           onto another workspace (also on the other
-//                           monitor) to move it there
+//   drag a window           onto another workspace to move it there
 //   middle-click a window   close it
 //   type                    filter the windows by title or app (the others
 //                           dim); Enter goes to the first match
 //   arrow keys + Enter      pick a workspace on the focused monitor
 //   Escape                  clear the search, then close
-// This file holds what both monitors share; popups/OverviewScreen.qml is one
-// monitor's view.
+// This file holds the window list and the actions; popups/OverviewScreen.qml
+// is the view.
 
 import QtQuick
 import Quickshell
@@ -32,7 +32,11 @@ Scope {
     // the address of the window being dragged ("" when none)
     property string dragging: ""
 
-    readonly property string focusedMonitor: BarState.focusedScreen()?.name ?? ""
+    // the monitor it shows: the focused one when it opened (the focus follows
+    // the mouse, so it's not followed after that)
+    property var shownScreen: null
+    Component.onCompleted: shownScreen = BarState.focusedScreen()
+    readonly property string focusedMonitor: shownScreen?.name ?? ""
 
     function close() {
         BarState.overviewOpen = false;
@@ -136,10 +140,10 @@ Scope {
         onTriggered: shared.refresh()
     }
 
-    // one view per monitor with a bar (the mirrored HDMI-A-1 has none)
+    // the view, on that monitor (only one with a bar: the mirrored HDMI-A-1
+    // has none)
     Variants {
-        // (a list property: copied into an array for filter())
-        model: Array.from(Quickshell.screens).filter(s => BarState.edgeFor(s.name) !== "")
+        model: [shared.shownScreen].filter(s => s && BarState.edgeFor(s.name) !== "")
 
         OverviewScreen {
             overview: shared

@@ -7,6 +7,7 @@
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
+import Quickshell.Widgets
 import qs.common
 import qs.services
 
@@ -87,26 +88,36 @@ PopupLayer {
                 width: grid.cellWidth
                 height: grid.cellHeight
 
-                Rectangle {
+                Item {
                     id: frame
                     anchors.fill: parent
                     anchors.margins: 5
                     anchors.bottomMargin: 28
-                    radius: 14
-                    color: Theme.card
-                    clip: true
-                    border.width: cell.selected || cell.inUse ? 3 : 0
-                    border.color: cell.selected ? Theme.accent : Qt.alpha(Theme.accent, 0.5)
 
-                    Image {
+                    // the picture, cut to the round corners (a plain clip
+                    // only cuts square, so its corners covered the border)
+                    ClippingRectangle {
                         anchors.fill: parent
-                        anchors.margins: frame.border.width
-                        source: "file://" + cell.modelData
-                        // small copies, so a big folder opens quickly
-                        sourceSize.width: 320
-                        fillMode: Image.PreserveAspectCrop
-                        asynchronous: true
-                        smooth: true
+                        radius: 14
+                        color: Theme.card
+
+                        Image {
+                            anchors.fill: parent
+                            source: "file://" + cell.modelData
+                            // small copies, so a big folder opens quickly
+                            sourceSize.width: 320
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            smooth: true
+                        }
+                    }
+                    // the border on top of the picture, round all the way
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: 14
+                        color: "transparent"
+                        border.width: cell.selected || cell.inUse ? 3 : 0
+                        border.color: cell.selected ? Theme.accent : Qt.alpha(Theme.accent, 0.5)
                     }
                 }
                 Label {

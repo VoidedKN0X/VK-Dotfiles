@@ -2,6 +2,99 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (3)
+
+### Fixed
+- **Desktop Quickshell: the mouse pointer no longer jumps to the middle of
+  the monitor** when the workspace changes (scrolling over the bar's
+  workspaces, keybinds, the overview): `cursor.no_warps = true`
+  (`hypr/hyprland/input.lua`, in pcall).
+- **Desktop Quickshell: wallpapers aren't squished any more**
+  (`background/WallpaperLayer.qml`). The wallpaper images had
+  `sourceSize` set to the screen's size, and an AnimatedImage scales its
+  frames to exactly that size, which stretched every wallpaper that isn't the
+  screen's shape before the crop. Without it, `PreserveAspectCrop` crops the
+  picture as it is.
+- **Desktop Quickshell: the wallpaper picker's borders aren't cut off at the
+  corners** (`popups/WallpaperPicker.qml`). The thumbnail is now clipped to
+  the round corners (`ClippingRectangle`) and the border drawn on top of it,
+  instead of a square-clipped picture covering the border's corners.
+- **Desktop Quickshell: the volume popup shows** (`popups/Osd.qml`). It now
+  appears whenever the volume or mute changes, whatever changed it (the
+  keys, scrolling on the volume icon, the mixer, an app), besides the
+  `qs ipc call osd show ...` calls of `hypr/scripts/osd.sh` (mic, Caps
+  Lock). It ignores the first 3 s, while PipeWire reports the starting
+  values.
+- **Desktop Quickshell: app icons from Papirus-Dark** in the launcher, tray,
+  switcher and overview (`//@ pragma IconTheme Papirus-Dark` in
+  `shell.qml`). Quickshell took Qt's icon theme (qt6ct: breeze-dark); Qt
+  apps keep that.
+
+### Changed
+- **Desktop Quickshell: popups are part of the frame.** The control center,
+  calendar, power menu, mixer, Bluetooth and network panels, launcher,
+  wallpaper picker and clipboard (`common/PopupLayer.qml`), the
+  notifications (`popups/NotificationPopups.qml`) and the volume popup
+  (`popups/Osd.qml`) are no longer layers of their own: they're drawn in the
+  frame's own window of their screen (`bar/Bar.qml`, registered in the new
+  `common/FrameHosts.qml`). So they're the same glass with exactly the same
+  blur as the frame, and they open by growing out of the frame's edge (the
+  glass grows, the content slides out with it; 260 ms) instead of sliding in
+  as a separate layer.
+  - While a popup is open the frame takes every click on the screen (a click
+    outside closes the popup), takes the keyboard (at once for the launcher,
+    wallpaper picker and clipboard), and moves to the overlay layer, so the
+    popup also shows over fullscreen apps. The notifications only take
+    clicks on their panel; the volume popup takes none.
+  - The notifications and the volume popup grow out of the frame and go back
+    in when they're done. As part of the frame they don't show over
+    fullscreen apps.
+  - The password dialog and the window switcher still float in the middle of
+    the screen, now as `common/FloatingPopup.qml`.
+  - `hypr/hyprland/rules.lua`: the per-popup slide animations are gone (the
+    popups animate themselves); the frame layers (`vk-top`, `vk-left`,
+    `vk-right`) get `no_anim`, so moving above fullscreen apps doesn't look
+    like they open again.
+- **Desktop Quickshell: the workspace overview shows only the monitor that
+  has the focus** when it opens (`popups/Overview.qml`), not both. Dragging
+  a window to the other monitor's workspaces is gone with it.
+- **Desktop Quickshell: frosted glass in GTK apps.** New
+  `gtk-3.0/gtk.css` (Thunar, Ristretto, file dialogs and other GTK 3 apps)
+  and `gtk-4.0/gtk.css` (GTK 4 / libadwaita apps such as Papers and File
+  Roller): the window is 42 % opaque glass in the wallpaper's colors, the
+  parts inside it let the glass through, selection in the accent, menus and
+  popovers stay solid. Hyprland blurs behind them like behind foot. The
+  colors are in `vk-colors.css` next to them, written by wallust at every
+  wallpaper change (new `wallust/templates/gtk-colors.template`, two targets
+  in `wallust.toml`) and kept by a reinstall (`KEEP_IF_EXISTS`). Qt and
+  Electron apps can't be made see-through this way.
+- **Desktop and Desktop Quickshell: AMD GPU overclocking.** The desktop
+  post-install (`Post Install/run-all-common.sh`, desktop profile only, when
+  an AMD graphics card is found in `/sys/class/drm`) adds
+  `amdgpu.ppfeaturemask=0xfff7ffff` to the kernel command line: the
+  kernel's default mask plus OverDrive (bit 14), so LACT (already installed,
+  `lactd` enabled) can change the GPU's clocks, voltage offset and power
+  limit. Not `0xffffffff`, which also turns on features the kernel leaves
+  off. The final check verifies it on the cmdline and in the UKI.
+- **All profiles: "About Xfce" is hidden from the app launcher**
+  (`.local/share/applications/xfce4-about.desktop` with `NoDisplay=true`;
+  it comes with Thunar's libxfce4ui).
+
+## 2026-11-18 (2)
+
+### Changed
+- **Desktop Quickshell: the app launcher is always alphabetical**
+  (`popups/Launcher.qml`). Apps are sorted A to Z (case and accents
+  ignored, numbers in order), also while searching: typing only leaves out
+  the apps that don't match their name, description, keywords, categories
+  or id. Before, apps you started often came first and search results were
+  ranked by how well they matched; that ranking and its counter file
+  (`~/.local/state/quickshell/.../launcher-usage.json`, no longer read or
+  written) are gone.
+- README and the launcher's comment explain how to hide an app: a copy of
+  its `.desktop` file in `~/.local/share/applications` with
+  `NoDisplay=true` (Quickshell leaves out NoDisplay and Hidden entries).
+
 ## 2026-11-18
 
 ### Fixed

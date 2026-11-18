@@ -5,18 +5,20 @@
 //   qs ipc call osd show brightness <0-100> ""
 //   qs ipc call osd show caps <on 0|1> ""
 // On the focused monitor, a small panel growing out of the right side of the
-// frame (Theme "the frame"), in the middle: the icon, a level bar going up
-// and the value. Gone after 1.2 s; holding a key updates it.
+// frame, in the middle: the icon, a level bar going up and the value. It's
+// drawn in the frame's own window (common/FrameHosts.qml), so it's the same
+// glass with the same blur. It also shows when the volume changes any other
+// way (the bar, the mixer, an app, a headset's buttons). Gone after 1.2 s;
+// holding a key keeps it.
 
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Io
-import Quickshell.Wayland
 import qs.common
 import qs.services
 
-PanelWindow {
+Item {
     id: osd
 
     property var targetScreen: null
@@ -26,76 +28,131 @@ PanelWindow {
     property real level: -1     // 0-1, or -1 for no bar (mic, Caps Lock)
     property string valueText: ""
     property bool muted: false
+    property bool shown: false
 
-    screen: targetScreen
-    visible: false
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "vk-osd"
-    WlrLayershell.layer: WlrLayer.Overlay
+    // in the frame's window of that screen; clicks go through it (it isn't
+    // the frame's clickArea)
+    parent: FrameHosts.hostFor(targetScreen?.name ?? "")
+    visible: parent !== null && progress > 0
+    width: parent?.width ?? 0
+    height: parent?.height ?? 0
 
-    // only anchored right: in the middle of the right side
-    anchors.right: true
-    margins.right: Theme.frameSize(osd.edge, "right")
-    implicitWidth: 64
-    implicitHeight: column.implicitHeight + 32 + Theme.fillet * 2
-    // it only shows; clicks go through it
-    mask: Region {}
+    // grows out of the frame, goes back in when it's done
+    property real progress: shown ? 1 : 0
+    Behavior on progress {
+        NumberAnimation {
+            duration: 200
+            easing.type: Easing.OutCubic
+        }
+    }
+
+    readonly property real base: width - Theme.frameSize(edge, "right")
+    readonly property real fullWidth: 64
+    readonly property real fullHeight: column.implicitHeight + 32
 
     FramePanel {
         side: "right"
-        base: osd.width
-        from: Theme.fillet
-        to: osd.height - Theme.fillet
-        depth: osd.width
+        base: osd.base
+        from: panel.y
+        to: panel.y + panel.height
+        depth: Math.max(1, panel.width)
     }
 
-    ColumnLayout {
-        id: column
-        anchors.centerIn: parent
-        spacing: 10
+    Item {
+        id: panel
+        clip: true
+        width: osd.fullWidth * osd.progress
+        height: osd.fullHeight
+        x: osd.base - width
+        y: (Theme.frameSize(osd.edge, "top") + osd.height - Theme.frameSize(osd.edge, "bottom") - height) / 2
 
-        Glyph {
-            Layout.alignment: Qt.AlignHCenter
-            glyph: osd.icon
-            color: osd.muted ? Theme.faint : Theme.accent
-            font.pixelSize: 18
-        }
-        Rectangle {
-            Layout.alignment: Qt.AlignHCenter
-            visible: osd.level >= 0
-            implicitWidth: 26
-            implicitHeight: 150
-            radius: 13
-            color: Theme.track
+        ColumnLayout {
+            id: column
+            x: (osd.fullWidth - implicitWidth) / 2
+            y: 16
+            spacing: 10
+
+            Glyph {
+                Layout.alignment: Qt.AlignHCenter
+                glyph: osd.icon
+                color: osd.muted ? Theme.faint : Theme.accent
+                font.pixelSize: 18
+            }
             Rectangle {
-                anchors.bottom: parent.bottom
-                width: parent.width
-                height: Math.max(parent.width, parent.height * Math.max(0, osd.level))
-                visible: osd.level > 0
+                Layout.alignment: Qt.AlignHCenter
+                visible: osd.level >= 0
+                implicitWidth: 26
+                implicitHeight: 150
                 radius: 13
-                color: osd.muted ? Qt.alpha(Theme.fg, 0.35) : Theme.accent
-                Behavior on height {
-                    NumberAnimation {
-                        duration: 80
+                color: Theme.track
+                Rectangle {
+                    anchors.bottom: parent.bottom
+                    width: parent.width
+                    height: Math.max(parent.width, parent.height * Math.max(0, osd.level))
+                    visible: osd.level > 0
+                    radius: 13
+                    color: osd.muted ? Qt.alpha(Theme.fg, 0.35) : Theme.accent
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: 80
+                        }
                     }
                 }
             }
+            Label {
+                Layout.alignment: Qt.AlignHCenter
+                text: osd.valueText
+                color: osd.muted ? Theme.faint : Theme.fg
+                font.pixelSize: Theme.smallSize
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+            }
         }
-        Label {
-            Layout.alignment: Qt.AlignHCenter
-            text: osd.valueText
-            color: osd.muted ? Theme.faint : Theme.fg
-            font.pixelSize: Theme.smallSize
-            font.weight: Font.DemiBold
-            horizontalAlignment: Text.AlignHCenter
+    }
+
+    // show it on the focused monitor
+    function present() {
+        const target = BarState.focusedScreen();
+        if (target !== osd.targetScreen) {
+            osd.shown = false;
+            osd.targetScreen = target;
+        }
+        osd.shown = true;
+        hideTimer.restart();
+    }
+
+    function showVolume(n, isMuted) {
+        osd.muted = isMuted;
+        osd.icon = isMuted || n === 0 ? Theme.iconMuted : Theme.iconVolume[Math.min(2, Math.floor(n / 34))];
+        osd.level = n / 100;
+        osd.valueText = `${n}%`;
+        present();
+    }
+
+    // the volume changed (any way): show it. Not in the first seconds, while
+    // PipeWire reports the starting values.
+    property bool ready: false
+    Timer {
+        interval: 3000
+        running: true
+        onTriggered: osd.ready = true
+    }
+    Connections {
+        target: Audio
+        function onPercentChanged() {
+            if (osd.ready)
+                osd.showVolume(Audio.percent, Audio.muted);
+        }
+        function onMutedChanged() {
+            if (osd.ready)
+                osd.showVolume(Audio.percent, Audio.muted);
         }
     }
 
     Timer {
         id: hideTimer
         interval: 1200
-        onTriggered: osd.visible = false
+        onTriggered: osd.shown = false
     }
 
     IpcHandler {
@@ -131,14 +188,7 @@ PanelWindow {
             default:
                 return;
             }
-            // on the focused monitor; moving it means hiding it first
-            const target = BarState.focusedScreen();
-            if (target !== osd.targetScreen) {
-                osd.visible = false;
-                osd.targetScreen = target;
-            }
-            osd.visible = true;
-            hideTimer.restart();
+            osd.present();
         }
     }
 }

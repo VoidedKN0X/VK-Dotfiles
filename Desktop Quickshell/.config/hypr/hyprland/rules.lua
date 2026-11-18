@@ -55,31 +55,27 @@ hl.window_rule({
 -- doesn't accept (an animation) is dropped whole, without a config error. The
 -- extras (xray off, animations) are separate and in pcall, so a Hyprland
 -- version without them skips them instead of stopping here.
--- The names: vk-top / vk-left / vk-right (the frame around the screen with
--- the bar on that side), and the popups that grow out of the frame, named by
--- the side they grow out of (-top, -bottom, -left, -right):
--- vk-control-center-*, vk-calendar-*, vk-power-*, vk-mixer-*, vk-bluetooth-*,
--- vk-network-*, vk-launcher-*, vk-wallpaper-*, vk-clipboard-*,
--- vk-notifications-*, and vk-osd (volume popup, right side). vk-polkit-* and
--- vk-switcher-* float in the middle of the screen, vk-overview is over every
--- monitor. frame-zone is the invisible space the frame keeps free.
+-- The names: vk-top / vk-left / vk-right are the frame around the screen with
+-- the bar on that side. The popups that grow out of the frame (control
+-- center, calendar, power menu, mixer, Bluetooth, network, launcher,
+-- wallpaper picker, clipboard), the notifications and the volume popup are
+-- drawn in that same layer, so they share its blur; they animate themselves
+-- (growing out of the frame). vk-polkit-* and vk-switcher-* float in the
+-- middle of the screen, vk-overview covers the focused monitor. frame-zone is
+-- the invisible space the frame keeps free.
 -- The wallpaper itself is "wallpaper" (nothing to blur). See quickshell/shell.qml.
 local shell = "^vk-.*$"
 hl.layer_rule({ match = { namespace = shell }, blur = true, ignore_alpha = 0.2 })
 pcall(hl.layer_rule, { match = { namespace = shell }, blur_popups = true })
 pcall(hl.layer_rule, { match = { namespace = shell }, xray = false })
 
--- the popups slide out of the side of the frame they grow out of
-for _, popup in ipairs({ "vk-control-center", "vk-calendar", "vk-power", "vk-mixer", "vk-bluetooth", "vk-network", "vk-launcher", "vk-wallpaper", "vk-clipboard", "vk-notifications" }) do
-    for _, side in ipairs({ "top", "bottom", "left", "right" }) do
-        pcall(hl.layer_rule, { match = { namespace = popup .. "-" .. side }, animation = "slide " .. side })
-    end
-end
-pcall(hl.layer_rule, { match = { namespace = "vk-osd" }, animation = "slide right" })
+-- the frame never animates (it moves above fullscreen apps while a popup is
+-- open, which must not look like it opens again)
+pcall(hl.layer_rule, { match = { namespace = "^vk-(top|left|right)$" }, no_anim = true })
 
 -- the password dialog rises from the bottom, in the middle of the screen
 pcall(hl.layer_rule, { match = { namespace = "^vk-polkit-.*$" }, animation = "slide bottom" })
--- the workspace overview zooms in a little (over both monitors)
+-- the workspace overview zooms in a little
 pcall(hl.layer_rule, { match = { namespace = "vk-overview" }, animation = "popin 95%" })
 -- the window switcher fades, so a quick Alt + Tab doesn't fly across the screen
 pcall(hl.layer_rule, { match = { namespace = "^vk-switcher-.*$" }, animation = "fade" })

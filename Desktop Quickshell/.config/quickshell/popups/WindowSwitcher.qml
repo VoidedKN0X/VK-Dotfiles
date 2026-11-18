@@ -13,11 +13,10 @@ import Quickshell.Widgets
 import qs.common
 import qs.services
 
-PopupLayer {
+FloatingPopup {
     id: switcher
 
     name: "vk-switcher"
-    centered: true
     typing: true
     // as wide as the cards (248 px + 12 between), at most the screen minus 160 px
     panelWidth: Math.min(Math.max(1, windows.length) * 260 - 12 + padding * 2, (targetScreen?.width ?? 1600) - 160)

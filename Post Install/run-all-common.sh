@@ -36,8 +36,9 @@
 #      on demand)
 #   D. fstab noatime (REBOOT required)
 #   E. systemd-boot kernel cmdline: transparent_hugepage=madvise,
-#      quiet splash plymouth.boot-log=/dev/null plymouth.nolog, and
-#      zswap.enabled=0 when zram is used
+#      quiet splash plymouth.boot-log=/dev/null plymouth.nolog,
+#      zswap.enabled=0 when zram is used, and on the desktop with an AMD
+#      graphics card amdgpu.ppfeaturemask=0xfff7ffff (overclocking in LACT)
 #      (REBOOT required). The cmdline is written in stage 2, before the images
 #      are built, so later stages don't have to rebuild for it.
 #   F. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
@@ -87,6 +88,17 @@ KCMDLINE="/etc/kernel/cmdline"
 NEW_PARAMS=(transparent_hugepage=madvise)
 # Plymouth: show the splash, hide boot messages, don't write a boot log
 NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
+
+# AMD GPU overclocking (desktop with an AMD graphics card): the kernel's
+# default PowerPlay feature mask (0xfff7bfff) plus OverDrive (bit 14), so LACT
+# (installed and enabled by Install.sh) can change the GPU's clocks, voltage
+# offset and power limit. Not 0xffffffff: that also turns on features the
+# kernel leaves off on purpose (bit 19, GFX_DCS). On the kernel cmdline, not in
+# /etc/modprobe.d: amdgpu loads from the initramfs, so it takes effect without
+# depending on which files the image includes.
+if [[ "$PROFILE_NAME" == "desktop" ]] && grep -qsx '0x1002' /sys/class/drm/card*/device/vendor; then
+  NEW_PARAMS+=(amdgpu.ppfeaturemask=0xfff7ffff)
+fi
 
 # Swap on zram (archinstall sets it up by default): zram is used when it's
 # active or configured. zswap must be off with zram, or it keeps zram from

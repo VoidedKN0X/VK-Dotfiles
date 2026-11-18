@@ -1,8 +1,10 @@
 // The bar of one monitor and the frame around its screen: one piece of glass
 // along every edge, with the desktop inside it rounded off at the corners
 // (Theme "the frame"). The bar's side (top, left or right: BarState.edgeFor)
-// is wide enough for the islands; the other sides are a thin border. Popups
-// grow out of the frame's inner edge (common/PopupLayer.qml).
+// is wide enough for the islands; the other sides are a thin border. The
+// popups, notifications and volume popup are drawn in this same window
+// (popupHost, common/FrameHosts.qml), so they're the same glass with the same
+// blur and grow out of the frame's inner edge (common/PopupLayer.qml).
 // The islands:
 //   start:  workspaces, music
 //   middle: clock
@@ -64,11 +66,23 @@ Scope {
         readonly property int sizeLeft: Theme.frameSize(edge, "left")
         readonly property int sizeRight: Theme.frameSize(edge, "right")
 
+        // the popups in this window right now (popupHost below)
+        readonly property var hosted: Array.from(popupHost.children)
+        // a popup is open: it takes every click on the screen (a click outside
+        // it closes it)
+        readonly property bool blocking: hosted.some(c => c.blocksScreen === true)
+        // a popup with a search field wants the keyboard at once
+        readonly property bool typing: hosted.some(c => c.blocksScreen === true && c.typing === true)
+        // the notifications: only their panel takes clicks
+        readonly property var clickable: hosted.find(c => c.clickArea)?.clickArea ?? null
+
         screen: modelData
         color: "transparent"
         // the layer's name: Hyprland blurs the frame by it (hypr/hyprland/rules.lua)
         WlrLayershell.namespace: "vk-" + edge
-        WlrLayershell.layer: WlrLayer.Top
+        // above windows; while a popup is open also above fullscreen apps
+        WlrLayershell.layer: blocking ? WlrLayer.Overlay : WlrLayer.Top
+        WlrLayershell.keyboardFocus: typing ? WlrKeyboardFocus.Exclusive : blocking ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None
         exclusionMode: ExclusionMode.Ignore
         anchors {
             top: true
@@ -77,9 +91,16 @@ Scope {
             right: true
         }
 
-        // only the frame takes clicks; the desktop inside it is the windows'
+        // only the frame takes clicks (and the notifications); the desktop
+        // inside it is the windows'. While a popup is open: the whole screen.
         mask: Region {
             regions: [
+                Region {
+                    item: bar.blocking ? popupHost : null
+                },
+                Region {
+                    item: bar.clickable
+                },
                 Region {
                     width: bar.width
                     height: bar.sizeTop
@@ -212,6 +233,15 @@ Scope {
                     onClicked: BarState.togglePowerMenu(bar.modelData)
                 }
             }
+        }
+
+        // the popups, notifications and volume popup of this screen, above
+        // the frame and its islands (they put themselves in here)
+        Item {
+            id: popupHost
+            anchors.fill: parent
+            Component.onCompleted: FrameHosts.register(bar.modelData.name, popupHost)
+            Component.onDestruction: FrameHosts.unregister(bar.modelData.name, popupHost)
         }
     }
 }

@@ -1,18 +1,18 @@
 // Notification popups, on the focused monitor next to the bell, in one panel
-// that grows out of the frame (Theme "the frame"): out of its right side at
-// the top with the bar on top, out of the bar's side at the bottom with a
-// side bar (where swaync put them). Newest nearest the bell. Each one stays
-// 8 s (low: 6 s, critical: until closed); hovering one keeps it. They stay in
-// the control center's list after they go away.
+// that grows out of the frame: out of its right side at the top with the bar
+// on top, out of the bar's side at the bottom with a side bar (where swaync
+// put them). It's drawn in the frame's own window (common/FrameHosts.qml), so
+// it's the same glass with the same blur. Newest nearest the bell. Each one
+// stays 8 s (low: 6 s, critical: until closed); hovering one keeps it. They
+// stay in the control center's list after they go away.
 
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Wayland
 import qs.common
 import qs.services
 
-PanelWindow {
+Item {
     id: popups
 
     readonly property var targetScreen: BarState.focusedScreen()
@@ -21,37 +21,86 @@ PanelWindow {
     // the frame side it grows out of
     readonly property string side: edge === "left" ? "left" : "right"
     readonly property int padding: 10
+    readonly property bool showing: Notifs.popups.length > 0
 
-    screen: targetScreen
-    visible: Notifs.popups.length > 0
-    color: "transparent"
-    exclusionMode: ExclusionMode.Ignore
-    WlrLayershell.namespace: "vk-notifications-" + side
-    WlrLayershell.layer: WlrLayer.Overlay
+    // in the frame's window of the focused screen
+    parent: FrameHosts.hostFor(targetScreen?.name ?? "")
+    visible: parent !== null && (showing || progress > 0)
+    width: parent?.width ?? 0
+    height: parent?.height ?? 0
 
-    anchors {
-        top: !popups.fromBottom
-        bottom: popups.fromBottom
-        left: popups.side === "left"
-        right: popups.side === "right"
+    // read by the frame: only the panel takes clicks
+    readonly property Item clickArea: visible ? panel : null
+
+    // grows out of the frame when the first one comes, goes back in after
+    // the last one
+    property real progress: 0
+    Behavior on progress {
+        NumberAnimation {
+            duration: 240
+            easing.type: Easing.OutCubic
+        }
     }
-    // from the frame's inner edge, clear of the desktop's round corner (the
-    // window includes the rounded joins above and below the cards)
-    margins {
-        top: popups.fromBottom ? 0 : Theme.frameSize(popups.edge, "top") + Theme.cornerClearance - Theme.fillet
-        bottom: popups.fromBottom ? Theme.frameSize(popups.edge, "bottom") + Theme.cornerClearance - Theme.fillet : 0
-        left: popups.side === "left" ? Theme.frameSize(popups.edge, "left") : 0
-        right: popups.side === "right" ? Theme.frameSize(popups.edge, "right") : 0
-    }
-    implicitWidth: 360 + padding * 2
-    implicitHeight: Math.max(1, list.implicitHeight) + padding * 2 + Theme.fillet * 2
+    onShowingChanged: progress = showing ? 1 : 0
+    Component.onCompleted: progress = showing ? 1 : 0
 
+    // the frame's inner edge on that side
+    readonly property real base: side === "right" ? width - Theme.frameSize(edge, "right") : Theme.frameSize(edge, "left")
+    readonly property real fullWidth: 360 + padding * 2
+    readonly property real fullHeight: list.implicitHeight + padding * 2
+
+    // the glass, joined to the frame
     FramePanel {
         side: popups.side
-        base: popups.side === "right" ? popups.width : 0
-        from: Theme.fillet
-        to: popups.height - Theme.fillet
-        depth: popups.width
+        base: popups.base
+        from: panel.y
+        to: panel.y + panel.height
+        depth: Math.max(1, panel.width)
+    }
+
+    // the panel, as far out as it has grown; the cards slide out with it
+    Item {
+        id: panel
+        clip: true
+        width: popups.fullWidth * popups.progress
+        height: popups.fullHeight
+        x: popups.side === "right" ? popups.base - width : popups.base
+        y: popups.fromBottom ? popups.height - Theme.frameSize(popups.edge, "bottom") - Theme.cornerClearance - height : Theme.frameSize(popups.edge, "top") + Theme.cornerClearance
+        Behavior on height {
+            NumberAnimation {
+                duration: 160
+            }
+        }
+
+        ColumnLayout {
+            id: list
+            x: (popups.side === "left" ? panel.width - popups.fullWidth : 0) + popups.padding
+            y: popups.padding
+            width: popups.fullWidth - popups.padding * 2
+            spacing: 8
+
+            Repeater {
+                model: popups.ordered
+
+                NotificationCard {
+                    id: card
+                    required property var modelData
+                    Layout.fillWidth: true
+                    popup: true
+                    notification: modelData
+                    age: Notifs.age(modelData, popups.now)
+                    onActivated: Notifs.activate(modelData)
+                    onClosed: modelData.dismiss()
+                    onActionInvoked: action => Notifs.invoke(modelData, action)
+
+                    Timer {
+                        interval: Notifs.timeoutFor(card.modelData) * 1000
+                        running: interval > 0 && !card.hovered
+                        onTriggered: Notifs.hidePopup(card.modelData)
+                    }
+                }
+            }
+        }
     }
 
     // in the order on screen: newest at the top under a top bar, at the
@@ -61,38 +110,8 @@ PanelWindow {
     property real now: Date.now()
     Timer {
         interval: 30000
-        running: popups.visible
+        running: popups.showing
         repeat: true
         onTriggered: popups.now = Date.now()
-    }
-
-    ColumnLayout {
-        id: list
-        x: popups.padding
-        y: Theme.fillet + popups.padding
-        width: parent.width - popups.padding * 2
-        spacing: 8
-
-        Repeater {
-            model: popups.ordered
-
-            NotificationCard {
-                id: card
-                required property var modelData
-                Layout.fillWidth: true
-                popup: true
-                notification: modelData
-                age: Notifs.age(modelData, popups.now)
-                onActivated: Notifs.activate(modelData)
-                onClosed: modelData.dismiss()
-                onActionInvoked: action => Notifs.invoke(modelData, action)
-
-                Timer {
-                    interval: Notifs.timeoutFor(card.modelData) * 1000
-                    running: interval > 0 && !card.hovered
-                    onTriggered: Notifs.hidePopup(card.modelData)
-                }
-            }
-        }
     }
 }

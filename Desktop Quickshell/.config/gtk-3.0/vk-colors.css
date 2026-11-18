@@ -1,0 +1,7 @@
+/* The wallpaper's colors for the frosted glass in gtk.css. Written by wallust
+   at every wallpaper change (wallust/templates/gtk-colors.template). */
+@define-color vk_bg #202021;
+@define-color vk_fg #ABB2BF;
+@define-color vk_accent #C678DD;
+/* the glass: the background color, darker (like the Quickshell frame) */
+@define-color vk_base shade(@vk_bg, 0.55);

@@ -124,6 +124,10 @@ Then **reboot**. It runs these stages in order:
    module (smoother frame times with Proton-CachyOS and GE-Proton), and a lower default PipeWire
    latency. The HDA audio power-save tweak is desktop-only, to save battery on the laptop and the
    Deck.
+   On the desktop with an AMD graphics card it also turns on GPU overclocking for LACT
+   (`amdgpu.ppfeaturemask=0xfff7ffff` on the kernel command line: the kernel's default plus
+   OverDrive). On an existing install, run the desktop script again (or add that parameter to
+   `/etc/kernel/cmdline` and rebuild with `sudo mkinitcpio -P`), then reboot.
    At the end it checks everything it set up and prints a pass/fail summary.
 
 All kernel and boot changes are made before the images are built, so they normally only need
@@ -282,7 +286,9 @@ Every popup grows out of the frame's inner edge with rounded joins: the calendar
 mixer, Bluetooth and network panels out of the bar's side, the control center along the whole
 right side (with a side bar: the bar's side), notifications out of the right side under a top bar
 (the bar's side at the bottom with a side bar), the volume popup out of the right side, and the
-launcher, wallpaper picker and clipboard out of the bottom. The password dialog and the window
+launcher, wallpaper picker and clipboard out of the bottom. They're drawn in the frame's own layer,
+so they're the same glass with the same blur, and they open by growing out of the frame's edge.
+While one is open the frame moves above fullscreen apps too. The password dialog and the window
 switcher float in the middle.
 
 - **Islands:** workspaces (dots, the active one a pill; each monitor shows its own), music
@@ -305,9 +311,9 @@ switcher float in the middle.
   recently used first. Keep <kbd>Alt</kbd> down, <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>
   to pick, let go to switch; a quick <kbd>Alt</kbd> + <kbd>Tab</kbd> flips between the last two.
 - **Workspace overview** (<kbd>Super</kbd> + <kbd>Tab</kbd>, or middle-click the workspaces
-  island): on both monitors at once, every workspace of that monitor as a thumbnail with its
-  windows as live previews at their real place. Click a workspace to go there, click a window to
-  focus it, drag a window onto another workspace (also on the other monitor) to move it,
+  island): on the monitor that has the focus, every workspace of that monitor as a thumbnail with
+  its windows as live previews at their real place. Click a workspace to go there, click a window
+  to focus it, drag a window onto another workspace to move it,
   middle-click a window to close it. Type to find a window (the others dim, <kbd>Enter</kbd> goes
   to it); arrow keys + <kbd>Enter</kbd> pick a workspace; <kbd>Esc</kbd> clears the search, then
   closes it.
@@ -335,9 +341,9 @@ switcher float in the middle.
 - **Top or left edge:** <kbd>Super</kbd> + <kbd>B</kbd> (or the control center's toggle), saved
   in `quickshell/bar-position` (kept by a reinstall). DP-2 always has its bar on the right edge.
 - **App launcher** (tap <kbd>Super</kbd>): type to search (names, descriptions, keywords),
-  <kbd>↑</kbd> / <kbd>↓</kbd> and <kbd>Enter</kbd>, or click. Apps you start often come first
-  (counted in `~/.local/state/quickshell`). The entries hidden in `~/.local/share/applications`
-  stay hidden.
+  <kbd>↑</kbd> / <kbd>↓</kbd> and <kbd>Enter</kbd>, or click. Always in alphabetical order, also
+  while searching. To hide an app: copy its `.desktop` file from `/usr/share/applications` to
+  `~/.local/share/applications` and add `NoDisplay=true` under `[Desktop Entry]`.
 - **Wallpaper picker** (<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>, or the control
   center's toggle): thumbnails of `~/Pictures/Wallpapers` (subfolders too), the current one
   outlined; search, arrow keys, <kbd>Enter</kbd> or a click.
@@ -349,8 +355,10 @@ switcher float in the middle.
   <kbd>Ctrl</kbd> + <kbd>Delete</kbd> removes it.
 - **Admin rights (polkit):** when an app asks for your password, a dialog in the same glass
   (what's asking, a password field; with the YubiKey login also "touch your key").
-- **Volume popup:** the volume, mic and Caps Lock keys show the same popup as before
-  (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`).
+- **Volume popup:** grows out of the frame's right side whenever the volume changes (the keys,
+  scrolling on the volume icon, the mixer, an app); the mic and Caps Lock keys show it too
+  (`hypr/scripts/osd.sh` calls `qs ipc call osd show ...`). It's part of the frame, so it doesn't
+  show over fullscreen apps.
 - **Colors:** everything follows the wallpaper. wallust writes `quickshell/colors.json`
   (`wallust/templates/colors-quickshell.template`); Quickshell watches it and recolors at once,
   without a restart. The accent is wallust's color5, the glass is the palette's background, the
@@ -358,7 +366,18 @@ switcher float in the middle.
   power button) is made from those, with guards that keep it readable: the text stays light, the
   glass dark, the accent bright enough for dark text on it. A black and white wallpaper gives a
   gray shell (wallust fills the palette with shades, `fallback_generator` in `wallust.toml`).
-  Window borders, foot, btop and the lock screen follow wallust too.
+  Window borders, foot, btop and the lock screen follow wallust too. App icons in the shell come
+  from Papirus-Dark, like in the GTK apps.
+- **Frosted glass in apps:** GTK 3 apps (Thunar, Ristretto, file dialogs) and GTK 4 / libadwaita
+  apps (Papers, File Roller) get the same 42 % glass in the wallpaper's colors, blurred by
+  Hyprland (`gtk-3.0/gtk.css`, `gtk-4.0/gtk.css`; wallust writes their colors to
+  `vk-colors.css`). Menus stay solid. Delete those `gtk.css` files to go back to the plain theme.
+  Qt, Electron and other apps draw their own windows and can't be made see-through this way; foot
+  has its own glass setting.
+- **AMD GPU overclocking:** LACT is installed and its service enabled, and the post-install adds
+  `amdgpu.ppfeaturemask=0xfff7ffff` to the kernel command line (the kernel's default plus
+  OverDrive) on a desktop with an AMD card, so LACT can change clocks, voltage offset and power
+  limit (Desktop and Desktop Quickshell).
 - **Restart:** <kbd>Super</kbd> + <kbd>R</kbd> (`hypr/scripts/restart-quickshell.sh`).
 - **Login screen:** tuigreet (greetd) with a clock, your last user and session filled in and a dot
   per password character, on black, in pastel versions of your wallpaper's colors: wallust writes them to

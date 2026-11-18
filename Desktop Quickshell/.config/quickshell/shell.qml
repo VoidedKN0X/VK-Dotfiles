@@ -1,5 +1,8 @@
 //@ pragma UseQApplication
 // (the tray icons' menus are Qt menus, which need QApplication)
+//@ pragma IconTheme Papirus-Dark
+// (app icons in the launcher, tray, switcher and overview from Papirus-Dark,
+// like the GTK apps: gtk-3.0/settings.ini; Qt apps keep their own: qt6ct)
 
 // VK Shell: the whole desktop shell of the "Desktop Quickshell" profile: the
 // wallpaper, bar, control center, calendar, power menu, notifications, volume

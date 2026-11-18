@@ -26,7 +26,10 @@ PanelWindow {
     WlrLayershell.namespace: "wallpaper"
     WlrLayershell.layer: WlrLayer.Background
 
-    // two images: the new one fades in over the old one
+    // two images: the new one fades in over the old one. No sourceSize: an
+    // AnimatedImage scales its frames to exactly that size, which squished
+    // every wallpaper that isn't the screen's shape before the crop
+    // (PreserveAspectCrop now crops the picture as it is)
     property bool frontIsA: true
 
     Connections {
@@ -65,7 +68,6 @@ PanelWindow {
         id: a
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(wall.modelData.width, wall.modelData.height)
         asynchronous: true
         cache: false
         opacity: 0
@@ -74,7 +76,6 @@ PanelWindow {
         id: b
         anchors.fill: parent
         fillMode: Image.PreserveAspectCrop
-        sourceSize: Qt.size(wall.modelData.width, wall.modelData.height)
         asynchronous: true
         cache: false
         opacity: 0

@@ -1,13 +1,14 @@
 // App launcher (replaces rofi): tap Super. Type to search, Up / Down to pick,
-// Enter or a click to start the app, Escape or Super again to close. Apps you
-// start often come first (the counts are kept in Quickshell's state folder,
-// ~/.local/state/quickshell). It reads the same .desktop files rofi did, so
-// the entries hidden in ~/.local/share/applications stay hidden.
+// Enter or a click to start the app, Escape or Super again to close. The apps
+// are always in alphabetical order, also while searching (typing only leaves
+// out the apps that don't match).
+// It reads the same .desktop files rofi did. To hide an app, copy its .desktop
+// file to ~/.local/share/applications and add NoDisplay=true under
+// [Desktop Entry]; apps with NoDisplay or Hidden aren't listed.
 
 import QtQuick
 import QtQuick.Layouts
 import Quickshell
-import Quickshell.Io
 import Quickshell.Widgets
 import qs.common
 import qs.services
@@ -28,59 +29,28 @@ PopupLayer {
     readonly property int rows: 8
     readonly property int rowHeight: 48
 
-    // how often each app was started, by its id
-    property var usage: ({})
-    FileView {
-        id: usageFile
-        path: Quickshell.statePath("launcher-usage.json")
-        blockLoading: true
-        printErrors: false
-        onLoaded: {
-            try {
-                launcher.usage = JSON.parse(text());
-            } catch (e) {
-                launcher.usage = {};
-            }
-        }
-    }
-
+    // the matching apps, A to Z (case and accents ignored, numbers in order:
+    // "App 2" before "App 10")
     readonly property var results: {
         const query = search.text.trim().toLowerCase();
-        const apps = DesktopEntries.applications.values;
-        const scored = [];
-        for (const app of apps) {
-            const s = score(app, query);
-            if (s > 0)
-                scored.push({
-                    app: app,
-                    score: s + Math.min(usage[app.id] ?? 0, 50)
-                });
-        }
-        scored.sort((a, b) => b.score - a.score || a.app.name.localeCompare(b.app.name));
-        return scored.map(s => s.app);
+        return DesktopEntries.applications.values.filter(app => matches(app, query)).sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", undefined, {
+                sensitivity: "base",
+                numeric: true
+            }));
     }
 
-    // how well an app matches what's typed (0: not at all)
-    function score(app, query) {
+    // whether an app matches what's typed: its name, or its description,
+    // keywords, categories or id
+    function matches(app, query) {
         if (query === "")
-            return 1;
-        const name = (app.name ?? "").toLowerCase();
-        if (name.startsWith(query))
-            return 300;
-        if (name.split(/[\s\-_.]+/).some(w => w.startsWith(query)))
-            return 200;
-        if (name.includes(query))
-            return 150;
-        const extra = [app.genericName, app.comment, (app.keywords ?? []).join(" "), (app.categories ?? []).join(" "), app.id].join(" ").toLowerCase();
-        return extra.includes(query) ? 60 : 0;
+            return true;
+        const text = [app.name, app.genericName, app.comment, (app.keywords ?? []).join(" "), (app.categories ?? []).join(" "), app.id].join(" ").toLowerCase();
+        return text.includes(query);
     }
 
     function launch(app) {
         if (!app)
             return;
-        const counts = Object.assign({}, usage);
-        counts[app.id] = (counts[app.id] ?? 0) + 1;
-        usageFile.setText(JSON.stringify(counts));
         if (app.runInTerminal)
             Session.inTerminal(app.command);
         else

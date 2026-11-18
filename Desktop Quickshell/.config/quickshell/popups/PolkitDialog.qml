@@ -11,14 +11,13 @@ import Quickshell.Widgets
 import qs.common
 import qs.services
 
-PopupLayer {
+FloatingPopup {
     id: dialog
 
     required property var agent
     readonly property var flow: agent.flow
 
     name: "vk-polkit"
-    centered: true
     typing: true
     panelWidth: 420
     padding: 22
@@ -98,7 +97,8 @@ PopupLayer {
             onAccepted: dialog.submit()
             onEscaped: dialog.closeRequested()
             Component.onCompleted: focusInput()
-            onEnabledChanged: if (enabled) focusInput()
+            onEnabledChanged: if (enabled)
+                focusInput()
         }
 
         // "Please touch the device", or why it failed

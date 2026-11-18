@@ -34,3 +34,12 @@ btop.pywal = true
 console-palette.template = 'console-palette.template'
 console-palette.target = '/var/lib/vk-greeter/palette'
 console-palette.pywal = true
+
+# the frosted glass of GTK 3 and GTK 4 apps (gtk-3.0/gtk.css, gtk-4.0/gtk.css)
+gtk3-colors.template = 'gtk-colors.template'
+gtk3-colors.target = '~/.config/gtk-3.0/vk-colors.css'
+gtk3-colors.pywal = true
+
+gtk4-colors.template = 'gtk-colors.template'
+gtk4-colors.target = '~/.config/gtk-4.0/vk-colors.css'
+gtk4-colors.pywal = true

@@ -535,6 +535,8 @@ KEEP_IF_EXISTS=(
     hypr/colors/hyprlock-colors.conf
     btop/themes/wallust.theme
     btop/btop.conf
+    gtk-3.0/vk-colors.css
+    gtk-4.0/vk-colors.css
 )
 mkdir -p "$HOME/.config"
 KEEP_TMP="$(mktemp -d)"
