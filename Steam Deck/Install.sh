@@ -269,6 +269,8 @@ KEEP_IF_EXISTS=(
     xfce4/xfconf/xfce-perchannel-xml/thunar.xml
 )
 vk_copy_configs
+# KDE / Kirigami apps in dark colors (the WiVRn dashboard, EasyEffects, ...)
+vk_kde_dark
 vk_hyprlock_password
 # File Roller (Hyprland doesn't blur behind it) and LibreWolf (it takes its
 # address bar colors from GTK, so its suggestions would have no background)

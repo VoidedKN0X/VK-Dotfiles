@@ -2,6 +2,19 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (24)
+
+### Fixed
+- **All profiles: KDE / Kirigami apps are dark again** (`vk_kde_dark` in
+  `Post Install/install-common.sh`, every `Install.sh`). Apps made with KDE's
+  Kirigami, like the WiVRn dashboard, take their colors from KDE's color
+  scheme (`~/.config/kdeglobals`), not from Kvantum. Since qt6ct's custom
+  palette was turned off for the Kvantum glass (2026-11-18), nothing gave
+  them dark colors and they showed Breeze's light ones. The install now
+  copies Breeze Dark (`/usr/share/color-schemes/BreezeDark.colors`, from the
+  `breeze` package) to `~/.config/kdeglobals` when there is none yet; an
+  existing one is kept. Normal Qt apps keep the Kvantum glass.
+
 ## 2026-11-18 (23)
 
 ### Added

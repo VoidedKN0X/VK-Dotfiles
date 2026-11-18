@@ -442,6 +442,20 @@ vk_copy_configs() {
     cp "$PROFILE_DIR/.zshrc" "$HOME/.zshrc"
 }
 
+# KDE's color scheme (~/.config/kdeglobals): Breeze Dark. Apps made with KDE's
+# Kirigami (the WiVRn dashboard, EasyEffects, Kdenlive, Partition Manager)
+# take their colors from it instead of Kvantum, and without it they're light.
+# Normal Qt apps keep the Kvantum glass. An existing kdeglobals is kept.
+vk_kde_dark() {
+    local scheme=/usr/share/color-schemes/BreezeDark.colors
+    [[ -e "$HOME/.config/kdeglobals" ]] && return
+    if [[ -r "$scheme" ]]; then
+        cp "$scheme" "$HOME/.config/kdeglobals"
+    else
+        warn "$scheme not found (is breeze installed?): KDE apps stay light"
+    fi
+}
+
 # Lock screen: without the YubiKey login it unlocks with your password, so it
 # gets a password field (hyprlock.conf has none: with the key there's nothing
 # to type). Added once; yubikey-setup.sh --login removes the line again.

@@ -199,6 +199,8 @@ KEEP_IF_EXISTS=(
 )
 ZSHRC_BACKUP=1
 vk_copy_configs
+# KDE / Kirigami apps in dark colors (the WiVRn dashboard, EasyEffects, ...)
+vk_kde_dark
 # hide helper apps (settings tools, foot server, ...) from the launcher, and
 # File Roller (Hyprland doesn't blur behind it) and Firefox (it takes its
 # address bar colors from GTK, so its suggestions would have no background)

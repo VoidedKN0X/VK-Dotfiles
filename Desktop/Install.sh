@@ -254,6 +254,8 @@ KEEP_IF_EXISTS=(
     opendeck/settings/dev.theca11.multiobs.sdPlugin.json
 )
 vk_copy_configs
+# KDE / Kirigami apps in dark colors (the WiVRn dashboard, EasyEffects, ...)
+vk_kde_dark
 vk_hyprlock_password
 # LACT, Faugus Launcher and File Roller (Hyprland doesn't blur behind them)
 # and LibreWolf (its address bar suggestions had no background) start without
