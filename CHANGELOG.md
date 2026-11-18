@@ -2,6 +2,28 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (8)
+
+### Fixed
+- **Desktop Quickshell: LibreWolf's address bar suggestions have a
+  background** (`hypr/scripts/solid-gtk.sh`, `Install.sh`,
+  `hypr/variables.lua`). The `userChrome.css` from the previous change didn't
+  help, so LibreWolf now starts without the GTK glass, like LACT: in its
+  normal look, with its address bar colors from the plain GTK theme.
+  `librewolf-chrome.sh` (and its run in `wallpaper.sh` and `Install.sh`) is
+  gone; the part it wrote into a profile's `chrome/userChrome.css` (between
+  the "vk-dotfiles" lines) can be deleted.
+- `solid-gtk.sh` now gives the app a full mirror of `~/.config` (a link to
+  everything in it: fonts, default apps, the Downloads folder setting, other
+  apps' settings, ...) with only the glass (`gtk.css`) left out of the GTK
+  folders, instead of just the GTK settings and the app's own folder. So an
+  app started through it finds all its settings as before.
+- `Install.sh` makes the LACT and LibreWolf launcher entries in
+  `~/.local/share/applications` from the apps' own (`/usr/share/applications`,
+  with every action and file type kept), with `solid-gtk.sh` in front of
+  every command, instead of a LACT entry in the repo. Super + W starts
+  LibreWolf through it too.
+
 ## 2026-11-18 (7)
 
 ### Fixed

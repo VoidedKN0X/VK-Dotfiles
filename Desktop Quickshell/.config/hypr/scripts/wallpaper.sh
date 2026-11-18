@@ -47,7 +47,6 @@ wallust run "$WALLPAPER"
 # the Qt apps' glass theme in the new colors (Kvantum; started Qt apps pick it
 # up when they're opened again)
 "$HOME/.config/hypr/scripts/kvantum-glass.sh" >/dev/null 2>&1 || true
-"$HOME/.config/hypr/scripts/librewolf-chrome.sh" >/dev/null 2>&1 || true
 
 # Nothing to reload: Quickshell watches quickshell/colors.json (written by
 # wallust above) and recolors the bar and its popups by itself

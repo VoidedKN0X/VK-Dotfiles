@@ -570,6 +570,19 @@ fi
 # RAW photos passed to it (for mimeapps.list)
 mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
+# apps the GTK glass doesn't work in (LACT: no blur behind it; LibreWolf: its
+# address bar suggestions had no background) start without it, through
+# hypr/scripts/solid-gtk.sh: their own .desktop files with that in front of
+# every command
+for app in io.github.ilya_zlobintsev.LACT librewolf; do
+    src="/usr/share/applications/$app.desktop"
+    if [ -r "$src" ]; then
+        sed "s|^Exec=|Exec=$HOME/.config/hypr/scripts/solid-gtk.sh |" "$src" \
+            > "$HOME/.local/share/applications/$app.desktop"
+    else
+        warn "$src not found: $app keeps the GTK glass"
+    fi
+done
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
 # Prism Launcher's icons: the icon packs made for Prism Launcher (its official
@@ -634,7 +647,6 @@ fi
 # Frosted glass for Qt apps: the Kvantum theme in the current colors (it's
 # made again at every wallpaper change)
 "$HOME/.config/hypr/scripts/kvantum-glass.sh" || warn "could not set up the Kvantum glass theme"
-"$HOME/.config/hypr/scripts/librewolf-chrome.sh" || warn "could not set up LibreWolf's address bar colors"
 
 # === Post install: kernel, boot and tuning, then the YubiKey setup (if chosen) ===
 # Both run as root (sudo is still active from the start of this script). Each one
