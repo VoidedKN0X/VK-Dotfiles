@@ -2,8 +2,10 @@
 // a pill in the accent color. Occupied workspaces are brighter than empty
 // ones, urgent ones turn red. Click a dot to go there, scroll to move to the
 // next / previous one (like Super + scroll), middle-click for the workspace
-// overview (like Super + Tab). Each bar shows only its own
-// monitor's workspaces (BarState.workspaces).
+// overview (like Super + Tab). Every bar shows the workspaces of all monitors
+// (1 to 10, BarState.workspaces), in order; only the focused workspace (the
+// one with the keyboard, on either monitor) is the pill, the same on both
+// bars.
 
 import QtQuick
 import QtQuick.Layouts
@@ -19,7 +21,16 @@ Island {
     padding: 9
     spacing: 0
 
-    readonly property var ids: BarState.workspaces[monitorName] ?? Hyprland.workspaces.values.filter(w => w.monitor?.name === monitorName && w.id > 0).map(w => w.id)
+    // every monitor's workspaces, plus any other open one, in order
+    readonly property var ids: {
+        let list = [];
+        for (const name in BarState.workspaces)
+            list = list.concat(BarState.workspaces[name]);
+        for (const w of Hyprland.workspaces.values)
+            if (w.id > 0 && !list.includes(w.id))
+                list.push(w.id);
+        return list.sort((a, b) => a - b);
+    }
 
     Repeater {
         model: island.ids
@@ -28,7 +39,8 @@ Island {
             id: dot
             required property int modelData
             readonly property var workspace: Hyprland.workspaces.values.find(w => w.id === modelData) ?? null
-            readonly property bool active: workspace?.active ?? false
+            // the focused workspace (not each monitor's active one)
+            readonly property bool active: Hyprland.focusedWorkspace?.id === modelData
             readonly property bool urgent: workspace?.urgent ?? false
             readonly property bool occupied: (workspace?.toplevels?.values?.length ?? 0) > 0
             readonly property bool hovered: mouse.containsMouse

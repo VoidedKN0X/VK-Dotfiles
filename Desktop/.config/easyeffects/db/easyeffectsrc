@@ -1,13 +1,13 @@
 [StreamInputs]
-inputDevice=alsa_input.usb-SteelSeries_SteelSeries_Alias-00.mono-fallback
+inputDevice=alsa_input.usb-Generic_USB_Audio-00.HiFi__Line__source
+visiblePage=pluginsPage
 
 [StreamOutputs]
-outputDevice=alsa_output.pci-0000_03_00.1.hdmi-stereo-extra3
-plugins=bass_enhancer#0
+outputDevice=alsa_output.pci-0000_03_00.1.hdmi-surround71-extra3
+plugins=equalizer#0
 visiblePage=pluginsPage
-visiblePlugin=bass_enhancer#0
+visiblePlugin=equalizer#0
 
 [Window]
-height=1367
-showTrayIcon=true
-width=1699
+height=1360
+width=3398

@@ -21,8 +21,9 @@ Singleton {
             "DP-2": "right"
         })
 
-    // the workspaces each monitor's bar shows: the same split as the workspace
-    // rules in hypr/hyprland/monitors.lua
+    // each monitor's workspaces: the same split as the workspace rules in
+    // hypr/hyprland/monitors.lua (every bar shows all of them, the overview a
+    // row per monitor)
     readonly property var workspaces: ({
             "DP-1": [1, 3, 5, 7, 9],
             "DP-2": [2, 4, 6, 8, 10]

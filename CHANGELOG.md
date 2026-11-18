@@ -2,6 +2,24 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (10)
+
+### Changed
+- **Desktop and Desktop Quickshell: new EasyEffects settings**
+  (`easyeffects/db/`). The bass enhancer is replaced by an equalizer
+  (`equalizerrc`: a 32-band equalizer boosting the low end, +16 dB at 22 Hz
+  to +7 dB at 102 Hz, the same on both channels) on the HDMI 7.1 output
+  (`hdmi-surround71-extra3`), and the input is now the USB audio interface's
+  line input (`Generic_USB_Audio ... HiFi__Line__source`) instead of the
+  SteelSeries Alias. `bassEnhancerrc` is removed. The tray icon setting is no
+  longer in `easyeffectsrc` (EasyEffects' own default applies).
+- **Desktop Quickshell: every bar shows all workspaces**
+  (`bar/Workspaces.qml`). The workspace dots on each monitor's bar showed only
+  that monitor's workspaces (1, 3, 5, 7, 9 and 2, 4, 6, 8, 10); now both bars
+  show 1 to 10 in order, the same on both bars. Only the focused workspace
+  (the one with the keyboard, on either monitor) is the accent pill; clicking
+  a dot goes to that workspace on its own monitor.
+
 ## 2026-11-18 (9)
 
 ### Changed
