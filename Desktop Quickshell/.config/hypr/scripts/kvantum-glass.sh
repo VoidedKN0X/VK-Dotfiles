@@ -1,21 +1,32 @@
 #!/bin/bash
 # Frosted glass for Qt apps, like the Quickshell frame and the GTK apps: a
-# Kvantum theme ("KvArcDark#", a modified copy of Kvantum's KvArcDark) whose
-# windows are see-through (42 % opaque, Hyprland blurs what's behind them),
-# in the wallpaper's colors. Text, menus and buttons stay solid.
+# Kvantum theme ("VKGlass") made from Orchis Dark, the Kvantum version of the
+# GTK apps' Orchis theme (rounded, flat, modern buttons; Install.sh puts it in
+# ~/.config/Kvantum/Orchis), or from Kvantum's own KvArcDark when Orchis
+# isn't there. Its windows are see-through (42 % opaque, Hyprland blurs
+# what's behind them), in the wallpaper's colors. Text, menus and buttons
+# stay solid.
 # qt5ct and qt6ct use the "kvantum" style (qt5ct/qt5ct.conf, qt6ct/qt6ct.conf).
 # Runs after wallust at every wallpaper change (wallpaper.sh) and once from
 # Install.sh. Open Qt apps take the new colors when they're started again.
 # Kvantum keeps some apps solid on purpose (video players and editors such as
 # VLC and Kdenlive): its "opaque" list.
 
-BASE=/usr/share/Kvantum/KvArcDark/KvArcDark.kvconfig
 COLORS="$HOME/.config/quickshell/colors.json"
-THEME_DIR="$HOME/.config/Kvantum/KvArcDark#"
-OUT="$THEME_DIR/KvArcDark#.kvconfig"
+THEME_DIR="$HOME/.config/Kvantum/VKGlass"
+OUT="$THEME_DIR/VKGlass.kvconfig"
 
-if [ ! -r "$BASE" ]; then
-    echo "kvantum-glass: $BASE not found (is kvantum installed?)" >&2
+# the theme it's made from: its settings (.kvconfig) and its look (.svg)
+BASE=""
+for base in "$HOME/.config/Kvantum/Orchis/OrchisDark" /usr/share/Kvantum/Orchis/OrchisDark \
+    /usr/share/Kvantum/KvArcDark/KvArcDark; do
+    if [ -r "$base.kvconfig" ] && [ -r "$base.svg" ]; then
+        BASE="$base"
+        break
+    fi
+done
+if [ -z "$BASE" ]; then
+    echo "kvantum-glass: no Orchis or KvArcDark Kvantum theme found (is kvantum installed?)" >&2
     exit 1
 fi
 
@@ -32,11 +43,13 @@ accent=$(color color5)
 glass=$(printf '%02x%02x%02x' $((16#${bg:0:2} * 55 / 100)) $((16#${bg:2:2} * 55 / 100)) $((16#${bg:4:2} * 55 / 100)))
 
 mkdir -p "$THEME_DIR"
-# KvArcDark's settings with these changed (and added where KvArcDark has none):
+cp "$BASE.svg" "$THEME_DIR/VKGlass.svg"
+# the base theme's settings with these changed (and added where it has none):
 #   see-through windows (58 % less opaque = 42 % opaque), solid menus, no
 #   Kvantum blur (that's KDE's; Hyprland does the blurring)
 #   the colors: windows the glass, views clear over it, text the wallpaper's
-#   foreground, selection and links its accent
+#   foreground, selection and links its accent (buttons keep the theme's own
+#   look)
 awk -v glass="$glass" -v fg="$fg" -v accent="$accent" '
 BEGIN {
     set["%General", "composite"] = "true"
@@ -48,7 +61,6 @@ BEGIN {
     set["GeneralColors", "window.color"] = "#" glass
     set["GeneralColors", "base.color"] = "#" glass "00"
     set["GeneralColors", "alt.base.color"] = "#ffffff0d"
-    set["GeneralColors", "button.color"] = "#ffffff12"
     set["GeneralColors", "highlight.color"] = "#" accent "aa"
     set["GeneralColors", "inactive.highlight.color"] = "#" accent "66"
     set["GeneralColors", "text.color"] = "#" fg
@@ -82,8 +94,10 @@ function flush(   k, parts) {
     print
 }
 END { flush() }
-' "$BASE" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
+' "$BASE.kvconfig" > "$OUT.tmp" && mv "$OUT.tmp" "$OUT"
 
 # use it
 mkdir -p "$HOME/.config/Kvantum"
-printf '[General]\ntheme=KvArcDark#\n' > "$HOME/.config/Kvantum/kvantum.kvconfig"
+printf '[General]\ntheme=VKGlass\n' > "$HOME/.config/Kvantum/kvantum.kvconfig"
+# (the theme of the first version of this script)
+rm -rf "$HOME/.config/Kvantum/KvArcDark#"

@@ -91,59 +91,68 @@ ShellRoot {
     }
 
     // ── popups, created while open ────────────────────────────────────────
-    LazyLoader {
-        id: controlCenterLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.controlCenterScreen !== null || (controlCenterLoader.item?.leaving ?? false)
-        ControlCenter {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.controlCenterScreen
+        popup: Component {
+            ControlCenter {}
+        }
     }
-    LazyLoader {
-        id: calendarLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.calendarScreen !== null || (calendarLoader.item?.leaving ?? false)
-        CalendarPopup {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.calendarScreen
+        popup: Component {
+            CalendarPopup {}
+        }
     }
-    LazyLoader {
-        id: powerMenuLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.powerMenuScreen !== null || (powerMenuLoader.item?.leaving ?? false)
-        PowerMenu {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.powerMenuScreen
+        popup: Component {
+            PowerMenu {}
+        }
     }
-    LazyLoader {
-        id: mixerLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.mixerScreen !== null || (mixerLoader.item?.leaving ?? false)
-        Mixer {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.mixerScreen
+        popup: Component {
+            Mixer {}
+        }
     }
-    LazyLoader {
-        id: launcherLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.launcherScreen !== null || (launcherLoader.item?.leaving ?? false)
-        Launcher {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.launcherScreen
+        popup: Component {
+            Launcher {}
+        }
     }
-    LazyLoader {
-        id: wallpaperLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.wallpaperScreen !== null || (wallpaperLoader.item?.leaving ?? false)
-        WallpaperPicker {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.wallpaperScreen
+        popup: Component {
+            WallpaperPicker {}
+        }
     }
-    LazyLoader {
-        id: clipboardLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.clipboardScreen !== null || (clipboardLoader.item?.leaving ?? false)
-        Clipboard {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.clipboardScreen
+        popup: Component {
+            Clipboard {}
+        }
     }
-    LazyLoader {
-        id: bluetoothLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.bluetoothScreen !== null || (bluetoothLoader.item?.leaving ?? false)
-        BluetoothPanel {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.bluetoothScreen
+        popup: Component {
+            BluetoothPanel {}
+        }
     }
-    LazyLoader {
-        id: networkLoader
-        // stays loaded while it closes (it goes back into the frame)
-        active: BarState.networkScreen !== null || (networkLoader.item?.leaving ?? false)
-        NetworkPanel {}
+    // (stays loaded while it closes: it goes back into the frame)
+    PopupLoader {
+        screen: BarState.networkScreen
+        popup: Component {
+            NetworkPanel {}
+        }
     }
     LazyLoader {
         active: BarState.switcherScreen !== null

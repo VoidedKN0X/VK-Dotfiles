@@ -25,7 +25,7 @@ stays self-contained and works on its own.
 | Profile | Machine | What's different |
 | --- | --- | --- |
 | `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets), AMD GPU |
-| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the whole desktop shell made in [Quickshell](https://quickshell.org): bar, control center, notifications, app launcher, wallpaper (picker), clipboard history, volume mixer, Bluetooth and network panels, window switcher, screenshots and the polkit password dialog, instead of waybar, swaync, rofi, awww, pavucontrol, blueman, flameshot and hyprpolkitagent (see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
+| `Desktop Quickshell/` | Desktop PC | The `Desktop/` profile with the whole desktop shell made in [Quickshell](https://quickshell.org): bar, control center, notifications, app launcher, wallpaper (picker), clipboard history, volume mixer, Bluetooth and network panels, window switcher, screenshots and the polkit password dialog, instead of waybar, swaync, rofi, awww, blueman, flameshot and hyprpolkitagent (pavucontrol stays, for showing and hiding sound devices; see [Desktop Quickshell](#desktop-quickshell)). Everything else is the same |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery module in the bar and on the lock screen, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, bigger touch-friendly bar, battery on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
@@ -38,7 +38,7 @@ stays self-contained and works on its own.
 | waybar | The bar: blurred "dynamic island" style, on the top or left edge (see [The bar](#the-bar)) |
 | swaync | Notifications + control center (Wi-Fi/Bluetooth toggles, volume, media) |
 | Bar popups (`waybar/scripts/*.py`) | Calendar, music and power menu popups, and the on-screen popup for the volume, mic and brightness keys and Caps Lock (GTK4 + gtk4-layer-shell) |
-| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications, popups, app launcher, wallpaper and wallpaper picker, clipboard history, volume mixer and polkit dialog, instead of waybar, swaync, the bar popups, rofi, awww, pavucontrol and hyprpolkitagent |
+| [Quickshell](https://quickshell.org) | *Desktop Quickshell profile only:* the bar, control center, notifications, popups, app launcher, wallpaper and wallpaper picker, clipboard history, volume mixer and polkit dialog, instead of waybar, swaync, the bar popups, rofi, awww and hyprpolkitagent |
 | rofi | App launcher (on the Steam Deck: [nwg-drawer](https://github.com/nwg-piotr/nwg-drawer) instead), wallpaper picker, clipboard history |
 | foot | Terminal |
 | hyprlock / hypridle | Lock screen / screen-off and suspend timers |
@@ -93,6 +93,9 @@ It does the following:
 8. Copies `.config` and `.zshrc` into your home folder, and adds Documents, Downloads, Music
    and Pictures to Thunar's sidebar (`~/.config/gtk-3.0/bookmarks`, built from your home
    folder, so it works for any username; bookmarks you already have are kept).
+   Prism Launcher gets the Papirus-Dark icons (a "Papirus" icon theme in
+   `~/.local/share/PrismLauncher/iconthemes`, set in `prismlauncher.cfg`; icons Papirus doesn't
+   have come from Prism's own Breeze set).
 9. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
 
@@ -324,8 +327,10 @@ switcher float in the middle.
   (Open / Show in folder). `hypr/scripts/screenshot.sh`, with grim.
 - **Volume:** click the volume icon (or <kbd>Ctrl</kbd> + <kbd>Alt</kbd> + <kbd>V</kbd>) for the
   **mixer**: pick the output and input device, their volume, and a volume slider for every app
-  playing sound. Its **Edit** button hides devices you never use (a GPU's HDMI outputs, a webcam
-  mic) from the lists, remembered per PC; click them again to show them.
+  playing sound. Its **Devices** button opens pavucontrol on its Configuration tab: set a sound
+  card's profile to **Off** to hide its outputs and inputs (a GPU's HDMI outputs, a webcam mic)
+  from the mixer, the bar and every app, or pick a profile again to show them. WirePlumber
+  remembers it.
 - **Clock:** click for the **calendar** (month view, Monday first; arrows or scrolling change the
   month, clicking the month's name goes back to today).
 - **Power:** click for the **power menu** (lock, suspend, log out, restart, shut down; the last
@@ -375,7 +380,9 @@ switcher float in the middle.
   Hyprland (`gtk-3.0/gtk.css`, `gtk-4.0/gtk.css`; wallust writes their colors to
   `vk-colors.css`). Menus stay solid. Delete those `gtk.css` files to go back to the plain theme.
   Qt apps get it through Kvantum (`hypr/scripts/kvantum-glass.sh`, run at every wallpaper change):
-  a modified KvArcDark ("KvArcDark#" in `~/.config/Kvantum`) with 42 % opaque windows in the
+  "VKGlass" in `~/.config/Kvantum`, made from Orchis Dark (the Kvantum version of the GTK apps'
+  Orchis theme: rounded, flat, modern buttons; Install.sh downloads it from
+  [Orchis-kde](https://github.com/vinceliuice/Orchis-kde)) with 42 % opaque windows in the
   wallpaper's colors; qt5ct and qt6ct use the `kvantum` style. Open Qt apps take new colors when
   they're started again, and Kvantum keeps video apps such as VLC and Kdenlive solid on purpose.
   Electron apps draw their own windows and can't be made see-through this way; foot has its own
@@ -525,6 +532,11 @@ If you're not me, look at these before running anything:
   (`quickshell/services/Connectivity.qml`) and the CPU temperature sensor
   (`quickshell/scripts/stats.sh`).
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.
+- **Solaar** (Logitech mice and keyboards) starts hidden in the tray (`hypr/hyprland/execs.lua`)
+  and sets the DPI and other settings set in it again every time the device connects: after it
+  sleeps, is turned on, or a reboot. For a mouse with onboard profiles (G502 X and other
+  G mice), set **Onboard Profiles** to **Disabled** in Solaar once, then set the DPI; otherwise
+  the mouse goes back to its own profile's DPI when it wakes up.
 
 ## Structure
 

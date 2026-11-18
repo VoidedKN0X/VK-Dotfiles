@@ -140,6 +140,8 @@ PACMAN_PKGS=(
     quickshell
     # wpctl: the volume keys (hypr/scripts/osd.sh)
     wireplumber
+    # the mixer's Devices button: show or hide sound devices (popups/Mixer.qml)
+    pavucontrol
     # the music visualizer in the bar and the control center
     cava
     earlyoom
@@ -191,6 +193,8 @@ PACMAN_PKGS=(
     # the bar's network icon, the network panel and the control center (state
     # and Wi-Fi from NetworkManager; nmtui comes with it, for VPN / static IP)
     networkmanager
+    # Stream Deck app (official repo; was the AUR opendeck-bin)
+    opendeck
 )
 
 # === Packages (AUR, via yay) ===
@@ -213,7 +217,6 @@ AUR_PKGS=(
     orca-slicer-bin
     mangojuice-bin
     localsend-bin
-    opendeck-bin
     imsprog
     vscodium-bin
     vscodium-bin-marketplace
@@ -569,6 +572,28 @@ mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
+# Prism Launcher's icons from Papirus-Dark, like the rest of the desktop: an
+# icon theme in Prism's own icon theme folder that takes Papirus-Dark's icons
+# and Prism's own Breeze (dark) ones for what Papirus has no icon for (the
+# Minecraft-specific ones), picked in Prism's settings
+PRISM_DIR="$HOME/.local/share/PrismLauncher"
+if mkdir -p "$PRISM_DIR/iconthemes/papirus"; then
+    cat > "$PRISM_DIR/iconthemes/papirus/index.theme" <<'PRISMICONS'
+[Icon Theme]
+Name=Papirus
+Comment=Papirus-Dark, with Prism Launcher's Breeze icons where Papirus has none
+Inherits=Papirus-Dark,breeze_dark
+Directories=
+PRISMICONS
+    if grep -q '^IconTheme=' "$PRISM_DIR/prismlauncher.cfg" 2>/dev/null; then
+        sed -i 's/^IconTheme=.*/IconTheme=papirus/' "$PRISM_DIR/prismlauncher.cfg"
+    else
+        echo 'IconTheme=papirus' >> "$PRISM_DIR/prismlauncher.cfg"
+    fi
+else
+    warn "could not set Prism Launcher's icons"
+fi
+
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so
 # they work for any username. The folders are created if missing. An existing
 # bookmarks file is kept: only missing lines are added, so running this again
@@ -590,6 +615,21 @@ fi
 # Make the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \
          "$HOME"/.config/quickshell/scripts/*.sh
+
+# Orchis for Qt apps: the Kvantum version of the GTK apps' Orchis theme
+# (rounded, flat, modern buttons), from its author's repository
+# (vinceliuice/Orchis-kde, GPL-3.0), into ~/.config/Kvantum/Orchis
+if [[ ! -f "$HOME/.config/Kvantum/Orchis/OrchisDark.svg" ]]; then
+    ORCHIS_TMP="$(mktemp -d)"
+    if git clone -q --depth 1 https://github.com/vinceliuice/Orchis-kde.git "$ORCHIS_TMP/orchis-kde" &&
+        mkdir -p "$HOME/.config/Kvantum" &&
+        cp -r "$ORCHIS_TMP/orchis-kde/Kvantum/Orchis" "$HOME/.config/Kvantum/"; then
+        echo "Orchis Kvantum theme installed"
+    else
+        warn "could not download the Orchis Kvantum theme (Qt apps use KvArcDark instead)"
+    fi
+    rm -rf "$ORCHIS_TMP"
+fi
 
 # Frosted glass for Qt apps: the Kvantum theme in the current colors (it's
 # made again at every wallpaper change)

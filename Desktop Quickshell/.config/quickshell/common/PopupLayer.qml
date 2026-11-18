@@ -6,8 +6,8 @@
 // the frame takes the clicks of the whole screen, so a click outside the
 // panel (also on the button that opened it) or Escape closes it.
 // targetScreen is where it should be open (null: closed). It stays on
-// shownScreen while it closes; its loader in shell.qml keeps it loaded while
-// leaving is true.
+// shownScreen while it closes; its loader (common/PopupLoader.qml) keeps it
+// loaded until it's back in.
 //   attach  the frame side it grows out of; the bar's side unless set
 //           ("bottom" for the launcher, wallpaper picker and clipboard)
 //   place   along that side: "start", "center" or "end" (top bar: left,
@@ -51,8 +51,6 @@ Item {
     // read by the frame: while open it takes every click on the screen (not
     // while it closes: then clicks reach what's under it again)
     readonly property bool blocksScreen: open
-    // read by its loader: still going back into the frame
-    readonly property bool leaving: !open && progress > 0
 
     signal closeRequested
 
@@ -75,16 +73,25 @@ Item {
 
     // ── growing out of the frame ─────────────────────────────────────────
     // 0 = hidden in the frame, 1 = all the way out. Out quickly and slowing
-    // down at the end; back in starting slowly and speeding up.
+    // down at the end (280 ms); back in starting slowly and speeding up
+    // (220 ms). Started by hand (not a Behavior), so it also runs right after
+    // the popup is created.
     property real progress: 0
-    Behavior on progress {
-        NumberAnimation {
-            duration: popupLayer.open ? 280 : 220
-            easing.type: popupLayer.open ? Easing.OutQuint : Easing.InCubic
-        }
+    NumberAnimation {
+        id: slide
+        target: popupLayer
+        property: "progress"
+    }
+    function slideTo(value) {
+        slide.stop();
+        slide.from = progress;
+        slide.to = value;
+        slide.duration = value > progress ? 280 : 220;
+        slide.easing.type = value > progress ? Easing.OutQuint : Easing.InCubic;
+        slide.start();
     }
     onOpenChanged: {
-        progress = open ? 1 : 0;
+        slideTo(open ? 1 : 0);
         if (open)
             inner.forceActiveFocus();
     }
@@ -176,7 +183,7 @@ Item {
     Component.onCompleted: {
         if (targetScreen)
             shownScreen = targetScreen;
-        progress = open ? 1 : 0;
+        slideTo(open ? 1 : 0);
         inner.forceActiveFocus();
     }
 }

@@ -2,6 +2,59 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (6)
+
+### Fixed
+- **Desktop Quickshell: the popups open and close smoothly again**
+  (`common/PopupLayer.qml`, new `common/PopupLoader.qml`, `shell.qml`). Since
+  the popups are drawn in the frame's window they appeared and disappeared at
+  once: the grow animation was a `Behavior`, which doesn't run for the value
+  set right after the popup is created, and the loader dropped the popup the
+  moment it closed. Now the popup starts its own animation (out in 280 ms,
+  slowing down at the end; back in 220 ms, speeding up), also right after it's
+  created, and each popup's loader (`PopupLoader`) keeps it 300 ms after it
+  closes so it can go back into the frame first.
+
+### Changed
+- **Desktop Quickshell: modern Qt buttons** (`hypr/scripts/kvantum-glass.sh`,
+  `Install.sh`). The Qt glass theme ("VKGlass", was "KvArcDark#") is now made
+  from Orchis Dark, the Kvantum version of the GTK apps' Orchis theme: rounded,
+  flat buttons, fields and tabs like the GTK apps, with the same see-through
+  glass in the wallpaper's colors. `Install.sh` downloads it from
+  [Orchis-kde](https://github.com/vinceliuice/Orchis-kde) (GPL-3.0) into
+  `~/.config/Kvantum/Orchis` and adds `kvantum` and `kvantum-qt5`; without it
+  the script falls back to KvArcDark. The theme's own buttons are kept (no
+  more button color override).
+- **Desktop Quickshell: pavucontrol is back** (`Install.sh`,
+  `popups/Mixer.qml`, `services/Audio.qml`, `hypr/hyprland/rules.lua`). The
+  mixer's Edit button (its own list of hidden devices) is replaced by a
+  **Devices** button that opens pavucontrol on its Configuration tab: a sound
+  card's profile "Off" hides its outputs and inputs from the mixer, the bar
+  and every app, picking a profile shows them again (WirePlumber remembers
+  it). The mixer lists every device PipeWire has; the old hidden-devices file
+  (`~/.local/state/quickshell/.../hidden-audio-devices.json`) isn't used any
+  more. pavucontrol floats, centered, at 60 % x 70 %.
+- **All profiles: Prism Launcher uses the Papirus icons** (`Install.sh`): a
+  "Papirus" icon theme in `~/.local/share/PrismLauncher/iconthemes/papirus`
+  (Papirus-Dark, with Prism's Breeze Dark icons where Papirus has none),
+  selected in `prismlauncher.cfg` (`IconTheme=papirus`).
+- **All profiles: Solaar starts at login** (`hypr/hyprland/execs.lua`), hidden
+  in the tray, so the DPI and other settings set in it are set again every
+  time the mouse connects (after it sleeps, is turned on, or a reboot).
+  Solaar only does that while it runs. For a G502 X (or another mouse with
+  onboard profiles), set "Onboard Profiles" to "Disabled" in Solaar once;
+  otherwise the mouse goes back to its profile's DPI when it wakes up.
+- README: the Kvantum, mixer, Prism Launcher and Solaar notes.
+
+## 2026-11-18 (5)
+
+### Changed
+- **Desktop and Desktop Quickshell: `opendeck` instead of `opendeck-bin`**
+  (`Install.sh`). OpenDeck (the Stream Deck app) is now in Arch's official
+  `extra` repository (2.14.2), so it moved from the AUR list to the pacman
+  list: no AUR download or build any more. On a PC that has `opendeck-bin`,
+  pacman asks to replace it. No other profile installs OpenDeck.
+
 ## 2026-11-18 (4)
 
 ### Fixed

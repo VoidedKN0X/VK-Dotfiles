@@ -480,6 +480,28 @@ mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
+# Prism Launcher's icons from Papirus-Dark, like the rest of the desktop: an
+# icon theme in Prism's own icon theme folder that takes Papirus-Dark's icons
+# and Prism's own Breeze (dark) ones for what Papirus has no icon for (the
+# Minecraft-specific ones), picked in Prism's settings
+PRISM_DIR="$HOME/.local/share/PrismLauncher"
+if mkdir -p "$PRISM_DIR/iconthemes/papirus"; then
+    cat > "$PRISM_DIR/iconthemes/papirus/index.theme" <<'PRISMICONS'
+[Icon Theme]
+Name=Papirus
+Comment=Papirus-Dark, with Prism Launcher's Breeze icons where Papirus has none
+Inherits=Papirus-Dark,breeze_dark
+Directories=
+PRISMICONS
+    if grep -q '^IconTheme=' "$PRISM_DIR/prismlauncher.cfg" 2>/dev/null; then
+        sed -i 's/^IconTheme=.*/IconTheme=papirus/' "$PRISM_DIR/prismlauncher.cfg"
+    else
+        echo 'IconTheme=papirus' >> "$PRISM_DIR/prismlauncher.cfg"
+    fi
+else
+    warn "could not set Prism Launcher's icons"
+fi
+
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so
 # they work for any username. The folders are created if missing. An existing
 # bookmarks file is kept: only missing lines are added, so running this again

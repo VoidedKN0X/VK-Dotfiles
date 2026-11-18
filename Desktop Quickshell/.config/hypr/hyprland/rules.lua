@@ -4,6 +4,7 @@
 -- Small utility windows: float, sized, centered
 hl.window_rule({ match = { class = "nmtui" }, float = true, size = "60% 70%", center = true })
 hl.window_rule({ match = { class = "nwg-look" }, float = true, size = "50% 60%", center = true })
+hl.window_rule({ match = { class = "org\\.pulseaudio\\.pavucontrol" }, float = true, size = "60% 70%", center = true })
 
 -- Steam / Moonlight
 hl.window_rule({ match = { class = "steam" }, rounding = 10 })
