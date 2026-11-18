@@ -194,7 +194,7 @@ PACMAN_PKGS=(
 # The desktop itself needs these: installed on their own first, so a failed
 # build of one of the big optional apps below can't leave them out
 AUR_ESSENTIAL_PKGS=(
-    wallust
+    wallust-git
     bibata-cursor-theme-bin
     qt6ct-kde
 )

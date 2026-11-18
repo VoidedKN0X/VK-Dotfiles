@@ -2,6 +2,15 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18
+
+### Fixed
+- **Desktop Quickshell: back to `wallust-git`** (`Install.sh`). The stable
+  AUR `wallust` package from 2026-11-16 (3) doesn't resolve when
+  installing, so the profile installs `wallust-git` again, as before.
+  Checked every profile that uses wallust: Desktop, Desktop Quickshell,
+  Asus Laptop, Steam Deck and Clean all install `wallust-git`.
+
 ## 2026-11-16 (3)
 
 ### Fixed
