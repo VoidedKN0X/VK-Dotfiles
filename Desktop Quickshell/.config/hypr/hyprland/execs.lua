@@ -30,12 +30,7 @@ hl.on("hyprland.start", function()
     -- hl.exec_cmd("claude-desktop --startup --password-store=gnome-libsecret")
 
     -- Autostart apps
-    -- Solaar (Logitech mice and keyboards) in the tray: it remembers the
-    -- settings set in it (DPI, ...) and sets them again every time the device
-    -- connects: after it sleeps, is turned on, or a reboot. For the DPI to
-    -- stick, set "Onboard Profiles" to "Disabled" in Solaar once (the mouse
-    -- otherwise goes back to its own profile's DPI when it wakes up).
-    hl.exec_cmd("solaar --window=hide")
+    -- hl.exec_cmd("solaar --window=hide")
     -- hl.exec_cmd("steam -silent")
     -- hl.exec_cmd("element-desktop --hidden")
     -- hl.exec_cmd("discord --start-minimized")

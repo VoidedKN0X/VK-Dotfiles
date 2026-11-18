@@ -533,11 +533,6 @@ If you're not me, look at these before running anything:
   (`quickshell/services/Connectivity.qml`) and the CPU temperature sensor
   (`quickshell/scripts/stats.sh`).
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.
-- **Solaar** (Logitech mice and keyboards) starts hidden in the tray (`hypr/hyprland/execs.lua`)
-  and sets the DPI and other settings set in it again every time the device connects: after it
-  sleeps, is turned on, or a reboot. For a mouse with onboard profiles (G502 X and other
-  G mice), set **Onboard Profiles** to **Disabled** in Solaar once, then set the DPI; otherwise
-  the mouse goes back to its own profile's DPI when it wakes up.
 
 ## Structure
 
@@ -545,7 +540,7 @@ If you're not me, look at these before running anything:
 <profile>/                 # Desktop/, Desktop Quickshell/, Asus Laptop/, Steam Deck/ or Clean/
 ├── .config/               # Hyprland, waybar, swaync, rofi, wallust, foot, btop, fastfetch, ...
 ├── .zshrc                 # Shell config
-└── Install.sh             # Apps, services, shell, login screen, printer, firewall, copies the configs
+└── Install.sh             # The profile's apps, services and own steps; the rest via install-common.sh
 
 Post Install/
 ├── run-all-desktop.sh     # Kernel, boot and tuning for the desktop (both desktop profiles)
@@ -554,6 +549,8 @@ Post Install/
 ├── run-all-clean.sh       # Kernel, boot and tuning for the Clean profile (no Secure Boot, gaming extras optional)
 ├── steamdeck/             # Steam Deck BIOS update service (installed by run-all-steamdeck.sh)
 ├── run-all-common.sh      # Shared logic (used by the four scripts above; don't run it directly)
+├── install-common.sh      # The install steps every Install.sh shares (shell, login screen, firewall,
+│                          #   configs, ...); sourced by them, don't run it directly
 ├── cachyos-repo.sh        # Adds the CachyOS repos (run by Install.sh first, and by run-all-common.sh)
 └── yubikey-setup.sh       # YubiKey login + LUKS disk unlock (interactive)
 ```

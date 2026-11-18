@@ -2,6 +2,44 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (15)
+
+### Changed
+- **All profiles: one shared install script** (new
+  `Post Install/install-common.sh`, every profile's `Install.sh`). The five
+  `Install.sh` files were about 400 to 700 lines each and mostly the same
+  code. The shared steps are now functions in `install-common.sh`, written
+  once: sudo and the YubiKey questions, multilib, the CachyOS repos, the
+  pacman and AUR installs, earlyoom, Oh My Zsh, the cleanup, the services,
+  greetd and tuigreet (plain, pastel or with autologin), the NAS share, the
+  printer, the firewall rules, smartd, the config copy, the lock screen's
+  password field, the app entries, the EasyEffects presets, the Prism icons,
+  the Thunar bookmarks, the Kvantum glass, the post-install scripts and the
+  summary. Each profile's `Install.sh` keeps only its package lists,
+  services, the files it keeps on a re-run and its own steps (the Steam
+  Deck's power button and touchscreen, Clean's gaming question), and calls
+  the shared steps in order. About 900 lines less in total; a fix to a
+  shared step now reaches every profile.
+- Checked with a dry run of every profile, old and new script side by side
+  (every command stubbed and logged, the configs copied into an empty home):
+  the same commands with the same files written, in the same order, and the
+  same configs in the home folder. The differences:
+  - every profile now builds AUR packages without the review/clean questions
+    and removes build-only dependencies afterwards (`--answerdiff None
+    --answerclean None --removemake`; before, only Desktop Quickshell);
+  - `/media/TrueNAS` is created together with its fstab line (a few steps
+    earlier), and the Steam Deck's autologin user is written straight into
+    greetd's config instead of a placeholder replaced afterwards.
+
+### Removed
+- **Desktop Quickshell: `otf-codenewroman-nerd`** (only rofi and swaync use
+  it, and this profile has neither). **All profiles:
+  `ttf-firacode-nerd`** (no config uses it).
+- **All profiles: Solaar no longer starts at login** (`hypr/hyprland/execs.lua`,
+  README). The G502 X keeps its onboard profiles, so Solaar can't restore the
+  DPI anyway; the autostart line is commented out again, as before
+  2026-11-18 (6).
+
 ## 2026-11-18 (14)
 
 ### Removed
