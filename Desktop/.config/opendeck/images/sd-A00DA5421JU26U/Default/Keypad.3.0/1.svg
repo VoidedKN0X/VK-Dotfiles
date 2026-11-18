@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144">
+<rect width="144" height="144" fill="#000"/>
+
+<text x="72" y="64" text-anchor="middle" fill="#fff" font-size="28" font-family="sans-serif" font-weight="bold" textLength="120" lengthAdjust="spacingAndGlyphs">Soundbar</text>
+
+<rect x="12" y="126" width="120" height="10" rx="5" fill="#333"/>
+<rect x="12" y="126" width="120" height="10" rx="5" fill="#4caf50"/>
+</svg>

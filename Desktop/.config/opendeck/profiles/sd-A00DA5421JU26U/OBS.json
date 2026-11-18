@@ -1,0 +1,398 @@
+{
+  "infobars": [],
+  "keys": [
+    {
+      "action": {
+        "controllers": [
+          "Keypad"
+        ],
+        "disable_automatic_states": true,
+        "encoder": null,
+        "icon": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/setscene/icon.svg",
+        "name": "Scene",
+        "plugin": "dev.theca11.multiobs.sdPlugin",
+        "property_inspector": "plugins/dev.theca11.multiobs.sdPlugin/propertyInspector/inspector.html",
+        "states": [
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/setscene/key_on.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          },
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/setscene/key_off.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          }
+        ],
+        "supported_in_multi_actions": true,
+        "tooltip": "Set current scene",
+        "uuid": "dev.theca11.multiobs.setscene",
+        "visible_in_action_list": true
+      },
+      "children": null,
+      "context": "Keypad.0.0",
+      "current_state": 0,
+      "settings": {
+        "advanced": {
+          "bgColorActive": "#fefefe",
+          "bgColorInactive": "#fefefe",
+          "bgColorIntermediate": "#fefefe",
+          "fgColor": "#fefefe"
+        },
+        "common": {
+          "target": "1"
+        },
+        "params1": {
+          "sceneName": "Scene",
+          "studioTarget": "preview"
+        },
+        "params2": {
+          "studioTarget": "preview"
+        }
+      },
+      "states": [
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "0.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "Scene",
+          "text_override": null,
+          "underline": false
+        },
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "1.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "Scene",
+          "text_override": null,
+          "underline": false
+        }
+      ]
+    },
+    null,
+    null,
+    {
+      "action": {
+        "controllers": [
+          "Keypad",
+          "Encoder"
+        ],
+        "disable_automatic_states": false,
+        "encoder": null,
+        "icon": "plugins/com.amansprojects.starterpack.sdPlugin/icons/switchProfile.png",
+        "name": "Switch Profile",
+        "plugin": "com.amansprojects.starterpack.sdPlugin",
+        "property_inspector": "plugins/com.amansprojects.starterpack.sdPlugin/propertyInspector/switchProfile.html",
+        "states": [
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/com.amansprojects.starterpack.sdPlugin/icons/switchProfile.png",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          }
+        ],
+        "supported_in_multi_actions": true,
+        "tooltip": "Switch the selected profile",
+        "uuid": "com.amansprojects.starterpack.switchprofile",
+        "visible_in_action_list": true
+      },
+      "children": null,
+      "context": "Keypad.3.0",
+      "current_state": 0,
+      "settings": {},
+      "states": [
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "plugins/com.amansprojects.starterpack.sdPlugin/icons/switchProfile.png",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "",
+          "text_override": null,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "action": {
+        "controllers": [
+          "Keypad"
+        ],
+        "disable_automatic_states": true,
+        "encoder": null,
+        "icon": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglestream/icon.svg",
+        "name": "Stream",
+        "plugin": "dev.theca11.multiobs.sdPlugin",
+        "property_inspector": "plugins/dev.theca11.multiobs.sdPlugin/propertyInspector/inspector.html",
+        "states": [
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglestream/key_on.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "Start",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          },
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglestream/key_off.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "Stop",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          }
+        ],
+        "supported_in_multi_actions": true,
+        "tooltip": "Start/stop streaming",
+        "uuid": "dev.theca11.multiobs.togglestream",
+        "visible_in_action_list": true
+      },
+      "children": null,
+      "context": "Keypad.4.0",
+      "current_state": 1,
+      "settings": {
+        "advanced": {
+          "bgColorActive": "#fefefe",
+          "bgColorInactive": "#fefefe",
+          "bgColorIntermediate": "#fefefe",
+          "fgColor": "#fefefe"
+        },
+        "common": {
+          "target": "1"
+        }
+      },
+      "states": [
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "0.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "Start",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "",
+          "text_override": null,
+          "underline": false
+        },
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "1.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "Stop",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "",
+          "text_override": null,
+          "underline": false
+        }
+      ]
+    },
+    {
+      "action": {
+        "controllers": [
+          "Keypad"
+        ],
+        "disable_automatic_states": true,
+        "encoder": null,
+        "icon": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglerecord/icon.svg",
+        "name": "Record",
+        "plugin": "dev.theca11.multiobs.sdPlugin",
+        "property_inspector": "plugins/dev.theca11.multiobs.sdPlugin/propertyInspector/inspector.html",
+        "states": [
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglerecord/key_on.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "Start",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          },
+          {
+            "alignment": "middle",
+            "background_colour": "#000000",
+            "colour": "#FFFFFF",
+            "family": "Liberation Sans",
+            "image": "plugins/dev.theca11.multiobs.sdPlugin/assets/actions/togglerecord/key_off.svg",
+            "image_override": null,
+            "image_scale": 100,
+            "name": "Stop",
+            "show": true,
+            "size": 16,
+            "stroke_colour": "#000000",
+            "stroke_size": 3,
+            "style": "Regular",
+            "text": "",
+            "text_override": null,
+            "underline": false
+          }
+        ],
+        "supported_in_multi_actions": true,
+        "tooltip": "Start/stop recording",
+        "uuid": "dev.theca11.multiobs.togglerecord",
+        "visible_in_action_list": true
+      },
+      "children": null,
+      "context": "Keypad.5.0",
+      "current_state": 1,
+      "settings": {
+        "advanced": {
+          "bgColorActive": "#fefefe",
+          "bgColorInactive": "#fefefe",
+          "bgColorIntermediate": "#fefefe",
+          "fgColor": "#fefefe"
+        },
+        "common": {
+          "target": "1"
+        }
+      },
+      "states": [
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "0.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "Start",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "",
+          "text_override": null,
+          "underline": false
+        },
+        {
+          "alignment": "middle",
+          "background_colour": "#000000",
+          "colour": "#FFFFFF",
+          "family": "Liberation Sans",
+          "image": "1.svg",
+          "image_override": null,
+          "image_scale": 100,
+          "name": "Stop",
+          "show": true,
+          "size": 16,
+          "stroke_colour": "#000000",
+          "stroke_size": 3,
+          "style": "Regular",
+          "text": "",
+          "text_override": null,
+          "underline": false
+        }
+      ]
+    }
+  ],
+  "sliders": []
+}

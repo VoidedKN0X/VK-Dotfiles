@@ -1,0 +1,11 @@
+"use strict";
+(self["webpackChunkmulti_obs_controller_sdplugin"] = self["webpackChunkmulti_obs_controller_sdplugin"] || []).push([[779],{
+
+/***/ 5779:
+/***/ ((module) => {
+
+module.exports = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"144\" height=\"144\"><path fill=\"#EFEFEF\" fill-rule=\"evenodd\" d=\"M48 60l28-16v56L48 84V60zm-12 6l8-4v20l-8-4V66zm54-22l3-2 15 30.108L93 102l-3-2 14-27.892L90 44zm-5.5 14l3-2 8 16-8 16-3-2 7-14-7-14z\"/></svg>";
+
+/***/ })
+
+}]);

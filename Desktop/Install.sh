@@ -250,6 +250,8 @@ KEEP_IF_EXISTS=(
     btop/btop.conf
     gtk-3.0/vk-colors.css
     gtk-4.0/vk-colors.css
+    # the OBS plugin's settings: the repo has no password in them, yours is kept
+    opendeck/settings/dev.theca11.multiobs.sdPlugin.json
 )
 vk_copy_configs
 vk_hyprlock_password

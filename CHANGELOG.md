@@ -2,6 +2,23 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (23)
+
+### Added
+- **Desktop: the OpenDeck setup** (new `.config/opendeck/`, `Install.sh`):
+  the Stream Deck's profiles (Default and OBS) with their button images,
+  OpenDeck's settings, and three plugins: Linux Media
+  (`me.amankhanna.oampris`, 1.4.0, x86_64 only), Multi OBS Controller
+  (`dev.theca11.multiobs`, 0.8.2, MIT) and PipeWire Audio Control
+  (`com.sfgrimes.pipewire-audio`, 1.2.0, GPL-3.0). The config copy puts them
+  in `~/.config/opendeck`. Left out: the OpenDeck Starter Pack (it comes with
+  OpenDeck itself, matching its version), the plugins' ARM binary, and the
+  logs. About 12 MB.
+- The OBS plugin's settings are in the repo **without the OBS WebSocket
+  password** (the repo is public): on a new install, enter it once in the
+  plugin's settings. On a PC that already has it, `Install.sh` keeps the
+  existing file (`KEEP_IF_EXISTS`), so the password stays.
+
 ## 2026-11-18 (22)
 
 ### Fixed

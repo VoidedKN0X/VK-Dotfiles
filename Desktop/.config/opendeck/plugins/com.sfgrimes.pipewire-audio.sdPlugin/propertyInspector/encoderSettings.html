@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Encoder Display Settings</title>
+  <link rel="stylesheet" href="sdpi.css" />
+</head>
+<body>
+  <div class="sdpi-wrapper">
+    <div class="sdpi-heading">Display</div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Custom Name</div>
+      <div class="sdpi-item-value">
+        <input type="text" id="customName" placeholder="Leave blank for auto-detect" />
+      </div>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Options</div>
+      <div class="sdpi-item-value">
+        <input type="checkbox" id="showName" checked />
+        <label for="showName">Show device name</label>
+      </div>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label"></div>
+      <div class="sdpi-item-value">
+        <input type="checkbox" id="showBar" checked />
+        <label for="showBar">Show volume bar</label>
+      </div>
+    </div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label"></div>
+      <div class="sdpi-item-value">
+        <input type="checkbox" id="showPercent" />
+        <label for="showPercent">Show percentage</label>
+      </div>
+    </div>
+
+    <div class="sdpi-heading">Button Action</div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Action</div>
+      <div class="sdpi-item-value">
+        <select id="direction">
+          <option value="up">Up (increase)</option>
+          <option value="down">Down (decrease)</option>
+          <option value="mute">Mute Toggle</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sdpi-heading">Volume Step</div>
+    <div class="sdpi-item">
+      <div class="sdpi-item-label">Step Size</div>
+      <div class="sdpi-item-value">
+        <input type="range" id="volumeStep" min="1" max="20" value="5" />
+        <span id="volumeStepLabel">5%</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="sdpi-common.js"></script>
+  <script>
+    initPI();
+
+    function saveSettings() {
+      settings.direction = document.getElementById("direction").value;
+      saveDisplaySettings();
+      saveVolumeStep();
+      sendSettings();
+    }
+
+    document.getElementById("volumeStep").addEventListener("input", function () {
+      document.getElementById("volumeStepLabel").textContent = this.value + "%";
+    });
+
+    // Restore direction on settings load
+    if (settings.direction) document.getElementById("direction").value = settings.direction;
+
+    document.getElementById("direction").addEventListener("change", saveSettings);
+    document.getElementById("customName").addEventListener("change", saveSettings);
+    document.getElementById("showName").addEventListener("change", saveSettings);
+    document.getElementById("showBar").addEventListener("change", saveSettings);
+    document.getElementById("showPercent").addEventListener("change", saveSettings);
+    document.getElementById("volumeStep").addEventListener("change", saveSettings);
+  </script>
+</body>
+</html>
