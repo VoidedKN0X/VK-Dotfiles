@@ -2,6 +2,22 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (25)
+
+### Security
+- **Desktop: the PipeWire Audio Control OpenDeck plugin's `ws` library
+  updated from 8.19.0 to 8.23.0** (`.config/opendeck/plugins/
+  com.sfgrimes.pipewire-audio.sdPlugin/node_modules/ws`, `package-lock.json`).
+  GitHub's Dependabot reported two advisories for the bundled version:
+  CVE-2026-48779 (high: a peer can exhaust memory with many tiny WebSocket
+  fragments; fixed in 8.21.0) and CVE-2026-45736 (moderate: uninitialized
+  memory in `close()` with a typed-array reason; fixed in 8.20.1). The plugin
+  only talks to OpenDeck on localhost, so the real risk was small. The update
+  stays within the plugin's own version range (`^8.18.0`, same major
+  version, no API changes); `package.json` and the plugin's code are
+  unchanged. Checked: the plugin's code still parses, and the new `ws`
+  connects and exchanges messages like the plugin does.
+
 ## 2026-11-18 (24)
 
 ### Fixed
