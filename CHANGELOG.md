@@ -2,6 +2,16 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (26)
+
+### Removed
+- **Desktop, Asus Laptop, Steam Deck: darktable** (`Install.sh`,
+  `mimeapps.list`). The package is no longer installed, and its file
+  associations are gone: its own `.dtstyle` files and the HDR image formats it
+  opened (`image/aces`, `image/vnd.radiance`, `image/x-portable-floatmap`,
+  `image/x-hdr`), which now fall back to the system's default apps. RAW
+  photos still open in RapidRAW. Clean never had it.
+
 ## 2026-11-18 (25)
 
 ### Security

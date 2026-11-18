@@ -40,7 +40,6 @@ PACMAN_PKGS=(
     adobe-source-serif-fonts
     android-tools
     android-udev
-    darktable
     qbittorrent
     gamemode
     gimp
