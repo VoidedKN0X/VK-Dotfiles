@@ -93,9 +93,10 @@ It does the following:
 8. Copies `.config` and `.zshrc` into your home folder, and adds Documents, Downloads, Music
    and Pictures to Thunar's sidebar (`~/.config/gtk-3.0/bookmarks`, built from your home
    folder, so it works for any username; bookmarks you already have are kept).
-   Prism Launcher gets the Papirus-Dark icons (a "Papirus" icon theme in
-   `~/.local/share/PrismLauncher/iconthemes`, set in `prismlauncher.cfg`; icons Papirus doesn't
-   have come from Prism's own Breeze set).
+   Prism Launcher gets the icon packs made for it (Fluent Dark, Ore UI, OSX, iOS and Twemoji,
+   from its official [Themes](https://github.com/PrismLauncher/Themes) repository) in
+   `~/.local/share/PrismLauncher/iconthemes`, with Fluent Dark picked; switch in Prism's
+   Settings > Appearance.
 9. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
 

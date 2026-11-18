@@ -44,6 +44,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 import Quickshell.Services.Polkit
+import qs.common
 import qs.services
 import qs.background
 import qs.bar

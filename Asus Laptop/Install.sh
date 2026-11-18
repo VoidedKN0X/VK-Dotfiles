@@ -480,27 +480,27 @@ mkdir -p "$HOME/.local/share/applications"
 cp -r "$PROFILE_DIR/.local/share/applications/." "$HOME/.local/share/applications/"
 update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
 
-# Prism Launcher's icons from Papirus-Dark, like the rest of the desktop: an
-# icon theme in Prism's own icon theme folder that takes Papirus-Dark's icons
-# and Prism's own Breeze (dark) ones for what Papirus has no icon for (the
-# Minecraft-specific ones), picked in Prism's settings
+# Prism Launcher's icons: the icon packs made for Prism Launcher (its official
+# Themes repository: Fluent Dark, Ore UI, OSX, iOS, Twemoji) in Prism's own
+# icon theme folder, with Fluent Dark picked in Prism's settings: flat, light
+# line icons that fit the dark glass desktop (Settings > Appearance switches
+# between them).
 PRISM_DIR="$HOME/.local/share/PrismLauncher"
-if mkdir -p "$PRISM_DIR/iconthemes/papirus"; then
-    cat > "$PRISM_DIR/iconthemes/papirus/index.theme" <<'PRISMICONS'
-[Icon Theme]
-Name=Papirus
-Comment=Papirus-Dark, with Prism Launcher's Breeze icons where Papirus has none
-Inherits=Papirus-Dark,breeze_dark
-Directories=
-PRISMICONS
+PRISM_TMP=$(mktemp -d)
+if git clone -q --depth 1 https://github.com/PrismLauncher/Themes.git "$PRISM_TMP/themes" &&
+    mkdir -p "$PRISM_DIR/iconthemes" &&
+    cp -r "$PRISM_TMP/themes/icons/." "$PRISM_DIR/iconthemes/"; then
+    # (the Papirus theme an earlier version of this script made)
+    rm -rf "$PRISM_DIR/iconthemes/papirus"
     if grep -q '^IconTheme=' "$PRISM_DIR/prismlauncher.cfg" 2>/dev/null; then
-        sed -i 's/^IconTheme=.*/IconTheme=papirus/' "$PRISM_DIR/prismlauncher.cfg"
+        sed -i 's/^IconTheme=.*/IconTheme=Fluent-Dark/' "$PRISM_DIR/prismlauncher.cfg"
     else
-        echo 'IconTheme=papirus' >> "$PRISM_DIR/prismlauncher.cfg"
+        echo 'IconTheme=Fluent-Dark' >> "$PRISM_DIR/prismlauncher.cfg"
     fi
 else
-    warn "could not set Prism Launcher's icons"
+    warn "could not download Prism Launcher's icon packs"
 fi
+rm -rf "$PRISM_TMP"
 
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so
 # they work for any username. The folders are created if missing. An existing

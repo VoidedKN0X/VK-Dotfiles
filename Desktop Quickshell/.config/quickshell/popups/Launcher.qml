@@ -28,6 +28,8 @@ PopupLayer {
 
     readonly property int rows: 8
     readonly property int rowHeight: 48
+    // where the mouse last was (scene position): see the rows' MouseArea
+    property point lastMouse: Qt.point(-1, -1)
 
     // the matching apps, A to Z (case and accents ignored, numbers in order:
     // "App 2" before "App 10")
@@ -83,15 +85,39 @@ PopupLayer {
             currentIndex: 0
             boundsBehavior: Flickable.StopAtBounds
             highlightMoveDuration: 120
+            // every row made up front (their icons too), so scrolling never
+            // waits for icons to load
+            cacheBuffer: Math.max(0, count * launcher.rowHeight)
 
-            // the mouse wheel: three apps per notch, at once (Qt's own wheel
-            // scrolling moves only a few pixels per notch); touchpads scroll
-            // by their own distance
+            // the mouse wheel: three apps per notch, gliding there in 150 ms
+            // (Qt's own wheel scrolling moves only a few pixels per notch; on
+            // Wayland a wheel notch also has a small pixelDelta, which the
+            // last version used, so it still crawled). Touchpads (a scroll
+            // phase) scroll by their own distance.
             WheelHandler {
+                acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                 onWheel: event => {
-                    const dy = event.pixelDelta.y !== 0 ? event.pixelDelta.y : event.angleDelta.y / 120 * 3 * launcher.rowHeight;
-                    list.contentY = Math.max(0, Math.min(list.contentHeight - list.height, list.contentY - dy));
+                    const touchpad = event.phase !== Qt.NoScrollPhase || event.angleDelta.y === 0;
+                    const dy = touchpad ? event.pixelDelta.y : event.angleDelta.y / 120 * 3 * launcher.rowHeight;
+                    const from = glide.running ? glide.to : list.contentY;
+                    const to = Math.max(0, Math.min(list.contentHeight - list.height, from - dy));
+                    glide.stop();
+                    if (touchpad) {
+                        list.contentY = to;
+                    } else {
+                        glide.from = list.contentY;
+                        glide.to = to;
+                        glide.start();
+                    }
+                    event.accepted = true;
                 }
+            }
+            NumberAnimation {
+                id: glide
+                target: list
+                property: "contentY"
+                duration: 150
+                easing.type: Easing.OutCubic
             }
 
             highlight: Rectangle {
@@ -142,7 +168,16 @@ PopupLayer {
                     anchors.fill: parent
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
-                    onEntered: list.currentIndex = row.index
+                    // only when the mouse itself moves: rows scrolling under a
+                    // still mouse don't move the selection (that made the list
+                    // jump back to keep the selected row in view)
+                    onPositionChanged: mouse => {
+                        const p = mapToItem(null, mouse.x, mouse.y);
+                        if (p.x !== launcher.lastMouse.x || p.y !== launcher.lastMouse.y) {
+                            launcher.lastMouse = p;
+                            list.currentIndex = row.index;
+                        }
+                    }
                     onClicked: launcher.launch(row.modelData)
                 }
             }

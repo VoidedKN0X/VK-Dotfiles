@@ -2,6 +2,55 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (7)
+
+### Fixed
+- **Desktop Quickshell: Quickshell starts again** (`shell.qml`). The popup
+  loaders from the previous change (`PopupLoader`, in `common/`) were used in
+  `shell.qml` without importing `qs.common`, so the whole shell failed to load
+  ("PopupLoader is not a type").
+- **Desktop Quickshell: LibreWolf's address bar suggestions have a
+  background again** (new `hypr/scripts/librewolf-chrome.sh`, run by
+  `wallpaper.sh` at login and every wallpaper change, and by `Install.sh`).
+  LibreWolf takes its address bar colors from GTK, and the GTK glass
+  (`gtk-3.0/gtk.css`) made those see-through, so the suggestions were drawn
+  over the page with no background. The script writes a `userChrome.css` part
+  (between "vk-dotfiles" marker lines; the rest of the file is kept) into
+  every LibreWolf profile (`~/.librewolf` and `~/.config/librewolf/librewolf`)
+  that gives the address bar and its suggestions a solid background in the
+  wallpaper's colors, and turns on
+  `toolkit.legacyUserProfileCustomizations.stylesheets` in the profile's
+  `user.js`. Takes effect when LibreWolf is started again.
+- **Desktop Quickshell: the app launcher scrolls quickly**
+  (`popups/Launcher.qml`). On Wayland a mouse wheel notch also comes with a
+  small pixel distance, which the last version used instead of its own
+  "three apps per notch", so it still crawled. Now a wheel notch (no scroll
+  phase) moves three apps, gliding there in 150 ms; touchpads still scroll by
+  their own distance. All rows are made up front (`cacheBuffer`), so
+  scrolling never waits for icons to load, and rows passing under a still
+  mouse no longer move the selection (which made the list jump back).
+
+- **Desktop Quickshell: LACT is no longer see-through without blur**
+  (new `hypr/scripts/solid-gtk.sh`, new
+  `.local/share/applications/io.github.ilya_zlobintsev.LACT.desktop`). LACT
+  got the GTK glass like the other GTK 4 apps, but Hyprland doesn't blur
+  behind it, so the wallpaper showed through sharp, whatever GTK renderer or
+  theme it used (an `opaque` window rule didn't change that). LACT now starts
+  without the glass, in its normal solid dark theme: `solid-gtk.sh` gives it a
+  GTK config folder of its own (`~/.config/vk-solid`) with the GTK settings
+  but without the glass `gtk.css`, and links LACT's own config folder in.
+
+### Changed
+- **All profiles: Prism Launcher's icons are the packs made for it**
+  (`Install.sh`), instead of Papirus (which didn't match). `Install.sh`
+  downloads the icon packs from Prism Launcher's official
+  [Themes](https://github.com/PrismLauncher/Themes) repository (Fluent Dark,
+  Ore UI, OSX, iOS, Twemoji; each with its own license file) into
+  `~/.local/share/PrismLauncher/iconthemes`, picks Fluent Dark (flat, light
+  line icons that fit the dark desktop) in `prismlauncher.cfg`, and removes
+  the old "papirus" theme. The others can be picked in Prism's Settings >
+  Appearance.
+
 ## 2026-11-18 (6)
 
 ### Fixed
