@@ -183,6 +183,9 @@ PACMAN_PKGS=(
     rtkit
     easyeffects
     calf
+    # EasyEffects' equalizer, compressor, delay and loudness (without it the
+    # equalizer can't be added or does nothing)
+    lsp-plugins-lv2
     librewolf
     otf-geist-mono-nerd
     bluez

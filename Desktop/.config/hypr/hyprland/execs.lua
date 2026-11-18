@@ -45,5 +45,10 @@ hl.on("hyprland.start", function()
     -- hl.exec_cmd("opendeck --hide")
     -- hl.exec_cmd("localsend --hidden")
     -- hl.exec_cmd("heroic")
-    -- hl.exec_cmd("easyeffects --hide-window --service-mode")
+    -- EasyEffects in the background (its effects only work while it runs).
+    -- Started hidden on purpose: EasyEffects 8.3.2 can crash when it starts
+    -- with its window open on the Output page and effects to restore
+    -- (github.com/wwmm/easyeffects/issues/5456); opening the window of the
+    -- one already running (app launcher or its tray icon) works.
+    hl.exec_cmd("easyeffects --hide-window --service-mode")
 end)

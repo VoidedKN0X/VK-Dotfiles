@@ -2,6 +2,31 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-18 (9)
+
+### Changed
+- **Desktop Quickshell: Kvantum Manager is hidden from the app launcher**
+  (new `.local/share/applications/kvantummanager.desktop`, with
+  `NoDisplay=true`, like "About Xfce"). The Qt glass theme is made by
+  `hypr/scripts/kvantum-glass.sh` at every wallpaper change, so there's
+  nothing to set in it; `kvantummanager` still opens it from a terminal.
+
+### Fixed
+- **Desktop and Desktop Quickshell: EasyEffects' equalizer works**
+  (`Install.sh`). The equalizer (and the compressor, delay and loudness
+  effects) come from the LSP plugins, an optional dependency of the
+  `easyeffects` package that wasn't installed; `lsp-plugins-lv2` is now in
+  the package list, next to `calf`.
+- **Desktop and Desktop Quickshell: EasyEffects no longer crashes when it
+  starts** (`hypr/hyprland/execs.lua`, `easyeffects/db/easyeffectsrc`).
+  EasyEffects 8.3.2 can crash (a segfault in Qt's QML engine) when it starts
+  with its window open on the Output page while it restores its effects
+  ([easyeffects#5456](https://github.com/wwmm/easyeffects/issues/5456), not
+  fixed yet). It now starts hidden in the background at login
+  (`easyeffects --hide-window --service-mode`, which also keeps its effects
+  working with the window closed); opening it from the app launcher or its
+  tray icon (now turned on) shows the window of the one that's running.
+
 ## 2026-11-18 (8)
 
 ### Fixed

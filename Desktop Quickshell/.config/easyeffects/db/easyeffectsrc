@@ -9,5 +9,5 @@ visiblePlugin=bass_enhancer#0
 
 [Window]
 height=1367
-showTrayIcon=false
+showTrayIcon=true
 width=1699
