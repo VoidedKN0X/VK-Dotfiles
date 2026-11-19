@@ -77,8 +77,6 @@ PACMAN_PKGS=(
     7zip
     qt6-multimedia-ffmpeg
     jre-openjdk
-    vulkan-intel
-    lib32-vulkan-intel
     sbctl
     chromium
     xdg-user-dirs
@@ -163,8 +161,6 @@ PACMAN_PKGS=(
     networkmanager
     # battery: critical-charge action (CriticalPowerAction)
     upower
-    # hardware video decoding (VA-API) on Intel graphics, saves battery
-    intel-media-driver
 )
 
 # === Packages (AUR, via yay) ===
@@ -209,7 +205,11 @@ SERVICES=(
 # === Apps ===
 vk_enable_multilib
 vk_cachyos_repos
+# graphics drivers (64- and 32-bit) for this laptop's Intel or AMD graphics,
+# detected, with hardware video decoding (saves battery); Intel: also thermald
+vk_hw_drivers lib32
 vk_install_pacman
+vk_nvidia_sleep
 vk_earlyoom "qs|quickshell"
 vk_install_aur
 # the Belgian eID middleware (eid-mw), with a temporary OpenSSL 4.0 fix
@@ -219,6 +219,8 @@ vk_cleanup
 
 # === Services and login screen ===
 vk_mask_power_daemons
+# auto-cpufreq: full speed on AC, the longest battery life on battery
+vk_auto_cpufreq
 vk_enable_services
 # tuigreet in pastel colors of your wallpaper (until the first wallpaper
 # change: yours if you have them, else the ones this profile ships with)

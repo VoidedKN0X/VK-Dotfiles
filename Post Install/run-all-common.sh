@@ -37,14 +37,16 @@
 #   D. fstab noatime (REBOOT required)
 #   E. systemd-boot kernel cmdline: transparent_hugepage=madvise,
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog,
-#      zswap.enabled=0 when zram is used, and on the desktop with an AMD
-#      graphics card amdgpu.ppfeaturemask=0xfff7ffff (overclocking in LACT)
+#      zswap.enabled=0 when zram is used, and on the desktop nowatchdog and,
+#      with an AMD graphics card, amdgpu.ppfeaturemask=0xfff7ffff
+#      (overclocking in LACT)
 #      (REBOOT required). The cmdline is written in stage 2, before the images
 #      are built, so later stages don't have to rebuild for it.
 #   F. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
 #      default PipeWire quantum
 #   G. CPU governor "performance" on every core, now and at every boot
-#      (desktop only: on the laptop and the Deck it would cost battery)
+#      (the desktop, and Clean on a desktop PC; laptops use auto-cpufreq),
+#      and on the desktop the AMD chipset watchdog off (REBOOT required)
 #
 # Persistence:
 #   /etc/sysctl.d/99-perf-tune.conf
@@ -52,7 +54,8 @@
 #   /etc/modules-load.d/bbr.conf
 #   /etc/tmpfiles.d/thp-defrag.conf
 #   /etc/modprobe.d/audio-disable-power-save.conf (desktop)
-#   /etc/tmpfiles.d/cpu-governor.conf (desktop)
+#   /etc/tmpfiles.d/cpu-governor.conf (desktop, Clean on a desktop PC)
+#   /etc/modprobe.d/blacklist-watchdog.conf (desktop)
 #   /etc/pipewire/pipewire.conf.d/99-low-latency.conf
 #   /etc/kernel/cmdline (modified, systemd-boot)
 #   /etc/fstab           (modified)
@@ -61,6 +64,10 @@
 # there is nothing worth preserving. It takes no command-line arguments.
 
 # === PROFILE (must be set by the sourcing entry point) ===
+# hw_cpu_vendor, hw_gpu_vendors, hw_nvidia_supported, hw_is_laptop
+# shellcheck source=hw-detect.sh
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/hw-detect.sh"
+
 if [[ -z "${PROFILE_NAME:-}" ]]; then
   echo "Error: run run-all-desktop.sh, run-all-laptop.sh, run-all-steamdeck.sh or run-all-clean.sh, not this file." >&2
   exit 2
@@ -101,6 +108,15 @@ NEW_PARAMS+=(quiet splash plymouth.boot-log=/dev/null plymouth.nolog)
 # depending on which files the image includes.
 if [[ "$PROFILE_NAME" == "desktop" ]] && grep -qsx '0x1002' /sys/class/drm/card*/device/vendor; then
   NEW_PARAMS+=(amdgpu.ppfeaturemask=0xfff7ffff)
+fi
+
+# Watchdogs off (desktop): the kernel's lockup detectors (nowatchdog; the NMI
+# one is also off through sysctl in stage 4) wake every CPU periodically to
+# check it isn't stuck. Only useful to debug kernel hangs; off is a little
+# less overhead and jitter. (The AMD chipset's hardware watchdog, sp5100_tco,
+# is blacklisted in stage 4.)
+if [[ "$PROFILE_NAME" == "desktop" ]]; then
+  NEW_PARAMS+=(nowatchdog)
 fi
 
 # Swap on zram (archinstall sets it up by default): zram is used when it's
@@ -457,7 +473,10 @@ fi
 EXTRA_PKGS=()
 NVIDIA_DRIVER=""
 if pacman -Q nvidia-open >/dev/null 2>&1; then NVIDIA_DRIVER="nvidia-open"
-elif pacman -Q nvidia >/dev/null 2>&1; then NVIDIA_DRIVER="nvidia"; fi
+elif pacman -Q nvidia >/dev/null 2>&1; then NVIDIA_DRIVER="nvidia"
+# Install.sh installed only the driver's libraries (vk_hw_drivers) for a
+# supported card (GTX 16 / RTX 20 and newer): the module is the open one
+elif pacman -Q nvidia-utils >/dev/null 2>&1 && hw_nvidia_supported; then NVIDIA_DRIVER="nvidia-open"; fi
 if [[ -n "$NVIDIA_DRIVER" ]]; then
   EXTRA_PKGS+=("$PKG_BASE-$NVIDIA_DRIVER")
   warn "NVIDIA driver '$NVIDIA_DRIVER' detected -> adding ${PKG_BASE}-${NVIDIA_DRIVER}"
@@ -561,6 +580,12 @@ remove_one() {
   for mod in nvidia nvidia-open zfs; do
     pacman -Q "$base-$mod" >/dev/null 2>&1 && pkgs+=("$base-$mod")
   done
+  # Arch's own NVIDIA modules for its kernels have other names (nvidia-open
+  # for linux, nvidia-lts-open for linux-lts) and would block the removal
+  case "$base" in
+    linux) for mod in nvidia nvidia-open; do pacman -Q "$mod" >/dev/null 2>&1 && pkgs+=("$mod"); done ;;
+    linux-lts) for mod in nvidia-lts nvidia-lts-open; do pacman -Q "$mod" >/dev/null 2>&1 && pkgs+=("$mod"); done ;;
+  esac
   echo "Removing: ${pkgs[*]}"
   if pacman -Rns --noconfirm "${pkgs[@]}"; then
     ok "removed $base"
@@ -625,6 +650,12 @@ for base in "${REMOVE[@]}"; do
   for suffix in headers dbg nvidia nvidia-open zfs; do
     pacman -Q "$base-$suffix" >/dev/null 2>&1 && pkgs+=("$base-$suffix")
   done
+  # Arch's own NVIDIA modules (nvidia-open for linux, nvidia-lts-open for
+  # linux-lts) would block the removal
+  case "$base" in
+    linux) for mod in nvidia nvidia-open; do pacman -Q "$mod" >/dev/null 2>&1 && pkgs+=("$mod"); done ;;
+    linux-lts) for mod in nvidia-lts nvidia-lts-open; do pacman -Q "$mod" >/dev/null 2>&1 && pkgs+=("$mod"); done ;;
+  esac
   # only errors are kept in the journal (pacman prints them on stderr)
   if ! pacman -Rns --noconfirm "${pkgs[@]}" >/dev/null; then
     log "failed to remove $base"
@@ -1183,20 +1214,27 @@ ok "Wrote $PIPEWIRE_CONF"
 # (rtkit package + rtkit-daemon service are installed and enabled by Install.sh)
 
 # =====================================================================
-section "G. CPU governor"
+section "G. CPU governor and watchdogs"
 
-# Desktop only: every core on the "performance" governor, now and at every
-# boot (a tmpfiles entry). With AMD's amd-pstate-epp driver that also sets the
-# energy preference to performance: the cores ramp up at once instead of
-# after a moment, so no lag at the start of a load. Idle cores still sleep
-# (C-states), so it costs a few watts at idle, not much more. The default is
-# "powersave" (which on amd-pstate-epp still boosts, just less eagerly);
-# GameMode switches to performance only while a game runs, and on this
-# desktop it stays there (defaultgov in ~/.config/gamemode.ini). Not on the
-# laptop and the Deck: there it would cost battery.
+# Every core on the "performance" governor, now and at every boot (a tmpfiles
+# entry), on the desktop and on the Clean profile on a desktop PC (no battery,
+# not a laptop case: hw_is_laptop). With the amd-pstate-epp (AMD) or
+# intel_pstate (Intel) driver that also sets the energy preference to
+# performance: the cores ramp up at once instead of after a moment, so no lag
+# at the start of a load. Idle cores still sleep (C-states), so it costs a few
+# watts at idle, not much more. The default is "powersave" (which still
+# boosts, just less eagerly). GameMode keeps it (on the desktop with
+# defaultgov in ~/.config/gamemode.ini, on Clean because it was performance
+# before the game). Laptops (the laptop and the Deck, and Clean on a laptop)
+# get auto-cpufreq instead (Install.sh): full speed on AC, battery saving on
+# battery.
 GOV_TMPFILES="/etc/tmpfiles.d/cpu-governor.conf"
-if [[ "$PROFILE_NAME" != "desktop" ]]; then
-  ok "CPU governor left to the system ($PROFILE_NAME: saves battery)"
+FULL_SPEED=0
+if [[ "$PROFILE_NAME" == "desktop" ]] || { [[ "$PROFILE_NAME" == "clean" ]] && ! hw_is_laptop; }; then
+  FULL_SPEED=1
+fi
+if [[ $FULL_SPEED -eq 0 ]]; then
+  ok "CPU governor left to auto-cpufreq ($PROFILE_NAME: full speed on AC, battery saving on battery)"
 elif ! grep -qw performance /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors 2>/dev/null; then
   warn "this CPU's frequency driver has no performance governor - skipped"
 else
@@ -1204,6 +1242,16 @@ else
     "$TUNE_NAME" > "$GOV_TMPFILES"
   systemd-tmpfiles --create "$GOV_TMPFILES"
   ok "CPU governor = performance, kept after reboots via $GOV_TMPFILES"
+fi
+
+# Desktop: the AMD chipset's hardware watchdog (sp5100_tco) not loaded. Like
+# the kernel's lockup detectors (nowatchdog on the kernel cmdline, stage 2),
+# it's only useful to catch a hung system, and it can delay shutdowns.
+# (REBOOT required)
+WDT_CONF="/etc/modprobe.d/blacklist-watchdog.conf"
+if [[ "$PROFILE_NAME" == "desktop" && "$(hw_cpu_vendor)" == "amd" ]]; then
+  printf '# Generated by %s\n# AMD chipset hardware watchdog: not used\nblacklist sp5100_tco\n' "$TUNE_NAME" > "$WDT_CONF"
+  ok "Wrote $WDT_CONF (sp5100_tco not loaded after the next reboot)"
 fi
 
 # =====================================================================
@@ -1330,8 +1378,8 @@ else
   fail "audio: rtkit-daemon not active"
 fi
 
-# Section G - CPU governor
-if [[ "$PROFILE_NAME" == "desktop" && -f "$GOV_TMPFILES" ]]; then
+# Section G - CPU governor and watchdogs
+if [[ $FULL_SPEED -eq 1 && -f "$GOV_TMPFILES" ]]; then
   gov_other=$(grep -L '^performance$' /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | wc -l)
   if [[ $gov_other -eq 0 ]]; then
     ok "CPU governor: performance on every core"
@@ -1339,6 +1387,9 @@ if [[ "$PROFILE_NAME" == "desktop" && -f "$GOV_TMPFILES" ]]; then
     fail "CPU governor: $gov_other core(s) not on performance"
   fi
   ok "persist: $GOV_TMPFILES"
+fi
+if [[ "$PROFILE_NAME" == "desktop" && "$(hw_cpu_vendor)" == "amd" ]]; then
+  [[ -f "$WDT_CONF" ]] && ok "persist: $WDT_CONF" || fail "persist: $WDT_CONF missing"
 fi
 
 # =====================================================================
@@ -1364,12 +1415,14 @@ Persistence files:
 EOF
 [[ "$GAMING" == "1" ]] && echo "  $NTSYNC_CONF"
 [[ "$PROFILE_NAME" == "desktop" ]] && echo "  $HDA_CONF"
-[[ -f "$GOV_TMPFILES" && "$PROFILE_NAME" == "desktop" ]] && echo "  $GOV_TMPFILES"
+[[ -f "$GOV_TMPFILES" && $FULL_SPEED -eq 1 ]] && echo "  $GOV_TMPFILES"
+[[ -f "$WDT_CONF" && "$PROFILE_NAME" == "desktop" ]] && echo "  $WDT_CONF"
 cat <<EOF
 
 ACTION REQUIRED (won't take effect until you do):
   REBOOT - fstab noatime, the kernel cmdline (THP, Plymouth), the new
            modules-load and udev rules, and on the desktop the HDA power-save
+           and the chipset watchdog blacklist
 EOF
 
 if [[ $FAIL -gt 0 ]]; then

@@ -33,8 +33,8 @@ else
 fi
 
 # === Packages (official repos) ===
-# Only what the config uses. Graphics drivers and CPU microcode aren't here:
-# archinstall installs the right ones for your hardware.
+# Only what the config uses. The graphics drivers are added for the hardware
+# it finds (vk_hw_drivers, below); the CPU microcode comes from archinstall.
 PACMAN_PKGS=(
     # base tools (AUR builds, the shell's `clean` function, unzip for wallpapers etc.)
     base-devel
@@ -158,16 +158,36 @@ SERVICES=(
     pkgfile-update.timer
 )
 
+# A laptop (detected: a battery or a laptop case): auto-cpufreq, full speed on
+# AC and the longest battery life on battery. A desktop PC runs at full speed
+# all the time instead (the performance governor, set by run-all-clean.sh).
+if hw_is_laptop; then
+    PACMAN_PKGS+=(auto-cpufreq)
+    SERVICES+=(auto-cpufreq.service)
+fi
+
 # === Apps ===
 vk_enable_multilib
 vk_cachyos_repos
+# graphics drivers for the AMD, Intel and/or NVIDIA chips it finds (with the
+# gaming extras also the 32-bit ones); on an Intel laptop also thermald
+if [[ $GAMING_FLAG == --gaming ]]; then
+    vk_hw_drivers lib32
+else
+    vk_hw_drivers
+fi
 vk_install_pacman
+vk_nvidia_sleep
 vk_earlyoom "qs|quickshell"
 vk_install_aur
 vk_oh_my_zsh
 vk_cleanup
 
 # === Services and login screen ===
+if hw_is_laptop; then
+    vk_mask_power_daemons
+    vk_auto_cpufreq
+fi
 vk_enable_services
 # tuigreet in pastel colors of your wallpaper (until the first wallpaper
 # change: yours if you have them, else the ones this profile ships with)

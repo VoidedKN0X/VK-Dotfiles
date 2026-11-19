@@ -16,6 +16,9 @@
 POST_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 WARNINGS=0
 warn() { echo "WARNING: $*" >&2; WARNINGS=$((WARNINGS + 1)); }
+# hw_cpu_vendor, hw_gpu_vendors, hw_nvidia_supported, hw_is_laptop
+# shellcheck source=hw-detect.sh
+source "$POST_DIR/hw-detect.sh"
 
 # ── start ─────────────────────────────────────────────────────────────────
 
@@ -74,6 +77,64 @@ vk_cachyos_repos() {
 # depends on it). -Syu also refreshes the package lists (needed after enabling
 # multilib) and avoids installing onto an out-of-date system (a partial
 # upgrade).
+# Graphics drivers for the chips this PC has (detected, see hw-detect.sh),
+# added to PACMAN_PKGS before vk_install_pacman; "lib32": also the 32-bit
+# ones (Steam and Wine games).
+# - AMD: Vulkan (RADV); OpenGL and video decoding are in mesa already
+# - Intel: Vulkan (ANV) and video decoding (intel-media-driver, Broadwell and
+#   newer)
+# - NVIDIA, GTX 16 / RTX 20 and newer: the driver's libraries and its VA-API
+#   video decoding; the kernel module comes with the CachyOS kernel
+#   (run-all-common.sh adds linux-cachyos-nvidia-open), and vk_nvidia_sleep
+#   sets up sleep. With a second (built-in) graphics chip, as in most
+#   laptops: also prime-run (nvidia-prime) to start a game on the NVIDIA
+#   card; the desktop itself stays on the built-in one, for the battery.
+# - NVIDIA, GTX 10 and older: the current driver no longer supports them, so
+#   the open-source driver (nouveau, with NVK for Vulkan) stays; the legacy
+#   proprietary one is nvidia-580xx-dkms in the AUR, to install yourself.
+# Intel laptops also get thermald (Intel's thermal daemon: cools before the
+# CPU has to throttle hard), added to SERVICES.
+vk_hw_drivers() {
+    local lib32=${1:-} vendors
+    vendors=$(hw_gpu_vendors)
+    if grep -qx amd <<<"$vendors"; then
+        PACMAN_PKGS+=(vulkan-radeon)
+        [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-vulkan-radeon)
+    fi
+    if grep -qx intel <<<"$vendors"; then
+        PACMAN_PKGS+=(vulkan-intel intel-media-driver)
+        [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-vulkan-intel)
+    fi
+    if grep -qx nvidia <<<"$vendors"; then
+        if hw_nvidia_supported; then
+            PACMAN_PKGS+=(nvidia-utils libva-nvidia-driver)
+            [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-nvidia-utils)
+            grep -qxE 'amd|intel' <<<"$vendors" && PACMAN_PKGS+=(nvidia-prime)
+        else
+            PACMAN_PKGS+=(vulkan-nouveau)
+            [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-vulkan-nouveau)
+            warn "older NVIDIA card (GTX 10 or older): the open-source driver stays; for NVIDIA's own, install nvidia-580xx-dkms from the AUR"
+        fi
+    fi
+    [[ -z $vendors ]] && warn "no graphics chip found: no graphics drivers added"
+    if hw_is_laptop && [[ $(hw_cpu_vendor) == intel ]]; then
+        PACMAN_PKGS+=(thermald)
+        SERVICES+=(thermald.service)
+    fi
+}
+
+# NVIDIA and sleep: the driver keeps the graphics memory in RAM while asleep
+# (else apps and the desktop lose it and show garbage after waking), with its
+# suspend/hibernate/resume services. Only when the NVIDIA driver is installed
+# (vk_hw_drivers); enabled, not started (starting them prepares a suspend).
+vk_nvidia_sleep() {
+    pacman -Q nvidia-utils >/dev/null 2>&1 || return 0
+    echo "options nvidia NVreg_PreserveVideoMemoryAllocations=1" |
+        sudo tee /etc/modprobe.d/nvidia-sleep.conf >/dev/null
+    sudo systemctl enable nvidia-suspend.service nvidia-hibernate.service nvidia-resume.service ||
+        warn "could not enable NVIDIA's sleep services"
+}
+
 vk_install_pacman() {
     sudo pacman -Syu --needed "${PACMAN_PKGS[@]}" || { echo "pacman install failed, stopping." >&2; exit 1; }
 }
@@ -171,6 +232,32 @@ vk_mask_power_daemons() {
     for unit in power-profiles-daemon.service tuned.service tuned-ppd.service tlp.service; do
         systemctl list-unit-files "$unit" >/dev/null 2>&1 && sudo systemctl mask --now "$unit"
     done
+}
+
+# auto-cpufreq's settings (/etc/auto-cpufreq.conf), the same on Intel and AMD:
+# - on AC: full speed: governor performance, energy preference performance,
+#   boost always on
+# - on battery: the longest battery life: governor powersave, energy
+#   preference power, boost off (the CPU stays at its base clock: noticeably
+#   slower under load, but much cooler and longer on battery)
+# auto-cpufreq checks the power source every few seconds and switches.
+vk_auto_cpufreq() {
+    sudo tee /etc/auto-cpufreq.conf >/dev/null <<'EOF'
+# auto-cpufreq: full speed on AC, the longest battery life on battery
+# (written by VK-Dotfiles' install, vk_auto_cpufreq)
+
+[charger]
+governor = performance
+energy_performance_preference = performance
+turbo = always
+
+[battery]
+governor = powersave
+energy_performance_preference = power
+turbo = never
+EOF
+    systemctl is-active --quiet auto-cpufreq.service && sudo systemctl restart auto-cpufreq.service
+    return 0
 }
 
 # Enable and start $SERVICES one by one, so one missing unit doesn't skip all

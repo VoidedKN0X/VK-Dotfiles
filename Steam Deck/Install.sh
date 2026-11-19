@@ -216,6 +216,8 @@ vk_cleanup
 
 # === Services and login screen ===
 vk_mask_power_daemons
+# auto-cpufreq: full speed on AC, the longest battery life on battery
+vk_auto_cpufreq
 vk_enable_services
 # Tailscale: lets you control it (and its tray icon) without sudo. Log in once
 # from the tray icon, or with: tailscale up

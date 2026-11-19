@@ -2,6 +2,99 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-19 (2)
+
+Each profile now gets the tuning for the hardware it runs on.
+
+### Added
+- **`Post Install/hw-detect.sh`** (new). It holds the hardware detection that
+  `install-common.sh` and `run-all-common.sh` share, so both detect the same
+  way. It only reads `/proc` and `/sys`.
+  - `hw_cpu_vendor`: AMD, Intel or other.
+  - `hw_gpus` and `hw_gpu_vendors`: every graphics chip on the PCI bus, also
+    one whose driver isn't loaded yet.
+  - `hw_nvidia_supported`: GTX 16 / RTX 20 or newer, which is what NVIDIA's
+    590+ driver still supports (PCI device id 0x1e00 and up).
+  - `hw_is_laptop`: a system battery (not a mouse's or a controller's) or a
+    portable chassis type.
+- **`vk_hw_drivers [lib32]`** (`install-common.sh`). It adds the graphics
+  drivers for the detected chips to the package list.
+  - **AMD:** `vulkan-radeon`.
+  - **Intel:** `vulkan-intel` and `intel-media-driver`.
+  - **NVIDIA, Turing or newer:** `nvidia-utils` and `libva-nvidia-driver`,
+    plus `nvidia-prime` when there's a second, built-in graphics chip.
+  - **NVIDIA, Pascal or older:** `vulkan-nouveau`, with a warning that NVIDIA's
+    legacy driver is `nvidia-580xx-dkms` in the AUR.
+  - With `lib32`, also the 32-bit versions. Intel laptops also get
+    `thermald` (enabled).
+- **`vk_nvidia_sleep`.** When the NVIDIA driver is installed, it keeps the
+  graphics memory in RAM during sleep (`NVreg_PreserveVideoMemoryAllocations=1`
+  in `/etc/modprobe.d/nvidia-sleep.conf`) and enables NVIDIA's suspend,
+  hibernate and resume services.
+- **`vk_auto_cpufreq`.** It writes `/etc/auto-cpufreq.conf`; until now
+  auto-cpufreq ran on its defaults.
+  - **On AC:** the `performance` governor, energy preference `performance`,
+    boost always on.
+  - **On battery:** `powersave`, energy preference `power`, boost off.
+  - It works the same on Intel and AMD.
+
+### Changed
+- **Asus Laptop: the graphics drivers are detected.** Until now it always
+  installed Intel's (`vulkan-intel`, `lib32-vulkan-intel`,
+  `intel-media-driver`), so an AMD laptop would have had no Vulkan driver.
+  - It now calls `vk_hw_drivers lib32` and gets Intel's or AMD's drivers,
+    and on an Intel CPU also thermald.
+  - It writes the auto-cpufreq config (full speed on AC, longest battery life
+    on battery).
+- **Steam Deck: the auto-cpufreq config.** It now runs at full speed on AC
+  and saves battery on battery, with boost off. It already had only AMD
+  drivers and AMD tuning.
+- **Clean: detects the hardware.** Until now it relied on archinstall's
+  graphics driver and had no power settings.
+  - **Drivers:** `vk_hw_drivers` installs the drivers for every graphics chip
+    it finds; with the gaming extras, the 32-bit ones too.
+  - **Laptop or desktop:**
+    - On a laptop: auto-cpufreq with the same config, the other power daemons
+      masked, and thermald on Intel.
+    - On a desktop PC: the CPU always on `performance`, now and at every boot,
+      like the desktop profile.
+  - **NVIDIA as the only card:** Clean's `.config/hypr/hyprland/env.lua`
+    detects that at runtime and sets `LIBVA_DRIVER_NAME=nvidia`,
+    `NVD_BACKEND=direct`, `__GLX_VENDOR_LIBRARY_NAME=nvidia` and a 12 GB
+    NVIDIA shader cache (`__GL_SHADER_DISK_CACHE_SIZE`,
+    `__GL_SHADER_DISK_CACHE_SKIP_CLEANUP`).
+  - **Built-in graphics plus NVIDIA:** none of those variables are set, so the
+    desktop stays on the built-in chip, and `prime-run` starts a game on the
+    NVIDIA card.
+  - `run-all-common.sh` installs the CachyOS kernel's NVIDIA module
+    (`linux-cachyos-nvidia-open`) when only the driver's libraries were
+    installed for a supported card.
+- **Desktop: watchdogs off.** `nowatchdog` is added to the kernel command line
+  (the kernel's lockup detectors), and `/etc/modprobe.d/blacklist-watchdog.conf`
+  keeps the AMD chipset's hardware watchdog (`sp5100_tco`) from loading. Both
+  are only useful to catch a hung system, and the hardware watchdog can delay
+  shutdowns. Takes effect after a reboot. Everything else on the desktop was
+  already AMD-specific (LACT, RADV, OverDrive, the V-Cache switch,
+  amd-pstate-epp on `performance`) or helps any hardware, and stays.
+- `run-all-common.sh` tune group G is now "CPU governor and watchdogs". The
+  governor part runs on the desktop and on Clean on a desktop PC. The
+  verification and the summary list `blacklist-watchdog.conf`.
+- `gamemode.ini` on the laptop, the Deck and Clean explains that auto-cpufreq
+  is in charge of the governor there. GameMode can't skip setting it, so it
+  switches to performance when a game starts, and on battery auto-cpufreq
+  switches back a few seconds later.
+- Desktop and Steam Deck `env.lua`: the shader-cache comment now says "AMD's
+  Mesa driver".
+
+### Fixed
+- **Removing the old kernel when Arch's NVIDIA module is installed**
+  (`run-all-common.sh`, both the immediate removal and the one-shot service
+  after the next boot). Arch names the module for its `linux` kernel
+  `nvidia-open`, not `linux-nvidia-open`. That package depends on `linux`, so
+  removing `linux` failed. It's now removed together with its kernel (also
+  `nvidia` for `linux`, and `nvidia-lts` / `nvidia-lts-open` for
+  `linux-lts`).
+
 ## 2026-11-19
 
 Performance for games, first tried on the desktop with a test script and

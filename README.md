@@ -26,10 +26,10 @@ own; the install steps they share are in `Post Install/install-common.sh`.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
-| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets that switch with the output), OpenDeck for the Stream Deck (profiles and plugins), AMD GPU with LACT overclocking, CPU always on the `performance` governor |
-| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery in the bar and on the lock screen, brightness slider in the control center, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
-| `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
-| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, battery in the bar and on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), rotate button in the control center, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
+| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets that switch with the output), OpenDeck for the Stream Deck (profiles and plugins), AMD GPU with LACT overclocking, CPU always on the `performance` governor, watchdogs off |
+| `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery in the bar and on the lock screen, brightness slider in the control center, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel or AMD graphics (detected at install), auto-cpufreq: full speed on AC, longest battery life on battery |
+| `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs, with the graphics drivers for the hardware it finds (AMD, Intel, NVIDIA) and laptop or desktop power settings; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
+| `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, battery in the bar and on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), rotate button in the control center, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU, auto-cpufreq: full speed on AC, longest battery life on battery (see [Steam Deck](#steam-deck-tablet)) |
 
 ## What's inside
 
@@ -131,9 +131,14 @@ Then **reboot**. It runs these stages in order:
    (`amdgpu.ppfeaturemask=0xfff7ffff` on the kernel command line: the kernel's default plus
    OverDrive). On an existing install, run the desktop script again (or add that parameter to
    `/etc/kernel/cmdline` and rebuild with `sudo mkinitcpio -P`), then reboot.
-   The desktop also keeps its CPU on the `performance` governor, now and at every boot
-   (`/etc/tmpfiles.d/cpu-governor.conf`); the laptop and the Deck keep the default, for the
-   battery.
+   The desktop (and Clean on a desktop PC) keeps its CPU on the `performance` governor, now
+   and at every boot (`/etc/tmpfiles.d/cpu-governor.conf`). The desktop also turns the
+   watchdogs off (`nowatchdog` on the kernel command line, and the AMD chipset's `sp5100_tco`
+   not loaded). Laptops (the laptop, the Deck and Clean on a laptop) use auto-cpufreq instead
+   (`/etc/auto-cpufreq.conf`, written by `Install.sh`): full speed on AC (performance, boost
+   on), the longest battery life on battery (powersave, power-saving energy preference, boost
+   off). The laptop and Clean install the graphics drivers for the hardware they find, and
+   Intel laptops get thermald.
    At the end it checks everything it set up and prints a pass/fail summary.
 
 All kernel and boot changes are made before the images are built, so they normally only need
@@ -200,7 +205,8 @@ git clone https://github.com/VoidedKN0X/VK-Dotfiles
 ```
 
 Start from a fresh Arch install with **systemd-boot** and **PipeWire** (archinstall's defaults
-for both), and pick your graphics driver in archinstall: the Clean profile doesn't install any.
+for both). The graphics driver can stay on archinstall's default: the Clean profile finds your
+graphics chips and installs their drivers itself.
 
 **What it installs and sets up:**
 
@@ -210,6 +216,18 @@ for both), and pick your graphics driver in archinstall: the Clean profile doesn
   and Firefox (for <kbd>Super</kbd> + <kbd>W</kbd>; change `browser` in
   `hypr/variables.lua` to use another).
 - **Login:** greetd + tuigreet, in pastel colors of your wallpaper.
+- **Your hardware (detected):**
+  - **Graphics:** AMD: Vulkan (RADV; OpenGL and video decoding come with mesa). Intel: Vulkan
+    and video decoding. NVIDIA GTX 16 / RTX 20 and newer: NVIDIA's driver (the CachyOS kernel's
+    open module, its libraries and video decoding), set up for sleep, with Hyprland's NVIDIA
+    settings when it's the only graphics card. A laptop with built-in graphics plus NVIDIA:
+    the desktop stays on the built-in chip (battery), and `prime-run <game>` starts a game on
+    NVIDIA. NVIDIA GTX 10 and older: NVIDIA's current driver no longer supports them, so the
+    open-source driver stays (with NVK for Vulkan); NVIDIA's legacy driver is
+    `nvidia-580xx-dkms` in the AUR. With the gaming extras, also the 32-bit drivers.
+  - **Desktop PC:** the CPU always on the `performance` governor (full speed).
+  - **Laptop** (a battery or a laptop case): auto-cpufreq, at full speed on AC and the longest
+    battery life on battery (boost off), on Intel and AMD; Intel laptops also get thermald.
 - **Gaming extras (you choose):** `Install.sh` asks once at the start. Answer **y** for Steam,
   gamemode and MangoHud (with their 32-bit versions), Proton-CachyOS, Heroic and the `ntsync`
   module (smoother frame times with Proton), with GameMode set up like on the other profiles
@@ -488,7 +506,7 @@ Desktop only:
   (`/etc/udev/rules.d/90-vk-x3d-mode.rules`) that lets the `gamemode` group switch it. Check it
   with `cat /sys/bus/platform/drivers/amd_x3d_vcache/*/amd_x3d_mode` while a game runs.
 - **CPU governor:** `performance` all the time, not only during games (see step 4 of
-  `run-all-<profile>.sh`).
+  `run-all-<profile>.sh`). Clean on a desktop PC does the same.
 
 ## Wallpaper and colors
 
@@ -543,6 +561,8 @@ Post Install/
 ├── run-all-common.sh      # Shared logic (used by the four scripts above; don't run it directly)
 ├── install-common.sh      # The install steps every Install.sh shares (shell, login screen, firewall,
 │                          #   configs, ...); sourced by them, don't run it directly
+├── hw-detect.sh           # Finds the CPU and graphics makers and whether it's a laptop (used by
+│                          #   install-common.sh and run-all-common.sh)
 ├── cachyos-repo.sh        # Adds the CachyOS repos (run by Install.sh first, and by run-all-common.sh)
 ├── eid-mw.sh              # Belgian eID middleware (AUR eid-mw) with a temporary OpenSSL 4.0 fix
 ├── eid-mw-openssl4.patch  #   (the upstream fix it applies; run by Install.sh)
