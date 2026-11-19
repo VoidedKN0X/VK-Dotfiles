@@ -125,19 +125,21 @@ Then **reboot**. It runs these stages in order:
    swap tuning for zram when zram is set up, with zswap turned off), a hard-disk readahead rule,
    transparent huge pages, noatime, 32-bit gamemode and MangoHud, Proton-CachyOS, Heroic, the `ntsync`
    module (smoother frame times with Proton-CachyOS and GE-Proton), and a lower default PipeWire
-   latency. The HDA audio power-save tweak is desktop-only, to save battery on the laptop and the
-   Deck.
+   latency. The HDA audio power-save tweak is for desktop PCs only (the desktop, and Clean on a
+   desktop PC), to save battery on laptops and the Deck.
    On the desktop with an AMD graphics card it also turns on GPU overclocking for LACT
    (`amdgpu.ppfeaturemask=0xfff7ffff` on the kernel command line: the kernel's default plus
    OverDrive). On an existing install, run the desktop script again (or add that parameter to
    `/etc/kernel/cmdline` and rebuild with `sudo mkinitcpio -P`), then reboot.
-   The desktop (and Clean on a desktop PC) keeps its CPU on the `performance` governor, now
-   and at every boot (`/etc/tmpfiles.d/cpu-governor.conf`). The desktop also turns the
-   watchdogs off (`nowatchdog` on the kernel command line, and the AMD chipset's `sp5100_tco`
-   not loaded). Laptops (the laptop, the Deck and Clean on a laptop) use auto-cpufreq instead
-   (`/etc/auto-cpufreq.conf`, written by `Install.sh`): full speed on AC (performance, boost
-   on), the longest battery life on battery (powersave, power-saving energy preference, boost
-   off). The laptop and Clean install the graphics drivers for the hardware they find, and
+   Desktop PCs (the desktop, and Clean on a desktop PC) keep the CPU on the `performance`
+   governor, now and at every boot (`/etc/tmpfiles.d/cpu-governor.conf`), and turn the
+   watchdogs off (`nowatchdog` on the kernel command line, and the chipset's hardware watchdog
+   not loaded: `sp5100_tco` on AMD, `iTCO_wdt` on Intel). Laptops (the laptop, the Deck and Clean on a laptop) use auto-cpufreq instead
+   (`/etc/auto-cpufreq.conf`, written by `Install.sh` for that machine): the most performance on
+   AC (performance, boost on, the firmware's performance profile when the laptop has one, and
+   on Intel the performance energy bias and dynamic boost), the longest battery life on
+   battery (powersave, power-saving energy preference, boost off, the firmware's low-power or
+   quiet profile). The laptop and Clean install the graphics drivers for the hardware they find, and
    Intel laptops get thermald.
    At the end it checks everything it set up and prints a pass/fail summary.
 
@@ -222,10 +224,12 @@ graphics chips and installs their drivers itself.
     open module, its libraries and video decoding), set up for sleep, with Hyprland's NVIDIA
     settings when it's the only graphics card. A laptop with built-in graphics plus NVIDIA:
     the desktop stays on the built-in chip (battery), and `prime-run <game>` starts a game on
-    NVIDIA. NVIDIA GTX 10 and older: NVIDIA's current driver no longer supports them, so the
+    NVIDIA. A desktop PC with NVIDIA uses it as the main card, also when the CPU has built-in
+    graphics too. NVIDIA GTX 10 and older: NVIDIA's current driver no longer supports them, so the
     open-source driver stays (with NVK for Vulkan); NVIDIA's legacy driver is
     `nvidia-580xx-dkms` in the AUR. With the gaming extras, also the 32-bit drivers.
-  - **Desktop PC:** the CPU always on the `performance` governor (full speed).
+  - **Desktop PC:** full speed: the CPU always on the `performance` governor, the watchdogs
+    off and the HDA audio power-save off, like the desktop profile.
   - **Laptop** (a battery or a laptop case): auto-cpufreq, at full speed on AC and the longest
     battery life on battery (boost off), on Intel and AMD; Intel laptops also get thermald.
 - **Gaming extras (you choose):** `Install.sh` asks once at the start. Answer **y** for Steam,
@@ -498,7 +502,7 @@ The same on every profile (Clean: with the gaming extras):
   pauses (works on every Java version Minecraft uses) and huge pages, for fewer stutters. Change
   them in Prism's Settings > Java.
 
-Desktop only:
+Desktop only (Clean on a desktop PC also gets the CPU governor):
 
 - **3D V-Cache (Ryzen 9 9950X3D):** while GameMode runs, the CPU prefers the CCD with the extra
   cache (`amd_x3d_mode` = `cache`), which most games like; after the last game it goes back to
@@ -539,7 +543,6 @@ If you're not me, look at these before running anything:
 - **`hypr/hyprland/input.lua`:** keyboard layout.
 - **`quickshell/services/BarState.qml`:** which monitor gets which bar, and their workspaces
   (desktop); **`quickshell/services/Connectivity.qml`:** the network interface (desktop: `eno1`).
-- **`hypr/hypridle.conf` (laptop):** the keyboard backlight device is `asus::kbd_backlight`.
 - **Steam Deck:** `Post Install/run-all-steamdeck.sh` only installs the Valve packages on an LCD
   Steam Deck (board "Valve Jupiter"); on anything else it skips them.
 - **`hypr/variables.lua`:** terminal, file manager, browser, cursor and GTK theme.

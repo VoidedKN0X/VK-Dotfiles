@@ -16,20 +16,45 @@ hl.env("ELECTRON_OZONE_PLATFORM_HINT", "auto")
 -- have to recompile shaders that were dropped (only uses disk space as it fills)
 hl.env("MESA_SHADER_CACHE_MAX_SIZE", "12G")
 
--- NVIDIA as the only graphics card (its driver installed by Install.sh): the
+-- NVIDIA as the main graphics card (its driver installed by Install.sh): the
 -- driver's own VA-API video decoding and OpenGL library, and the same 12 GB
--- shader cache (its default is 1 GB, and old shaders get cleaned out). Not
--- with a second, built-in graphics chip (most laptops): the desktop and apps
--- stay on that one, for the battery; start a game on NVIDIA with prime-run.
+-- shader cache (its default is 1 GB, and old shaders get cleaned out). That's
+-- any desktop PC with an NVIDIA card (the monitors are on it, also when the
+-- CPU has built-in graphics too), and a laptop with only NVIDIA. Not a laptop
+-- with built-in graphics plus NVIDIA: the screen is on the built-in chip,
+-- the desktop and apps stay there for the battery, and prime-run starts a
+-- game on NVIDIA.
+local function read(path)
+    local f = io.open(path, "r")
+    if not f then
+        return nil
+    end
+    local value = f:read("*l")
+    f:close()
+    return value
+end
 local gpus = {}
 for i = 0, 9 do
-    local f = io.open("/sys/class/drm/card" .. i .. "/device/vendor", "r")
-    if f then
-        gpus[(f:read("*l") or "")] = true
-        f:close()
+    local vendor = read("/sys/class/drm/card" .. i .. "/device/vendor")
+    if vendor then
+        gpus[vendor] = true
     end
 end
-if gpus["0x10de"] and not gpus["0x1002"] and not gpus["0x8086"] then
+-- a laptop: a system battery, or a portable chassis type (like the install's
+-- hw_is_laptop: 8 portable, 9 laptop, 10 notebook, 11 handheld, 14 sub-notebook,
+-- 30 tablet, 31 convertible, 32 detachable)
+local laptop = false
+for _, name in ipairs({ "BAT0", "BAT1", "BAT2", "BATT", "BATC" }) do
+    if read("/sys/class/power_supply/" .. name .. "/type") == "Battery" then
+        laptop = true
+    end
+end
+local portable = { ["8"] = true, ["9"] = true, ["10"] = true, ["11"] = true, ["14"] = true, ["30"] = true, ["31"] = true, ["32"] = true }
+if portable[read("/sys/class/dmi/id/chassis_type") or ""] then
+    laptop = true
+end
+local builtin = gpus["0x1002"] or gpus["0x8086"]
+if gpus["0x10de"] and not (laptop and builtin) then
     hl.env("LIBVA_DRIVER_NAME", "nvidia")
     hl.env("NVD_BACKEND", "direct")
     hl.env("__GLX_VENDOR_LIBRARY_NAME", "nvidia")

@@ -86,9 +86,12 @@ vk_cachyos_repos() {
 # - NVIDIA, GTX 16 / RTX 20 and newer: the driver's libraries and its VA-API
 #   video decoding; the kernel module comes with the CachyOS kernel
 #   (run-all-common.sh adds linux-cachyos-nvidia-open), and vk_nvidia_sleep
-#   sets up sleep. With a second (built-in) graphics chip, as in most
-#   laptops: also prime-run (nvidia-prime) to start a game on the NVIDIA
-#   card; the desktop itself stays on the built-in one, for the battery.
+#   sets up sleep. A laptop with built-in graphics plus NVIDIA: also
+#   prime-run (nvidia-prime) to start a game on the NVIDIA card; the desktop
+#   itself stays on the built-in chip, which drives the screen (battery). Not
+#   on a desktop PC, even when its CPU has built-in graphics too (Ryzen
+#   7000+, most Intel): there the monitors are on the NVIDIA card, which is
+#   the main one.
 # - NVIDIA, GTX 10 and older: the current driver no longer supports them, so
 #   the open-source driver (nouveau, with NVK for Vulkan) stays; the legacy
 #   proprietary one is nvidia-580xx-dkms in the AUR, to install yourself.
@@ -109,7 +112,7 @@ vk_hw_drivers() {
         if hw_nvidia_supported; then
             PACMAN_PKGS+=(nvidia-utils libva-nvidia-driver)
             [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-nvidia-utils)
-            grep -qxE 'amd|intel' <<<"$vendors" && PACMAN_PKGS+=(nvidia-prime)
+            grep -qxE 'amd|intel' <<<"$vendors" && hw_is_laptop && PACMAN_PKGS+=(nvidia-prime)
         else
             PACMAN_PKGS+=(vulkan-nouveau)
             [[ $lib32 == lib32 ]] && PACMAN_PKGS+=(lib32-vulkan-nouveau)
@@ -234,28 +237,50 @@ vk_mask_power_daemons() {
     done
 }
 
-# auto-cpufreq's settings (/etc/auto-cpufreq.conf), the same on Intel and AMD:
-# - on AC: full speed: governor performance, energy preference performance,
-#   boost always on
+# auto-cpufreq's settings (/etc/auto-cpufreq.conf), made for this hardware:
+# - on AC: the most performance: governor performance, energy preference
+#   performance, boost always on; the firmware's "performance" profile when
+#   the laptop has one (higher power limits and fan speeds, e.g. Asus'
+#   Performance mode); Intel: energy bias performance and HWP dynamic boost
 # - on battery: the longest battery life: governor powersave, energy
 #   preference power, boost off (the CPU stays at its base clock: noticeably
-#   slower under load, but much cooler and longer on battery)
-# auto-cpufreq checks the power source every few seconds and switches.
+#   slower under load, but much cooler and longer on battery); the
+#   firmware's low-power (or quiet) profile; Intel: energy bias power, no
+#   dynamic boost
+# The firmware profiles and Intel's settings are only written when this PC
+# has them (/sys/firmware/acpi/platform_profile_choices,
+# /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost), so auto-cpufreq
+# never tries one that isn't there. auto-cpufreq checks the power source
+# every few seconds and switches.
 vk_auto_cpufreq() {
-    sudo tee /etc/auto-cpufreq.conf >/dev/null <<'EOF'
-# auto-cpufreq: full speed on AC, the longest battery life on battery
-# (written by VK-Dotfiles' install, vk_auto_cpufreq)
-
-[charger]
-governor = performance
-energy_performance_preference = performance
-turbo = always
-
-[battery]
-governor = powersave
-energy_performance_preference = power
-turbo = never
-EOF
+    local choices ac_profile="" bat_profile="" p intel=0 hwp=0
+    # one profile name per line (exact names: "balanced-performance" isn't
+    # "performance")
+    choices=$(tr ' ' '\n' 2>/dev/null </sys/firmware/acpi/platform_profile_choices)
+    grep -qx performance <<<"$choices" && ac_profile=performance
+    for p in low-power quiet cool; do grep -qx "$p" <<<"$choices" && bat_profile=$p && break; done
+    [[ $(hw_cpu_vendor) == intel ]] && intel=1
+    [[ -e /sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost ]] && hwp=1
+    {
+        echo "# auto-cpufreq: the most performance on AC, the longest battery life on"
+        echo "# battery (written by VK-Dotfiles' install, vk_auto_cpufreq, for this PC)"
+        echo
+        echo "[charger]"
+        echo "governor = performance"
+        echo "energy_performance_preference = performance"
+        [[ $intel -eq 1 ]] && echo "energy_perf_bias = performance"
+        [[ $hwp -eq 1 ]] && echo "hwp_dynamic_boost = 1"
+        [[ -n $ac_profile ]] && echo "platform_profile = $ac_profile"
+        echo "turbo = always"
+        echo
+        echo "[battery]"
+        echo "governor = powersave"
+        echo "energy_performance_preference = power"
+        [[ $intel -eq 1 ]] && echo "energy_perf_bias = power"
+        [[ $hwp -eq 1 ]] && echo "hwp_dynamic_boost = 0"
+        [[ -n $bat_profile ]] && echo "platform_profile = $bat_profile"
+        echo "turbo = never"
+    } | sudo tee /etc/auto-cpufreq.conf >/dev/null
     systemctl is-active --quiet auto-cpufreq.service && sudo systemctl restart auto-cpufreq.service
     return 0
 }

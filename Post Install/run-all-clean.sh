@@ -17,7 +17,9 @@
 #     README, step 2, first).
 #   - gaming extras (32-bit gamemode and MangoHud, Proton-CachyOS, Heroic and
 #     the ntsync module) only if you choose them
-#   - HDA audio power-save stays on (that tweak is desktop profile only).
+#   - on a desktop PC (not a laptop: hw_is_laptop) the desktop profile's
+#     full-speed tweaks: performance governor, watchdogs off, HDA audio
+#     power-save off; on a laptop auto-cpufreq instead (Clean/Install.sh)
 
 PROFILE_NAME="clean"
 SECURE_BOOT=0

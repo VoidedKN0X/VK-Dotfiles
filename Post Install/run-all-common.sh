@@ -37,25 +37,27 @@
 #   D. fstab noatime (REBOOT required)
 #   E. systemd-boot kernel cmdline: transparent_hugepage=madvise,
 #      quiet splash plymouth.boot-log=/dev/null plymouth.nolog,
-#      zswap.enabled=0 when zram is used, and on the desktop nowatchdog and,
-#      with an AMD graphics card, amdgpu.ppfeaturemask=0xfff7ffff
-#      (overclocking in LACT)
+#      zswap.enabled=0 when zram is used, nowatchdog on desktop PCs, and on
+#      the desktop profile with an AMD graphics card
+#      amdgpu.ppfeaturemask=0xfff7ffff (overclocking in LACT)
 #      (REBOOT required). The cmdline is written in stage 2, before the images
 #      are built, so later stages don't have to rebuild for it.
-#   F. Audio: HDA power-save off (desktop only, REBOOT required) and a lower
+#   F. Audio: HDA power-save off (desktop PCs, REBOOT required) and a lower
 #      default PipeWire quantum
-#   G. CPU governor "performance" on every core, now and at every boot
-#      (the desktop, and Clean on a desktop PC; laptops use auto-cpufreq),
-#      and on the desktop the AMD chipset watchdog off (REBOOT required)
+#   G. CPU governor "performance" on every core, now and at every boot, and
+#      the chipset watchdog off (REBOOT required), on desktop PCs; laptops
+#      use auto-cpufreq (Install.sh)
+# Desktop PCs (DESKTOP_PC): the desktop profile, and Clean when it doesn't
+# run on a laptop. They also get nowatchdog (E).
 #
 # Persistence:
 #   /etc/sysctl.d/99-perf-tune.conf
 #   /etc/udev/rules.d/60-ioschedulers.rules
 #   /etc/modules-load.d/bbr.conf
 #   /etc/tmpfiles.d/thp-defrag.conf
-#   /etc/modprobe.d/audio-disable-power-save.conf (desktop)
-#   /etc/tmpfiles.d/cpu-governor.conf (desktop, Clean on a desktop PC)
-#   /etc/modprobe.d/blacklist-watchdog.conf (desktop)
+#   /etc/modprobe.d/audio-disable-power-save.conf (desktop PCs)
+#   /etc/tmpfiles.d/cpu-governor.conf (desktop PCs)
+#   /etc/modprobe.d/blacklist-watchdog.conf (desktop PCs)
 #   /etc/pipewire/pipewire.conf.d/99-low-latency.conf
 #   /etc/kernel/cmdline (modified, systemd-boot)
 #   /etc/fstab           (modified)
@@ -94,6 +96,16 @@ MODPROBE_DIR="/etc/modules-load.d"
 FSTAB="/etc/fstab"
 KCMDLINE="/etc/kernel/cmdline"
 
+# A desktop PC, which gets the full-speed tweaks (no battery to save): the
+# desktop profile, and the Clean profile when it doesn't run on a laptop (no
+# system battery, not a laptop case: hw_is_laptop). The laptop, the Deck and
+# Clean on a laptop save battery instead (auto-cpufreq, set up by Install.sh:
+# full speed only on AC).
+DESKTOP_PC=0
+if [[ "$PROFILE_NAME" == "desktop" ]] || { [[ "$PROFILE_NAME" == "clean" ]] && ! hw_is_laptop; }; then
+  DESKTOP_PC=1
+fi
+
 # Kernel cmdline parameters added in stage 2 (and verified in stage 4)
 NEW_PARAMS=(transparent_hugepage=madvise)
 # Plymouth: show the splash, hide boot messages, don't write a boot log
@@ -110,12 +122,12 @@ if [[ "$PROFILE_NAME" == "desktop" ]] && grep -qsx '0x1002' /sys/class/drm/card*
   NEW_PARAMS+=(amdgpu.ppfeaturemask=0xfff7ffff)
 fi
 
-# Watchdogs off (desktop): the kernel's lockup detectors (nowatchdog; the NMI
-# one is also off through sysctl in stage 4) wake every CPU periodically to
-# check it isn't stuck. Only useful to debug kernel hangs; off is a little
-# less overhead and jitter. (The AMD chipset's hardware watchdog, sp5100_tco,
-# is blacklisted in stage 4.)
-if [[ "$PROFILE_NAME" == "desktop" ]]; then
+# Watchdogs off (desktop PCs): the kernel's lockup detectors (nowatchdog; the
+# NMI one is also off through sysctl in stage 4) wake every CPU periodically
+# to check it isn't stuck. Only useful to debug kernel hangs; off is a little
+# less overhead and jitter. (The chipset's hardware watchdog is blacklisted in
+# stage 4.)
+if [[ $DESKTOP_PC -eq 1 ]]; then
   NEW_PARAMS+=(nowatchdog)
 fi
 
@@ -1176,11 +1188,11 @@ fi
 section "F. Audio (HDA power-save) (REBOOT required for HDA)"
 
 # F.1 HDA codec power-save disable - prevents HDMI audio crackle/pop on resume.
-# Desktop only: on the laptop and the Deck it would keep the audio chip awake
+# Desktop PCs only: on a laptop or the Deck it would keep the audio chip awake
 # and cost battery.
 HDA_CONF="/etc/modprobe.d/audio-disable-power-save.conf"
-if [[ "$PROFILE_NAME" != "desktop" ]]; then
-  ok "HDA power-save left on ($PROFILE_NAME: saves battery)"
+if [[ $DESKTOP_PC -eq 0 ]]; then
+  ok "HDA power-save left on ($PROFILE_NAME on battery power: saves battery)"
 elif [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
   ok "HDA power-save config already present"
 else
@@ -1217,8 +1229,7 @@ ok "Wrote $PIPEWIRE_CONF"
 section "G. CPU governor and watchdogs"
 
 # Every core on the "performance" governor, now and at every boot (a tmpfiles
-# entry), on the desktop and on the Clean profile on a desktop PC (no battery,
-# not a laptop case: hw_is_laptop). With the amd-pstate-epp (AMD) or
+# entry), on desktop PCs (DESKTOP_PC: the desktop, and Clean on a desktop PC). With the amd-pstate-epp (AMD) or
 # intel_pstate (Intel) driver that also sets the energy preference to
 # performance: the cores ramp up at once instead of after a moment, so no lag
 # at the start of a load. Idle cores still sleep (C-states), so it costs a few
@@ -1229,11 +1240,7 @@ section "G. CPU governor and watchdogs"
 # get auto-cpufreq instead (Install.sh): full speed on AC, battery saving on
 # battery.
 GOV_TMPFILES="/etc/tmpfiles.d/cpu-governor.conf"
-FULL_SPEED=0
-if [[ "$PROFILE_NAME" == "desktop" ]] || { [[ "$PROFILE_NAME" == "clean" ]] && ! hw_is_laptop; }; then
-  FULL_SPEED=1
-fi
-if [[ $FULL_SPEED -eq 0 ]]; then
+if [[ $DESKTOP_PC -eq 0 ]]; then
   ok "CPU governor left to auto-cpufreq ($PROFILE_NAME: full speed on AC, battery saving on battery)"
 elif ! grep -qw performance /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors 2>/dev/null; then
   warn "this CPU's frequency driver has no performance governor - skipped"
@@ -1244,14 +1251,19 @@ else
   ok "CPU governor = performance, kept after reboots via $GOV_TMPFILES"
 fi
 
-# Desktop: the AMD chipset's hardware watchdog (sp5100_tco) not loaded. Like
-# the kernel's lockup detectors (nowatchdog on the kernel cmdline, stage 2),
-# it's only useful to catch a hung system, and it can delay shutdowns.
-# (REBOOT required)
+# Desktop PCs: the chipset's hardware watchdog not loaded (AMD: sp5100_tco,
+# Intel: iTCO_wdt). Like the kernel's lockup detectors (nowatchdog on the
+# kernel cmdline, stage 2), it's only useful to catch a hung system, and it
+# can delay shutdowns. (REBOOT required)
 WDT_CONF="/etc/modprobe.d/blacklist-watchdog.conf"
-if [[ "$PROFILE_NAME" == "desktop" && "$(hw_cpu_vendor)" == "amd" ]]; then
-  printf '# Generated by %s\n# AMD chipset hardware watchdog: not used\nblacklist sp5100_tco\n' "$TUNE_NAME" > "$WDT_CONF"
-  ok "Wrote $WDT_CONF (sp5100_tco not loaded after the next reboot)"
+WDT_MOD=""
+case "$(hw_cpu_vendor)" in
+  amd) WDT_MOD=sp5100_tco ;;
+  intel) WDT_MOD=iTCO_wdt ;;
+esac
+if [[ $DESKTOP_PC -eq 1 && -n "$WDT_MOD" ]]; then
+  printf '# Generated by %s\n# chipset hardware watchdog: not used\nblacklist %s\n' "$TUNE_NAME" "$WDT_MOD" > "$WDT_CONF"
+  ok "Wrote $WDT_CONF ($WDT_MOD not loaded after the next reboot)"
 fi
 
 # =====================================================================
@@ -1360,7 +1372,7 @@ if [[ "$GAMING" == "1" ]]; then
 fi
 
 # Section F - audio
-if [[ "$PROFILE_NAME" == "desktop" ]]; then
+if [[ $DESKTOP_PC -eq 1 ]]; then
   if [[ -f "$HDA_CONF" ]] && grep -q "power_save=0" "$HDA_CONF"; then
     ok "audio: HDA power-save config present"
   else
@@ -1379,7 +1391,7 @@ else
 fi
 
 # Section G - CPU governor and watchdogs
-if [[ $FULL_SPEED -eq 1 && -f "$GOV_TMPFILES" ]]; then
+if [[ $DESKTOP_PC -eq 1 && -f "$GOV_TMPFILES" ]]; then
   gov_other=$(grep -L '^performance$' /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor 2>/dev/null | wc -l)
   if [[ $gov_other -eq 0 ]]; then
     ok "CPU governor: performance on every core"
@@ -1388,7 +1400,7 @@ if [[ $FULL_SPEED -eq 1 && -f "$GOV_TMPFILES" ]]; then
   fi
   ok "persist: $GOV_TMPFILES"
 fi
-if [[ "$PROFILE_NAME" == "desktop" && "$(hw_cpu_vendor)" == "amd" ]]; then
+if [[ $DESKTOP_PC -eq 1 && -n "$WDT_MOD" ]]; then
   [[ -f "$WDT_CONF" ]] && ok "persist: $WDT_CONF" || fail "persist: $WDT_CONF missing"
 fi
 
@@ -1414,14 +1426,14 @@ Persistence files:
   $FSTAB      (modified)
 EOF
 [[ "$GAMING" == "1" ]] && echo "  $NTSYNC_CONF"
-[[ "$PROFILE_NAME" == "desktop" ]] && echo "  $HDA_CONF"
-[[ -f "$GOV_TMPFILES" && $FULL_SPEED -eq 1 ]] && echo "  $GOV_TMPFILES"
-[[ -f "$WDT_CONF" && "$PROFILE_NAME" == "desktop" ]] && echo "  $WDT_CONF"
+[[ $DESKTOP_PC -eq 1 ]] && echo "  $HDA_CONF"
+[[ -f "$GOV_TMPFILES" && $DESKTOP_PC -eq 1 ]] && echo "  $GOV_TMPFILES"
+[[ -f "$WDT_CONF" && $DESKTOP_PC -eq 1 ]] && echo "  $WDT_CONF"
 cat <<EOF
 
 ACTION REQUIRED (won't take effect until you do):
   REBOOT - fstab noatime, the kernel cmdline (THP, Plymouth), the new
-           modules-load and udev rules, and on the desktop the HDA power-save
+           modules-load and udev rules, and on desktop PCs the HDA power-save
            and the chipset watchdog blacklist
 EOF
 

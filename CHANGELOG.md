@@ -2,6 +2,70 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-19 (3)
+
+I rechecked every tweak against the hardware it's meant for: the most
+performance on AC or on a desktop PC, and battery saving only on battery.
+
+### Fixed
+- **Clean: NVIDIA plus built-in graphics is treated as hybrid graphics only on
+  laptops.** Until now, any PC with an NVIDIA card plus built-in graphics was
+  handled like a hybrid laptop. That included desktop PCs whose CPU has
+  built-in graphics enabled (Ryzen 7000 and newer, most Intel).
+  - What went wrong: they got `nvidia-prime` and none of Hyprland's NVIDIA
+    settings, so video decoding went to the weak built-in chip instead of the
+    NVIDIA card the monitors are plugged into.
+  - **Install** (`vk_hw_drivers`): `nvidia-prime` is now installed only on a
+    laptop (`hw_is_laptop`) with built-in graphics plus NVIDIA.
+  - **`env.lua`** (Clean's `.config/hypr/hyprland/env.lua`): it now detects a
+    laptop at runtime, the same way as the install (a system battery
+    `BAT0`/`BAT1`/`BAT2`/`BATT`/`BATC`, or a portable chassis type). The NVIDIA
+    settings are set on every desktop PC with an NVIDIA card, and on a laptop
+    whose only graphics chip is NVIDIA. On a laptop with built-in graphics plus
+    NVIDIA, they stay off: the desktop runs on the built-in chip, and
+    `prime-run` starts games on NVIDIA.
+  - Tested with simulated hardware: a desktop with Ryzen built-in graphics
+    plus NVIDIA, an Intel laptop with NVIDIA, NVIDIA only, and AMD only.
+- **Asus Laptop: the keyboard backlight dims on any laptop**
+  (`.config/hypr/hypridle.conf`). The idle dimming used the fixed device
+  `asus::kbd_backlight`, so on another make it did nothing. It now uses
+  `*::kbd_backlight`, like Clean already did. The README no longer lists it
+  under "Things to change".
+
+### Changed
+- **auto-cpufreq config made for each machine** (`vk_auto_cpufreq` in
+  `install-common.sh`, used by the laptop, the Deck and Clean on a laptop).
+  Besides the governor, energy preference and boost, it now adds what the
+  hardware has:
+  - **Firmware power profile** (`platform_profile`): `performance` on AC
+    (higher power limits and fan speeds, e.g. Asus' Performance mode), and
+    `low-power`, `quiet` or `cool` on battery. Only names listed in
+    `/sys/firmware/acpi/platform_profile_choices`, matched exactly, so
+    `balanced-performance` doesn't count as `performance`.
+  - **Intel CPUs:** `energy_perf_bias` set to `performance` on AC and `power`
+    on battery.
+  - **Intel with HWP dynamic boost:** `hwp_dynamic_boost` on (AC) and off
+    (battery), only when
+    `/sys/devices/system/cpu/intel_pstate/hwp_dynamic_boost` exists.
+  - A setting the PC doesn't have is left out, so auto-cpufreq never tries to
+    write one. The Deck has no firmware profile and an AMD CPU, so it keeps
+    the plain config.
+- **Clean on a desktop PC gets all of the desktop's full-speed tweaks**
+  (`run-all-common.sh`, new `DESKTOP_PC`: the desktop profile, or Clean when
+  `hw_is_laptop` is false). It used to get only the performance governor. Now
+  it also gets:
+  - `nowatchdog`;
+  - the chipset's hardware watchdog blacklisted;
+  - the HDA audio power-save turned off.
+
+  The laptop, the Deck and Clean on a laptop keep battery saving. LACT's GPU
+  overclocking (`amdgpu.ppfeaturemask`) stays a desktop-profile option.
+- **Chipset watchdog by CPU maker:** `sp5100_tco` on AMD, `iTCO_wdt` on Intel
+  (`/etc/modprobe.d/blacklist-watchdog.conf`). It used to be AMD only.
+- `run-all-common.sh` and `run-all-clean.sh` comments, the verification, the
+  summary and the reboot reminder now say "desktop PCs" where these tweaks
+  apply. The README describes the same.
+
 ## 2026-11-19 (2)
 
 Each profile now gets the tuning for the hardware it runs on.
