@@ -208,6 +208,10 @@ vk_kde_dark
 # address bar colors from GTK, so its suggestions would have no background)
 # without the GTK glass
 vk_app_entries org.gnome.FileRoller firefox
+# GameMode for games (with the gaming extras; else its config goes): the
+# gamemode group (higher priority for games) and GameMode on in Heroic when
+# it's set up
+vk_gamemode
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \

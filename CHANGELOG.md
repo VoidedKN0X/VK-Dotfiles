@@ -2,6 +2,107 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-19
+
+Performance for games, first tried on the desktop with a test script and
+then added here. Documented in the new README section "Gaming".
+
+### Added
+- **All profiles: Minecraft and Wine/Proton games outside Steam count as
+  games** (`.config/hypr/hyprland/rules.lua`). Until now only Steam games and
+  gamescope got the game rule. Two new rules:
+  - **Minecraft:** windows titled `Minecraft 1.x` or, when modded,
+    `Minecraft* 1.x`.
+  - **Wine/Proton:** windows whose class ends in `.exe`, which covers Heroic,
+    Faugus and plain Wine.
+
+  They get the same treatment as Steam games: opaque, tearing allowed (lower
+  input lag), and the game content type, so VRR follows the game and not the
+  cursor. Idle and the lock screen wait only while these windows are
+  fullscreen (`idle_inhibit = "fullscreen"`), because their launchers are
+  `.exe` windows too and shouldn't keep the screen awake. Steam games keep
+  `always`.
+- **All profiles: GameMode is configured.**
+  - **`.config/gamemode.ini`** is new. While a game runs with GameMode, it
+    gets nice -10 (`renice=10`) and the highest best-effort disk priority
+    (`ioprio=0`). The CPU governor is `performance` during the game, as
+    before.
+  - GPU settings aren't touched: on the desktop they would fight with LACT.
+    Core pinning stays at GameMode's default.
+  - Its start and end commands run the new `.config/gamemode/hook.sh`
+    (desktop: also the V-Cache switch, below).
+  - **`vk_gamemode`** is a new step in `Post Install/install-common.sh`,
+    called by every `Install.sh`:
+    - It adds you to the `gamemode` group, which renice needs. This takes
+      effect after you log in again.
+    - It makes the hook executable.
+    - If Heroic is already set up (running the install again, with Heroic
+      closed), it turns on Heroic's "Use GameMode" in Heroic's defaults and
+      in every installed game's settings (`~/.config/heroic`).
+    - A new install has no Heroic settings yet, and creating that file would
+      lose Heroic's own defaults (its Wine prefix folder). So on a new
+      install you turn it on in Heroic's Settings once, as the README says.
+    - On Clean without the gaming extras, GameMode isn't installed, so this
+      step removes the copied `gamemode.ini` and hook again.
+  - **Steam** (`gamemoderun %command%`) and **Faugus** (the GameMode box per
+    game) are turned on per game. The README explains how.
+- **Desktop: 3D V-Cache preference while gaming** (Desktop's
+  `.config/gamemode/hook.sh`; `vk_gamemode x3d` in the Desktop's
+  `Install.sh`). The 9950X3D has the extra cache on one of its two CCDs, and
+  it's the only CPU with one across the profiles.
+  - When GameMode starts, the hook switches the CPU to prefer the cache CCD
+    (`amd_x3d_mode` = `cache`), which most games, Minecraft included, run
+    better on.
+  - When the last game ends, it restores the mode the CPU had before. That's
+    normally `frequency`, the faster clocks for everything else.
+  - `vk_gamemode x3d` writes `/etc/udev/rules.d/90-vk-x3d-mode.rules`, which
+    lets the `gamemode` group write that setting at every boot, and applies
+    the permission right away when the driver is already loaded. On a CPU
+    without the setting (no ACPI device `AMDI0101`) it skips this with a
+    warning.
+  - The other profiles' hooks only do the Quickshell part (next item).
+- **All profiles: Quickshell pauses while gaming** (new
+  `.config/quickshell/services/GameMode.qml`; `services/Cava.qml`,
+  `popups/Osd.qml`).
+  - The music visualizer (cava) and the Caps Lock check (five reads a
+    second) pause while GameMode runs.
+  - The hook tells Quickshell with `qs ipc call gamemode setActive
+    true|false`. When Quickshell starts, it asks `gamemoded -s` itself, so a
+    restart mid-game is handled; without gamemode installed, nothing pauses.
+  - When the Caps Lock check resumes after a game, it doesn't show the Caps
+    Lock popup.
+- **Desktop, Asus Laptop, Steam Deck: Prism Launcher tuned** (new
+  `vk_prism_tune` in `install-common.sh`, called by these three
+  `Install.sh`).
+  - GameMode is on (`EnableFeralGamemode=true`).
+  - New global Java arguments, used by every instance without its own: G1
+    with short pauses (Aikar's flags), huge pages where Java asks for them
+    (`-XX:+UseTransparentHugePages`, which matches the THP `madvise`
+    setting), and the starting memory touched at launch
+    (`-XX:+AlwaysPreTouch`). The result is fewer garbage-collection stutters.
+  - G1 instead of ZGC: ZGC's flags stop Minecraft versions on Java 8 or 17
+    from starting, while G1's flags work on every Java version Minecraft
+    uses.
+  - Running the install again replaces Prism's global Java arguments.
+  - Clean has no Prism Launcher.
+- **Desktop: the CPU always runs on the `performance` governor** (`Post
+  Install/run-all-common.sh`, new tune group G, desktop only).
+  - The default is `powersave`, and GameMode used to switch back to it after
+    every game.
+  - Now `/etc/tmpfiles.d/cpu-governor.conf` sets `performance` on every core
+    now and at every boot. On AMD's amd-pstate-epp driver this also sets the
+    energy preference to performance, so the cores ramp up straight away.
+    Idle cores still sleep, so the cost is a few watts at idle.
+  - The desktop's `gamemode.ini` also sets `desiredgov` and `defaultgov` to
+    `performance`, so GameMode never switches back to `powersave`.
+  - The final verification checks every core and lists the file.
+  - The laptop and the Deck keep the default, to save battery.
+
+### Fixed
+- `run-all-common.sh`: the code comment above the audio checks in the
+  verification said "Section H"; it's group F. Comment only, nothing
+  changes when it runs.
+
 ## 2026-11-18 (27)
 
 ### Added

@@ -257,6 +257,11 @@ vk_hyprlock_password
 # start without the GTK glass
 vk_app_entries org.gnome.FileRoller librewolf
 vk_prism_icons
+# Prism Launcher: GameMode and tuned Java arguments
+vk_prism_tune
+# GameMode for games: the gamemode group (higher priority for games) and
+# GameMode on in Heroic when it's set up
+vk_gamemode
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \

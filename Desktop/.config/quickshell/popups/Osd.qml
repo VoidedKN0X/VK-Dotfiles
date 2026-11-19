@@ -173,9 +173,12 @@ Item {
     // Caps Lock: the keyboards' Caps Lock lights, read five times a second
     // with bash's own read (only sleep runs in between), printed only when
     // it changes: "1" on, "0" off. The first line is the state at start.
+    // Paused while a game runs with GameMode (services/GameMode.qml).
     property bool capsKnown: false
     Process {
-        running: true
+        running: !GameMode.active
+        // resumed after a game: the first line is the state again, not a change
+        onRunningChanged: osd.capsKnown = false
         command: ["bash", "-c", "prev=; while :; do on=0; for f in /sys/class/leds/*::capslock/brightness; do [ -r \"$f\" ] && read -r b < \"$f\" && [ \"$b\" != 0 ] && on=1; done; [ \"$on\" != \"$prev\" ] && echo \"$on\" && prev=$on; sleep 0.2; done"]
         stdout: SplitParser {
             onRead: line => {

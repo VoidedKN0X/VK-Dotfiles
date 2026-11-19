@@ -26,7 +26,7 @@ own; the install steps they share are in `Post Install/install-common.sh`.
 
 | Profile | Machine | What's different |
 | --- | --- | --- |
-| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets that switch with the output), OpenDeck for the Stream Deck (profiles and plugins), AMD GPU with LACT overclocking |
+| `Desktop/` | Desktop PC | Two monitors (3440x1440 at 280 Hz + rotated 2560x1440 at 165 Hz, VRR; the main one runs SDR and switches to HDR by itself for fullscreen HDR games and video, or with <kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>D</kbd>), US keyboard layout, VR streaming with WiVRn, EasyEffects (with presets that switch with the output), OpenDeck for the Stream Deck (profiles and plugins), AMD GPU with LACT overclocking, CPU always on the `performance` governor |
 | `Asus Laptop/` | Asus laptop | Any monitor at its preferred mode, Belgian keyboard layout, touchpad gestures, battery in the bar and on the lock screen, brightness slider in the control center, media keys, screen + keyboard backlight dimming, locks when the lid closes, Intel GPU |
 | `Clean/` | **Any** desktop or laptop: for everyone who isn't me | Only the desktop itself and the programs it needs; none of my apps, network shares, printer or hardware settings, no Secure Boot and no YubiKey setup (see [Clean profile](#clean-profile)) |
 | `Steam Deck/` | LCD Steam Deck with the controllers removed, used as a **tablet** | Rotated built-in screen, battery in the bar and on the lock screen, touchscreen gestures, on-screen keyboard (with a button in the bar), rotate button in the control center, Valve's fan control and BIOS updates, power button = sleep, auto-login, no automatic screen lock, AMD GPU (see [Steam Deck](#steam-deck-tablet)) |
@@ -94,7 +94,8 @@ It does the following:
    from its official [Themes](https://github.com/PrismLauncher/Themes) repository) in
    `~/.local/share/PrismLauncher/iconthemes`, with Fluent Dark picked, and Prism's "System" theme,
    so it gets the frosted glass of the other Qt apps; switch either in Prism's
-   Settings > Appearance.
+   Settings > Appearance. It also gets GameMode and tuned Java arguments, and GameMode is set
+   up for games (see [Gaming](#gaming)).
 9. Runs step 2 and then step 3 below, and prints a short summary of all three. Step 3 still
    runs if step 2 reports a failure.
 
@@ -130,6 +131,9 @@ Then **reboot**. It runs these stages in order:
    (`amdgpu.ppfeaturemask=0xfff7ffff` on the kernel command line: the kernel's default plus
    OverDrive). On an existing install, run the desktop script again (or add that parameter to
    `/etc/kernel/cmdline` and rebuild with `sudo mkinitcpio -P`), then reboot.
+   The desktop also keeps its CPU on the `performance` governor, now and at every boot
+   (`/etc/tmpfiles.d/cpu-governor.conf`); the laptop and the Deck keep the default, for the
+   battery.
    At the end it checks everything it set up and prints a pass/fail summary.
 
 All kernel and boot changes are made before the images are built, so they normally only need
@@ -208,7 +212,8 @@ for both), and pick your graphics driver in archinstall: the Clean profile doesn
 - **Login:** greetd + tuigreet, in pastel colors of your wallpaper.
 - **Gaming extras (you choose):** `Install.sh` asks once at the start. Answer **y** for Steam,
   gamemode and MangoHud (with their 32-bit versions), Proton-CachyOS, Heroic and the `ntsync`
-  module (smoother frame times with Proton). The Mesa shader cache is 12 GB either way
+  module (smoother frame times with Proton), with GameMode set up like on the other profiles
+  (see [Gaming](#gaming)). The Mesa shader cache is 12 GB either way
   (`hypr/hyprland/env.lua`), so games don't have to recompile dropped shaders.
 - **Tuning:** the CachyOS repos and kernel, unified kernel images, the Plymouth boot splash,
   and the performance tuning of step 2 (sysctl, zram swap, THP, noatime, hard-disk readahead,
@@ -451,6 +456,39 @@ It's based on the laptop profile.
 After the first boot, test the gestures once. If a swipe goes the wrong way in landscape, change
 `ROTATION=3` to `ROTATION=1` in `~/.config/hypr/scripts/touch-gestures.sh`.
 `touch-gestures.sh --debug` prints every gesture it sees.
+
+## Gaming
+
+The same on every profile (Clean: with the gaming extras):
+
+- **Game windows:** Steam games, gamescope, Minecraft and Wine/Proton games outside Steam (Heroic,
+  Faugus: windows whose class ends in `.exe`) are marked as games in `hypr/hyprland/rules.lua`:
+  opaque, tearing allowed (lower input lag), the game content type (VRR follows the game, not the
+  cursor) and no screen lock or sleep while they're fullscreen (Steam games: while they're open).
+- **GameMode** (`~/.config/gamemode.ini`): while a game runs with it, the CPU runs at full speed
+  (`performance` governor) and the game gets a higher CPU priority (nice -10; the install adds you
+  to the `gamemode` group for that, active after logging in again) and the highest disk priority.
+  It starts by itself in Prism Launcher (turned on by the install). Elsewhere, turn it on once:
+  - **Steam:** a game's Properties > Launch Options: `gamemoderun %command%` (with MangoHud:
+    `gamemoderun mangohud %command%`);
+  - **Heroic:** Settings > Game Defaults > Other > Use GameMode (running `Install.sh` again turns it
+    on for Heroic and every installed game, when Heroic is closed);
+  - **Faugus** (desktop): the GameMode box per game.
+- **Quickshell:** the music visualizer (cava) and the Caps Lock check pause while GameMode runs
+  (`services/GameMode.qml`, told by the GameMode hook `~/.config/gamemode/hook.sh`).
+- **Minecraft (Prism Launcher, not on Clean):** Java arguments for every instance without its own: G1 with short
+  pauses (works on every Java version Minecraft uses) and huge pages, for fewer stutters. Change
+  them in Prism's Settings > Java.
+
+Desktop only:
+
+- **3D V-Cache (Ryzen 9 9950X3D):** while GameMode runs, the CPU prefers the CCD with the extra
+  cache (`amd_x3d_mode` = `cache`), which most games like; after the last game it goes back to
+  `frequency` (faster clocks for everything else). Done by the GameMode hook, with a udev rule
+  (`/etc/udev/rules.d/90-vk-x3d-mode.rules`) that lets the `gamemode` group switch it. Check it
+  with `cat /sys/bus/platform/drivers/amd_x3d_vcache/*/amd_x3d_mode` while a game runs.
+- **CPU governor:** `performance` all the time, not only during games (see step 4 of
+  `run-all-<profile>.sh`).
 
 ## Wallpaper and colors
 

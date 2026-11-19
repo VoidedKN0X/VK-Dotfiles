@@ -456,6 +456,77 @@ vk_kde_dark() {
     fi
 }
 
+# GameMode (Feral) for games, with ~/.config/gamemode.ini and its hook
+# (~/.config/gamemode/hook.sh, both copied with the configs):
+# - you in the gamemode group: GameMode may raise a game's CPU priority (the
+#   gamemode package allows nice -10 for that group)
+# - "vk_gamemode x3d" (the desktop's 9950X3D): a udev rule lets the gamemode
+#   group switch the CPU to prefer its 3D V-Cache CCD (amd_x3d_mode), at
+#   every boot; the desktop's hook does that while a game runs. Skipped with
+#   a warning if the CPU has no such setting (ACPI device AMDI0101).
+# - Heroic, when it's set up already (running the install again): GameMode on
+#   by default and for every installed game. A new install has no Heroic
+#   settings yet, and making that file would lose Heroic's own defaults (its
+#   Wine prefix folder), so there it's Heroic's Settings > Game Defaults >
+#   Other > Use GameMode.
+# Without gamemode (Clean without the gaming extras) its config isn't kept.
+vk_gamemode() {
+    if ! pacman -Q gamemode >/dev/null 2>&1; then
+        rm -f "$HOME/.config/gamemode.ini" "$HOME/.config/gamemode/hook.sh"
+        rmdir "$HOME/.config/gamemode" 2>/dev/null
+        return 0
+    fi
+    if getent group gamemode >/dev/null; then
+        id -nG "$USER" | tr ' ' '\n' | grep -qx gamemode ||
+            sudo usermod -aG gamemode "$USER" || warn "could not add $USER to the gamemode group"
+    else
+        warn "no gamemode group: GameMode can't raise a game's priority"
+    fi
+    chmod +x "$HOME/.config/gamemode/hook.sh" 2>/dev/null
+
+    local f
+    if [[ ${1:-} == x3d ]] && ! compgen -G "/sys/bus/acpi/devices/AMDI0101:*" >/dev/null; then
+        warn "this CPU has no 3D V-Cache setting (amd_x3d_mode): V-Cache switch skipped"
+    elif [[ ${1:-} == x3d ]]; then
+        sudo tee /etc/udev/rules.d/90-vk-x3d-mode.rules >/dev/null <<'EOF'
+# Lets the gamemode group switch the 3D V-Cache preference (amd_x3d_mode:
+# cache or frequency); the GameMode hook ~/.config/gamemode/hook.sh uses it.
+ACTION=="add|bind", SUBSYSTEM=="platform", DRIVER=="amd_x3d_vcache", RUN+="/usr/bin/chgrp gamemode /sys%p/amd_x3d_mode", RUN+="/usr/bin/chmod g+w /sys%p/amd_x3d_mode"
+EOF
+        sudo udevadm control --reload
+        # now too, when the driver is loaded already (else from the next boot)
+        for f in /sys/bus/platform/drivers/amd_x3d_vcache/*/amd_x3d_mode; do
+            [[ -e $f ]] && sudo chgrp gamemode "$f" && sudo chmod g+w "$f"
+        done
+    fi
+
+    local heroic="$HOME/.config/heroic"
+    if [[ -f $heroic/config.json ]]; then
+        if pgrep -x heroic >/dev/null; then
+            warn "Heroic is running: GameMode not turned on in it (close it and run the install again)"
+        elif ! python3 -I - "$heroic" <<'PY'; then
+import glob, json, os, sys
+d = sys.argv[1]
+def edit(path, change):
+    with open(path) as fh:
+        data = json.load(fh)
+    change(data)
+    with open(path, "w") as fh:
+        json.dump(data, fh, indent=2)
+edit(os.path.join(d, "config.json"),
+     lambda data: data.setdefault("defaultSettings", {}).update(useGameMode=True))
+def games(data):
+    for value in data.values():
+        if isinstance(value, dict):
+            value["useGameMode"] = True
+for path in glob.glob(os.path.join(d, "GamesConfig", "*.json")):
+    edit(path, games)
+PY
+            warn "could not turn GameMode on in Heroic"
+        fi
+    fi
+}
+
 # Lock screen: without the YubiKey login it unlocks with your password, so it
 # gets a password field (hyprlock.conf has none: with the key there's nothing
 # to type). Added once; yubikey-setup.sh --login removes the line again.
@@ -537,6 +608,19 @@ vk_prism_set() {
         [[ -s "$cfg" && -n "$(tail -c1 "$cfg")" ]] && echo >>"$cfg"
         echo "$1=$2" >>"$cfg"
     fi
+}
+
+# Prism Launcher for performance (prismlauncher.cfg, close Prism first):
+# - GameMode while Minecraft runs (~/.config/gamemode.ini)
+# - Java arguments for every instance that doesn't set its own: G1 with short
+#   pauses (Aikar's flags: they work on every Java Minecraft uses, 8 to 21+,
+#   unlike ZGC's), huge pages where Java asks for them (THP is "madvise") and
+#   the starting memory touched at launch instead of during play. Replaces
+#   Prism's global Java arguments.
+vk_prism_tune() {
+    mkdir -p "$HOME/.local/share/PrismLauncher"
+    vk_prism_set EnableFeralGamemode true
+    vk_prism_set JvmArgs "-XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 -XX:G1MixedGCLiveThresholdPercent=90 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 -XX:+UseTransparentHugePages"
 }
 
 # Thunar sidebar bookmarks (~/.config/gtk-3.0/bookmarks), built from $HOME so

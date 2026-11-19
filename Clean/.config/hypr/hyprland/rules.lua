@@ -19,6 +19,12 @@ hl.window_rule({ match = { title = "Library" }, float = true })
 -- Games: opaque, tearing allowed, never go idle, marked as game content (VRR
 -- then ignores cursor movement instead of rendering extra frames for it)
 hl.window_rule({ match = { class = "(steam_app_(default|[0-9]+))|gamescope" }, opaque = true, immediate = true, idle_inhibit = "always", content = "game" })
+-- Minecraft (title "Minecraft 1.21.4", modded "Minecraft* 1.21.4") and
+-- Wine/Proton games outside Steam (Heroic, Faugus: class "game.exe"). Their
+-- launchers aren't fullscreen, so idle and the lock screen only wait while
+-- the game is fullscreen.
+hl.window_rule({ match = { title = "^Minecraft\\*? [0-9].*" }, opaque = true, immediate = true, idle_inhibit = "fullscreen", content = "game" })
+hl.window_rule({ match = { class = ".*\\.exe" }, opaque = true, immediate = true, idle_inhibit = "fullscreen", content = "game" })
 
 -- Wine/XWayland helper windows
 hl.window_rule({ match = { xwayland = true, title = "win[0-9]+" }, no_dim = true, no_shadow = true, rounding = 10 })

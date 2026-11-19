@@ -265,6 +265,11 @@ vk_app_entries io.github.ilya_zlobintsev.LACT io.github.Faugus.faugus-launcher \
     io.github.Faugus.faugus-launcher.shortcut org.gnome.FileRoller librewolf
 vk_easyeffects_presets
 vk_prism_icons
+# Prism Launcher: GameMode and tuned Java arguments
+vk_prism_tune
+# GameMode for games: the gamemode group (higher priority for games), the
+# 9950X3D's V-Cache switch, and GameMode on in Heroic when it's set up
+vk_gamemode x3d
 vk_thunar_bookmarks
 # the scripts executable (no sudo needed: they're in your own home)
 chmod +x "$HOME"/.config/hypr/scripts/*.sh \

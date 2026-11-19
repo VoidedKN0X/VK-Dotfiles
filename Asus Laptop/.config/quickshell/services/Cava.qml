@@ -1,7 +1,7 @@
 pragma Singleton
 
 // Visualizer levels (cava, scripts/cava.sh): six bars, 0-1 each. Runs only
-// while a player has a track, so cava never runs for nothing.
+// while a player has a track and no game runs with GameMode.
 
 import QtQuick
 import Quickshell
@@ -14,7 +14,7 @@ Singleton {
     property var levels: [0, 0, 0, 0, 0, 0]
 
     Process {
-        running: Media.active
+        running: Media.active && !GameMode.active
         command: ["sh", Quickshell.shellPath("scripts/cava.sh"), String(root.bars)]
         stdout: SplitParser {
             onRead: line => {
