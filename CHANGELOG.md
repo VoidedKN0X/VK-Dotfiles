@@ -2,6 +2,67 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-19 (4)
+
+### Changed
+- **All profiles: the network panel now does everything nmtui does**
+  (`.config/quickshell/popups/NetworkPanel.qml`, the same file in every
+  profile). nmtui often misbehaved, and the panel's "More settings" link
+  opened it in a terminal. The panel is now three pages; Wi-Fi scanning and
+  connecting still use Quickshell's Networking module, and the rest runs
+  NetworkManager's `nmcli`.
+  - **Main page:**
+    - Wired connections and the Wi-Fi list, as before.
+    - New **Hidden network...** row: joins a network by its name (SSID),
+      with an optional password (`nmcli device wifi connect ... hidden yes`).
+    - New **VPN** section: every saved VPN and WireGuard connection, with an
+      on/off switch (`nmcli connection up/down`) and its state.
+  - **The cog: connection settings.**
+    - **Saved connections:** every saved connection, with its type and
+      whether it's connected (nmtui's "Edit a connection"). The loopback
+      connection is left out.
+    - **Import a VPN:** a WireGuard `.conf` or OpenVPN `.ovpn` file (`~`
+      works) via `nmcli connection import`. The new connection is switched
+      off and set not to connect at login, so nothing goes through a VPN
+      until you switch it on. If OpenVPN fails because its plugin is
+      missing, the panel says to install `networkmanager-openvpn`.
+    - **Hostname:** the PC's name, checked as a valid hostname and set with
+      `hostnamectl`. It asks for your password through the shell's polkit
+      dialog (nmtui's "Set system hostname").
+  - **One connection** (click it in the list):
+    - Connect or disconnect (nmtui's "Activate a connection").
+    - Name and *Connect automatically*.
+    - The Wi-Fi password, for WPA/WPA3 networks; left empty, it stays the
+      same.
+    - Wired and Wi-Fi connections also get:
+      - **IPv4:** *Automatic (DHCP)* or *Manual (static)*, with address and
+        gateway. An address without a prefix gets `/24`, and it's checked
+        before saving.
+      - **DNS servers**, plus *Only these DNS servers* to ignore the
+        router's. Switching that on without any servers is refused, because
+        it would leave you with no DNS.
+      - **IPv6:** Automatic or Off.
+    - **Delete**, which needs two clicks.
+    - Saving changes a connected connection and reconnects it, so the new
+      settings apply at once (nmtui left that to you).
+  - The list refreshes by itself on NetworkManager changes (`nmcli monitor`,
+    only while the panel is open). Errors from NetworkManager show under
+    the page.
+  - New shared building blocks, as their own files in `common/` (like the
+    rest of the shell's building blocks; as inline components in the panel,
+    Quickshell failed to load them with "SwitchRow is not a type"):
+    `LabeledField.qml` (a text field with a label), `PillButton.qml` (text
+    buttons), `ChoiceRow.qml` (one of a few choices), `SwitchRow.qml` (a
+    setting with a switch), `PageTitle.qml` (title with back arrow or cog)
+    and `StatusLine.qml` (the message under a page). The scroll areas cap the
+    settings and edit pages at 560 px, so they fit on the Steam Deck's
+    screen.
+- **nmtui is no longer opened anywhere.** Removed `Session.networkSettings()`
+  (`services/Session.qml`) and the floating window rule for nmtui
+  (`hypr/hyprland/rules.lua`) in every profile. nmtui itself stays installed
+  as part of NetworkManager. The `Install.sh` comments and the README's
+  description of the network panel are updated.
+
 ## 2026-11-19 (3)
 
 I rechecked every tweak against the hardware it's meant for: the most

@@ -98,8 +98,8 @@ PACMAN_PKGS=(
     pavucontrol
     bluez
     bluez-utils
-    # the bar's network icon, the network panel and the control center (nmtui
-    # comes with it, for VPN / static IP)
+    # the bar's network icon, the network panel and the control center (the
+    # panel does everything nmtui does, through nmcli, which comes with it)
     networkmanager
 
     # shell

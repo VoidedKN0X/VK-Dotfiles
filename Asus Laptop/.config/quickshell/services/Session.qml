@@ -43,10 +43,6 @@ Singleton {
     function btop() {
         shell("foot btop");
     }
-    // nmtui, for what the network panel doesn't do (VPN, static IP)
-    function networkSettings() {
-        shell("foot --app-id=nmtui nmtui");
-    }
     // an app in foot (the terminal of hypr/variables.lua)
     function inTerminal(command) {
         Quickshell.execDetached(["foot"].concat(command));

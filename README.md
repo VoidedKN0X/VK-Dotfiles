@@ -263,8 +263,8 @@ Every profile's desktop shell is one [Quickshell](https://quickshell.org) config
 (`.config/quickshell/`): the wallpaper, bar, notifications and control center, the popups, app
 launcher, wallpaper picker, clipboard history, volume mixer (pavucontrol stays for the full
 mixer), Bluetooth and network panels, window switcher, workspace overview, screenshots and the
-password dialog when an app asks for admin rights. nmtui (part of NetworkManager) stays for VPNs
-and static addresses, but the bar and control center open the network panel instead.
+password dialog when an app asks for admin rights. The network panel does everything nmtui does,
+so you don't need nmtui (it's still there, as part of NetworkManager).
 
 The bar is a row of glass islands, set in a **frame**: one piece of
 glass around each screen with a bar. The bar's side holds the islands, the other three sides are a
@@ -293,9 +293,20 @@ switcher float in the middle.
   *Search* to find new devices in pairing mode; click one to pair, trust and connect it. A device
   that asks for a PIN code needs `bluetoothctl` in a terminal (Quickshell can't answer PIN requests
   yet).
-- **Network panel:** each cable connection with its state and IP address; on a PC with Wi-Fi also
-  Wi-Fi on/off and the networks around (strongest first): click one to connect, a password field
-  opens when it needs one; disconnect and forget. *More settings* opens nmtui.
+- **Network panel** (the bar's network icon, or the control center's Network toggle): everything
+  nmtui does, through NetworkManager's `nmcli`.
+  - **Main page:** each cable connection with its state and IP address; on a PC with Wi-Fi also
+    Wi-Fi on/off and the networks around (strongest first): click one to connect, a password field
+    opens when it needs one; disconnect and forget; *Hidden network...* to join one by its name.
+    Your VPNs (OpenVPN, WireGuard, ...) with an on/off switch each.
+  - **The cog:** every saved connection, and two tools: *Import a VPN* (a WireGuard `.conf` or an
+    OpenVPN `.ovpn` file; OpenVPN needs `networkmanager-openvpn`), added switched off, and the PC's
+    *hostname* (asks for your password).
+  - **A saved connection** (click it): connect/disconnect, its name, *Connect automatically*, the
+    Wi-Fi password, IPv4 *Automatic (DHCP)* or *Manual (static)* with address and gateway, your own
+    DNS servers (with *Only these DNS servers* to ignore the router's), IPv6 on/off, and delete
+    (click twice). Saving a connected connection reconnects it, so the new settings apply at once.
+  - Errors from NetworkManager show under the page.
 - **Window switcher** (<kbd>Alt</kbd> + <kbd>Tab</kbd>): live previews of every window, most
   recently used first. Keep <kbd>Alt</kbd> down, <kbd>Tab</kbd> / <kbd>Shift</kbd> + <kbd>Tab</kbd>
   to pick, let go to switch; a quick <kbd>Alt</kbd> + <kbd>Tab</kbd> flips between the last two.

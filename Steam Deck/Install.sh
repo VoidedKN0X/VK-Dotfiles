@@ -158,7 +158,8 @@ PACMAN_PKGS=(
     claude-desktop
     claude-code
     # the bar's network icon, the network panel and the control center (state
-    # and Wi-Fi from NetworkManager; nmtui comes with it, for VPN / static IP)
+    # and Wi-Fi from NetworkManager; the panel does everything nmtui does,
+    # through nmcli, which comes with it)
     networkmanager
 )
 
