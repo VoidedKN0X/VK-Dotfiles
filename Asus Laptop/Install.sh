@@ -99,6 +99,8 @@ PACMAN_PKGS=(
     foot
     nano
     git
+    # GitHub on the command line (gh): sign in with gh auth login
+    github-cli
     base-devel
     pacman-contrib
     zsh

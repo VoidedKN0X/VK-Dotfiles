@@ -39,6 +39,8 @@ PACMAN_PKGS=(
     # base tools (AUR builds, the shell's `clean` function, unzip for wallpapers etc.)
     base-devel
     git
+    # GitHub on the command line (gh): sign in with gh auth login
+    github-cli
     nano
     wget
     unzip

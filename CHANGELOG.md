@@ -2,6 +2,16 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-20
+
+### Added
+- **All profiles: the GitHub CLI** (`github-cli` from Arch's official
+  repositories, the `gh` command), next to `git` in each `Install.sh`'s
+  package list. It lets you work with repositories, pull requests, issues
+  and releases from a terminal. Sign in once with `gh auth login`. No config
+  is added: `gh` keeps its settings and sign-in in `~/.config/gh`, which isn't
+  part of the dotfiles.
+
 ## 2026-11-19 (4)
 
 ### Changed
