@@ -285,6 +285,16 @@ vk_auto_cpufreq() {
     return 0
 }
 
+# The YubiKey's "touch me" panel (quickshell/services/YubiKey.qml): the
+# detector's socket, for this user (a user service); the detector itself
+# starts when the shell connects to it, and keeps running.
+vk_touch_detector() {
+    pacman -Q yubikey-touch-detector >/dev/null 2>&1 || return 0
+    systemctl --user daemon-reload
+    systemctl --user enable --now yubikey-touch-detector.socket ||
+        warn "could not enable yubikey-touch-detector.socket (systemctl --user enable --now yubikey-touch-detector.socket)"
+}
+
 # Enable and start $SERVICES one by one, so one missing unit doesn't skip all
 # the others. Then pkgfile's list of files, which zsh's "command not found"
 # uses to name the package that has a command (refreshed by
@@ -440,6 +450,8 @@ vk_printer() {
 #               for this exact file, so it won't ask to fix the firewall again
 #   tailscale   everything that comes in over the tailnet (your own devices);
 #               41641/udp lets devices connect directly instead of via a relay
+#   kdeconnect  KDE Connect: your phone finds this PC and connects on
+#               1714-1764 (TCP and UDP)
 # Named app profiles, so `ufw status` shows the app instead of a bare port.
 # archinstall normally installs ufw; it's installed here if it's missing.
 vk_firewall() {
@@ -475,6 +487,13 @@ vk_firewall() {
         tailscale)
             sudo ufw allow in on tailscale0
             sudo ufw allow 41641/udp
+            ;;
+        kdeconnect)
+            # (a file name of its own, so it never clashes with one a package
+            # might ship)
+            printf '[KDEConnect]\ntitle=KDE Connect\ndescription=KDE Connect phone link (discovery and transfers)\nports=1714:1764/tcp|1714:1764/udp\n' \
+                | sudo tee /etc/ufw/applications.d/vk-kdeconnect >/dev/null
+            sudo ufw allow KDEConnect
             ;;
         *) warn "unknown firewall rule: $rule" ;;
         esac

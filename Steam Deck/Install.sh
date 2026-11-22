@@ -111,6 +111,14 @@ PACMAN_PKGS=(
     pkgfile
     # the bar, control center, notifications and popups (~/.config/quickshell)
     quickshell
+    # the launcher's calculator and unit conversions (qalc)
+    libqalculate
+    # the phone (KDE Connect): its battery in the bar, a phone card in the
+    # control center, its notifications; sshfs to browse its files, kdialog
+    # for the control center's "Send files"
+    kdeconnect
+    sshfs
+    kdialog
     tailscale
     # wpctl: the volume keys (hypr/scripts/osd.sh)
     wireplumber
@@ -144,6 +152,8 @@ PACMAN_PKGS=(
     yubikey-manager
     pam-u2f
     libfido2
+    # the "touch your YubiKey" panel under the clock (quickshell/services/YubiKey.qml)
+    yubikey-touch-detector
     ghostscript
     skanlite
     sane-airscan
@@ -222,6 +232,8 @@ vk_mask_power_daemons
 # auto-cpufreq: full speed on AC, the longest battery life on battery
 vk_auto_cpufreq
 vk_enable_services
+# the YubiKey's "touch me" panel: the detector's socket (a user service)
+vk_touch_detector
 # Tailscale: lets you control it (and its tray icon) without sudo. Log in once
 # from the tray icon, or with: tailscale up
 sudo tailscale set --operator="$USER" || warn "could not make $USER the Tailscale operator"
@@ -256,7 +268,7 @@ sudo udevadm trigger --subsystem-match=input --action=change
 # === Network, firewall, disks ===
 vk_truenas
 vk_printer
-vk_firewall syncthing orcaslicer localsend tailscale
+vk_firewall syncthing orcaslicer localsend tailscale kdeconnect
 vk_smartd 70
 xdg-user-dirs-update
 

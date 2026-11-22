@@ -21,6 +21,11 @@ hl.on("hyprland.start", function()
     -- Clipboard manager (cliphist)
     hl.exec_cmd("wl-paste --watch cliphist store")
 
+    -- KDE Connect's background service, for the phone: the bar shows its
+    -- battery, the control center a phone card (quickshell/services/Phone.qml);
+    -- its own tray icon isn't used
+    hl.exec_cmd("kdeconnectd")
+
     -- Your own autostart apps go here, for example:
     -- hl.exec_cmd("steam -silent")
 end)

@@ -213,8 +213,8 @@ graphics chips and installs their drivers itself.
 **What it installs and sets up:**
 
 - **Programs:** only what the config uses: Hyprland, hyprlock, hypridle, Quickshell, foot,
-  wallust, cava, playerctl, cliphist, grim, Thunar, btop, pavucontrol, NetworkManager, zsh + Oh
-  My Zsh, fastfetch, the GTK/Qt themes (with Kvantum for the Qt glass), icons, cursor and fonts,
+  wallust, cava, playerctl, cliphist, grim, Thunar, btop, pavucontrol, NetworkManager, KDE Connect
+  (with sshfs and kdialog), yubikey-touch-detector, libqalculate, zsh + Oh My Zsh, fastfetch, the GTK/Qt themes (with Kvantum for the Qt glass), icons, cursor and fonts,
   and Firefox (for <kbd>Super</kbd> + <kbd>W</kbd>; change `browser` in
   `hypr/variables.lua` to use another).
 - **Login:** greetd + tuigreet, in pastel colors of your wallpaper.
@@ -337,7 +337,30 @@ switcher float in the middle.
   as ring gauges with the CPU temperature between them (click for btop), volume and microphone
   sliders (and on a laptop or the Steam Deck screen brightness, with the battery's charge and
   time left), the music player, and the notifications (one row; click it for the list). Right-click
-  the bell for do not disturb.
+  the bell for do not disturb. With a phone paired in KDE Connect, a phone card sits under the
+  toggles (see *Phone* below).
+- **Phone (KDE Connect):** pair your phone once in the *KDE Connect* app (install KDE Connect on the
+  phone from F-Droid or the Play Store, on the same network or over Tailscale). From then on:
+  - the bar shows the phone's battery while it's in reach (in the accent color while charging);
+    a click opens the control center;
+  - the control center's phone card: name, battery, in reach or not, and buttons to make it
+    ring, send it this PC's clipboard, send it files (a file picker) and browse its files in Thunar;
+  - its notifications pop up like your own; for a message, *Reply* opens KDE Connect's small reply
+    window;
+  - music playing on the phone shows in the bar's music island and the control center, and its
+    buttons control it;
+  - in Thunar, right-click a file, *Send To* > *Send via KDE Connect*.
+
+  KDE Connect's background service starts at login (`hypr/hyprland/execs.lua`); its own tray
+  icon isn't used (and is hidden from the launcher). On the phone, allow notification access and
+  unrestricted battery use (on ColorOS and other aggressive Android skins it disconnects
+  otherwise). Phone to PC clipboard: tap *Send clipboard* on the phone (Android doesn't let apps
+  read it in the background).
+- **YubiKey:** while your YubiKey waits for a touch (sudo or a login with pam-u2f, a website, SSH
+  or GPG signing, challenge-response), a small panel grows out of the top of the frame under the
+  clock, says what's asking and pulses until you touch it (or it's cancelled), and a key blinks
+  in the bar. It uses `yubikey-touch-detector` (its socket is a user service, turned on by the
+  install).
 - **Notifications:** Quickshell is the notification daemon. Popups appear next to the bell on the
   focused monitor, stay 8 s (low: 6 s, critical: until closed; hovering keeps them) and stay in
   the control center's list. Clicking one runs its default action. With do not disturb on, only
@@ -350,6 +373,10 @@ switcher float in the middle.
   <kbd>↑</kbd> / <kbd>↓</kbd> and <kbd>Enter</kbd>, or click. Always in alphabetical order, also
   while searching. To hide an app: copy its `.desktop` file from `/usr/share/applications` to
   `~/.local/share/applications` and add `NoDisplay=true` under `[Desktop Entry]`.
+  It's also a **calculator**: type a sum (`12*21%`, `2^10`, `sqrt(2)`) or a conversion
+  (`5 ft to cm`, `30 celsius to fahrenheit`, `3 GiB to MB`, `20 EUR to USD`) and the answer shows
+  above the apps; <kbd>Enter</kbd> or a click copies it. Start with `=` to always calculate. It
+  uses `qalc` (libqalculate).
 - **Wallpaper picker** (<kbd>Super</kbd> + <kbd>Shift</kbd> + <kbd>W</kbd>, or the control
   center's toggle): thumbnails of `~/Pictures/Wallpapers` (subfolders too), the current one
   outlined; search, arrow keys, <kbd>Enter</kbd> or a click.

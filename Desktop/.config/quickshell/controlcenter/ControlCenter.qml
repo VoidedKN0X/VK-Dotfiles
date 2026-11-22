@@ -2,6 +2,9 @@
 // Super + N. From the top:
 //   session buttons: lock, suspend, restart, shut down (the last two: click twice)
 //   quick toggles:   network, Bluetooth, do not disturb, stay awake, bar position, wallpaper
+//   phone:           (with a phone paired in KDE Connect) its name, battery and
+//                    whether it's in reach; ring it, send it the clipboard or
+//                    files, browse its files
 //   system:          CPU usage, CPU temperature, memory used / total
 //   volume and microphone sliders
 //   the music player (while one has a track)
@@ -176,6 +179,133 @@ PopupLayer {
                     icon: Theme.iconWallpaper
                     label: "Wallpaper"
                     onClicked: BarState.toggleWallpaperPicker(cc.targetScreen)
+                }
+            }
+
+            // ── phone (KDE Connect, services/Phone.qml) ───────────────────
+            Rectangle {
+                id: phoneCard
+                // the buttons' actions; files open a window, so the control
+                // center closes first
+                function act(action) {
+                    if (action === "ring")
+                        Phone.ring();
+                    else if (action === "clipboard")
+                        Phone.sendClipboard();
+                    else if (action === "send")
+                        cc.openApp(() => Phone.sendFiles());
+                    else if (action === "browse")
+                        cc.openApp(() => Phone.browse());
+                }
+                Layout.fillWidth: true
+                visible: Phone.present
+                implicitHeight: phoneColumn.implicitHeight + 28
+                radius: 18
+                color: Phone.reachable ? Qt.alpha(Theme.accent, 0.12) : Theme.card
+
+                ColumnLayout {
+                    id: phoneColumn
+                    anchors.fill: parent
+                    anchors.margins: 14
+                    spacing: 10
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: 12
+                        Glyph {
+                            glyph: String.fromCodePoint(0xf011c)  // cellphone
+                            color: Phone.reachable ? Theme.accent : Theme.faint
+                            font.pixelSize: 20
+                        }
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 0
+                            Label {
+                                Layout.fillWidth: true
+                                text: Phone.name || "Phone"
+                                font.pixelSize: 14
+                                font.weight: Font.Bold
+                                elide: Text.ElideRight
+                            }
+                            Label {
+                                text: !Phone.reachable ? "Not in reach" : Phone.charging ? "Connected · charging" : "Connected"
+                                color: Phone.reachable ? Theme.accent : Theme.dim
+                                font.pixelSize: 11
+                            }
+                        }
+                        Label {
+                            visible: Phone.reachable && Phone.charge >= 0
+                            text: `${Phone.charge}%`
+                            font.pixelSize: 16
+                            font.weight: Font.Bold
+                        }
+                    }
+                    // the battery
+                    Rectangle {
+                        Layout.fillWidth: true
+                        visible: Phone.reachable && Phone.charge >= 0
+                        implicitHeight: 6
+                        radius: 3
+                        color: Theme.track
+                        Rectangle {
+                            width: parent.width * Math.max(0, Math.min(100, Phone.charge)) / 100
+                            height: parent.height
+                            radius: 3
+                            color: Theme.accent
+                        }
+                    }
+                    // ring / send clipboard / send files / browse files (the
+                    // last two open a window: the control center closes)
+                    RowLayout {
+                        Layout.fillWidth: true
+                        enabled: Phone.reachable
+                        opacity: enabled ? 1 : 0.4
+                        spacing: 6
+                        Repeater {
+                            model: [
+                                {
+                                    icon: 0xf009e,
+                                    name: "Ring",
+                                    action: "ring"
+                                },
+                                {
+                                    icon: 0xf0147,
+                                    name: "Clipboard",
+                                    action: "clipboard"
+                                },
+                                {
+                                    icon: 0xf0552,
+                                    name: "Send files",
+                                    action: "send"
+                                },
+                                {
+                                    icon: 0xf024b,
+                                    name: "Files",
+                                    action: "browse"
+                                }
+                            ]
+                            ColumnLayout {
+                                required property var modelData
+                                Layout.fillWidth: true
+                                spacing: 2
+                                HoverButton {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    size: 38
+                                    iconSize: 16
+                                    icon: String.fromCodePoint(parent.modelData.icon)
+                                    accessibleName: parent.modelData.name
+                                    fill: Theme.button
+                                    onClicked: phoneCard.act(parent.modelData.action)
+                                }
+                                Label {
+                                    Layout.alignment: Qt.AlignHCenter
+                                    text: parent.modelData.name
+                                    color: Theme.dim
+                                    font.pixelSize: 10
+                                }
+                            }
+                        }
+                    }
                 }
             }
 

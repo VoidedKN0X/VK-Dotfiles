@@ -107,6 +107,14 @@ PACMAN_PKGS=(
     pkgfile
     # the bar, control center, notifications and popups (~/.config/quickshell)
     quickshell
+    # the launcher's calculator and unit conversions (qalc)
+    libqalculate
+    # the phone (KDE Connect): its battery in the bar, a phone card in the
+    # control center, its notifications; sshfs to browse its files, kdialog
+    # for the control center's "Send files"
+    kdeconnect
+    sshfs
+    kdialog
     earlyoom
     noto-fonts
     ristretto
@@ -136,6 +144,8 @@ PACMAN_PKGS=(
     yubikey-manager
     pam-u2f
     libfido2
+    # the "touch your YubiKey" panel under the clock (quickshell/services/YubiKey.qml)
+    yubikey-touch-detector
     ghostscript
     skanlite
     sane-airscan
@@ -225,6 +235,8 @@ vk_mask_power_daemons
 # auto-cpufreq: full speed on AC, the longest battery life on battery
 vk_auto_cpufreq
 vk_enable_services
+# the YubiKey's "touch me" panel: the detector's socket (a user service)
+vk_touch_detector
 # tuigreet in pastel colors of your wallpaper (until the first wallpaper
 # change: yours if you have them, else the ones this profile ships with)
 colors_json="$HOME/.config/quickshell/colors.json"
@@ -235,7 +247,7 @@ vk_greetd /usr/local/bin/vk-tuigreet
 # === Network, firewall, disks ===
 vk_truenas
 vk_printer
-vk_firewall syncthing orcaslicer localsend
+vk_firewall syncthing orcaslicer localsend kdeconnect
 # laptop disks run warmer: warn above 80 °C
 vk_smartd 80
 xdg-user-dirs-update

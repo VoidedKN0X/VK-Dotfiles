@@ -111,6 +111,14 @@ PACMAN_PKGS=(
     pkgfile
     # the bar, control center, notifications and popups (~/.config/quickshell)
     quickshell
+    # the launcher's calculator and unit conversions (qalc)
+    libqalculate
+    # the phone (KDE Connect): its battery in the bar, a phone card in the
+    # control center, its notifications; sshfs to browse its files, kdialog
+    # for the control center's "Send files"
+    kdeconnect
+    sshfs
+    kdialog
     # wpctl: the volume keys (hypr/scripts/osd.sh)
     wireplumber
     # the mixer's Devices button: show or hide sound devices (popups/Mixer.qml)
@@ -145,6 +153,8 @@ PACMAN_PKGS=(
     yubikey-manager
     pam-u2f
     libfido2
+    # the "touch your YubiKey" panel under the clock (quickshell/services/YubiKey.qml)
+    yubikey-touch-detector
     ghostscript
     skanlite
     sane-airscan
@@ -227,6 +237,8 @@ vk_cleanup
 
 # === Services and login screen ===
 vk_enable_services
+# the YubiKey's "touch me" panel: the detector's socket (a user service)
+vk_touch_detector
 # tuigreet in pastel colors of your wallpaper (until the first wallpaper
 # change: yours if you have them, else the ones this profile ships with)
 colors_json="$HOME/.config/quickshell/colors.json"
@@ -237,7 +249,7 @@ vk_greetd /usr/local/bin/vk-tuigreet
 # === Network, firewall, disks ===
 vk_truenas
 vk_printer
-vk_firewall syncthing orcaslicer localsend wivrn
+vk_firewall syncthing orcaslicer localsend wivrn kdeconnect
 vk_smartd 70
 vk_media_folders
 xdg-user-dirs-update

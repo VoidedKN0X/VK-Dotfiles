@@ -2,6 +2,98 @@
 
 Changes to VK-Dotfiles, newest first.
 
+## 2026-11-21
+
+### Added
+- **All profiles: a calculator in the app launcher**
+  (`.config/quickshell/popups/Launcher.qml`, the same file in every profile).
+  - **What it does:** type a sum (`12*21%`, `2^10`, `sqrt(2)`) or a
+    conversion (`5 ft to cm`, `30 celsius to fahrenheit`, `3 GiB to MB`,
+    `20 EUR to USD`), and the answer appears above the app list. Enter, or a
+    click on the answer, copies it with `wl-copy`, so it also lands in the
+    clipboard history, and closes the launcher.
+  - **When it calculates:**
+    - The text starts like a sum (a number, a bracket, a minus or a maths
+      function such as `sqrt(`) and contains an operator, a bracket, or
+      `to`/`in`.
+    - Or the text starts with `=`, which always calculates.
+    - App searches like `7zip`, `4k`, `2fa` or `mp3 to ogg` stay searches.
+  - **How:** `qalc -t` runs 120 ms after the last key; a previous run is
+    stopped. The answer is its last line. It's left out when it's an error
+    or a warning, has no number, or is the same as what was typed.
+  - **Note:** for temperatures, type `celsius`/`fahrenheit` or `°C`/`°F`.
+    A plain `C` and `F` mean coulomb and farad to qalc.
+  - "No apps found" is hidden while an answer shows.
+- **All profiles: `libqalculate`** (Arch's official repositories, provides
+  `qalc`) in each `Install.sh`'s package list, next to `quickshell`.
+- README: the app launcher section describes the calculator.
+- **All profiles: "Touch your YubiKey".** While a YubiKey (or another FIDO
+  key) waits for a touch, the shell shows it.
+  - **The panel:** grows out of the top of the frame on the focused monitor,
+    in the middle (under the clock with the bar on top). It shows the key with
+    a pulsing ring, "Touch your YubiKey" and what's asking.
+  - **The bar:** a blinking key in the status island at the same time, for
+    the other monitor.
+  - **What it reacts to:** `sudo` or a login with pam-u2f, a website or SSH
+    with a FIDO2 key (`U2F`); GPG signing, decrypting or SSH through
+    gpg-agent (`GPG`); challenge-response (`MAC`).
+  - **When it goes:** as soon as the key stops waiting. The detector can't
+    tell a touch from a cancel or a timeout, so there's no "done" message.
+  - **How it works:** new `services/YubiKey.qml` connects to
+    `yubikey-touch-detector`'s socket (`$XDG_RUNTIME_DIR/yubikey-touch-detector.socket`,
+    5-letter messages such as `U2F_1`/`U2F_0`). The panel is the new
+    `popups/YubikeyTouch.qml`, drawn in the frame's own window like the
+    volume popup (`shell.qml`), and the icon is in `bar/StatusIsland.qml`.
+    Without the detector, the service quietly retries every 30 s.
+  - **Install:** `yubikey-touch-detector` (Arch's official repositories) is
+    in every profile's package list. On Clean it's new and works with any
+    FIDO key, because systemd's own rules give your user access. The new
+    `vk_touch_detector` step in `install-common.sh` turns on its socket as a
+    user service (`systemctl --user enable --now yubikey-touch-detector.socket`).
+- **All profiles: the phone, through KDE Connect.**
+  - **Bar:** the phone's battery shows while it's in reach, in the accent
+    colour while charging. A click opens the control center.
+  - **Control center:** a phone card under the quick toggles, shown only with
+    a paired phone. It has the name, battery, "Connected" or "Not in reach",
+    and four buttons:
+    - *Ring*: find my phone.
+    - *Clipboard*: sends this PC's clipboard.
+    - *Send files*: a `kdialog` file picker, then `kdeconnect-cli --share`.
+    - *Files*: mounts the phone over sshfs and opens the folder with
+      `xdg-open`. KDE Connect's own "browse" opens a `kdeconnect://` address
+      only KDE's file manager understands.
+  - **New `services/Phone.qml` and `scripts/phone.sh`:** the script talks to
+    KDE Connect's service over D-Bus with `busctl` (part of systemd). Names
+    checked against KDE Connect's source:
+    - `org.kde.kdeconnect.daemon.devices`;
+    - the device's `name` and `isReachable`;
+    - the battery plugin's `charge` and `isCharging`;
+    - `findmyphone.ring`, `clipboard.sendClipboard`, `sftp.mountAndWait` /
+      `mountPoint`.
+
+    It reports changes as JSON lines, checking every 10 s. Without KDE
+    Connect it idles (`sleep infinity`) instead of being restarted over and
+    over.
+  - **Phone notifications** come through the shell's own notification
+    server. For messages, KDE Connect offers a *Reply* button that opens its
+    small reply window. The popups can't take typing, so the notification
+    server keeps inline replies off on purpose.
+  - **Phone music** shows in the music island and media card by itself:
+    KDE Connect offers the phone's player as a media player on the desktop.
+  - **Thunar:** *Send To* > *Send via KDE Connect* comes with the
+    `kdeconnect` package.
+  - **Hyprland:** `kdeconnectd` starts at login (`execs.lua`). KDE Connect's
+    own windows (reply, pairing) and the "Send to phone" picker float
+    (`rules.lua`).
+  - **Launcher:** KDE Connect's tray indicator is hidden
+    (`.local/share/applications/org.kde.kdeconnect.nonplasma.desktop`).
+    "KDE Connect" (pairing, settings) and "KDE Connect SMS" stay.
+  - **Install:** `kdeconnect`, `sshfs` and `kdialog` (official repositories)
+    in every profile's package list, plus a new `kdeconnect` firewall rule in
+    `vk_firewall`: an app profile in `/etc/ufw/applications.d/vk-kdeconnect`
+    for 1714–1764 TCP and UDP, called by every profile.
+- README: the phone and YubiKey features, and the program list.
+
 ## 2026-11-20
 
 ### Added

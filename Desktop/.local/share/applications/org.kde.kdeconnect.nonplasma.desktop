@@ -1,0 +1,14 @@
+[Desktop Entry]
+# Hides KDE Connect's tray indicator from the app launcher: the bar and the
+# control center show the phone instead (quickshell/services/Phone.qml), and
+# kdeconnectd starts at login (hypr/hyprland/execs.lua). "KDE Connect" (to
+# pair a phone, and its settings) and "KDE Connect SMS" stay. This copy in
+# ~/.local/share/applications takes the place of the system one;
+# NoDisplay=true keeps it out of launchers and menus.
+Type=Application
+Name=KDE Connect Indicator
+Comment=Display information about your devices
+Exec=kdeconnect-indicator
+Icon=kdeconnect
+Categories=Qt;KDE;Network;
+NoDisplay=true

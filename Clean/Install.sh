@@ -66,6 +66,17 @@ PACMAN_PKGS=(
     # the bar, control center, notifications, launcher and popups
     # (~/.config/quickshell)
     quickshell
+    # the launcher's calculator and unit conversions (qalc)
+    libqalculate
+    # the phone (KDE Connect): its battery in the bar, a phone card in the
+    # control center, its notifications; sshfs to browse its files, kdialog
+    # for the control center's "Send files"
+    kdeconnect
+    sshfs
+    kdialog
+    # the YubiKey's "touch me" panel (only does something with a YubiKey or
+    # another FIDO key plugged in)
+    yubikey-touch-detector
     libnotify
     # the media keys
     playerctl
@@ -191,6 +202,8 @@ if hw_is_laptop; then
     vk_auto_cpufreq
 fi
 vk_enable_services
+# the YubiKey's "touch me" panel: the detector's socket (a user service)
+vk_touch_detector
 # tuigreet in pastel colors of your wallpaper (until the first wallpaper
 # change: yours if you have them, else the ones this profile ships with)
 colors_json="$HOME/.config/quickshell/colors.json"
@@ -201,7 +214,7 @@ vk_greetd /usr/local/bin/vk-tuigreet
 # === Firewall and disks ===
 # blocks everything that comes in unless you allow it (ufw's default). Add
 # rules for your own apps with `sudo ufw allow <port or app>`.
-vk_firewall
+vk_firewall kdeconnect
 vk_smartd 70
 # home folders (Documents, Downloads, Pictures, ...); the wallpaper picker
 # (Super + Shift + W) looks in Pictures/Wallpapers

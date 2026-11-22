@@ -181,6 +181,7 @@ ShellRoot {
 
     NotificationPopups {}
     Osd {}
+    YubikeyTouch {}
 
     // ── commands for keybinds ─────────────────────────────────────────────
     IpcHandler {

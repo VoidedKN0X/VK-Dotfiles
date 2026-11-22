@@ -5,6 +5,11 @@
 //   network     -> the network panel
 //   volume      -> the volume mixer (scroll: volume in 1% steps, right click: mute)
 //   battery     -> (laptops only) the charge; hover: the time left
+//   YubiKey     -> (only while it waits for a touch) a blinking key; the panel
+//                  under the clock says what's asking (popups/YubikeyTouch.qml)
+//   phone       -> (with a phone paired in KDE Connect and in reach) its
+//                  battery, in the accent color while charging; click: the
+//                  control center, with the phone card
 
 import QtQuick
 import Quickshell.Services.SystemTray
@@ -27,6 +32,40 @@ Island {
         }
     }
 
+    // the YubiKey waiting for a touch: a blinking key
+    BarModule {
+        id: yubikey
+        visible: YubiKey.waiting
+        vertical: island.vertical
+        icon: String.fromCodePoint(0xf0306)  // key
+        color: Theme.accent
+        interactive: false
+        SequentialAnimation on opacity {
+            running: yubikey.visible
+            loops: Animation.Infinite
+            onRunningChanged: if (!running)
+                yubikey.opacity = 1
+            NumberAnimation {
+                to: 0.3
+                duration: 500
+                easing.type: Easing.InOutQuad
+            }
+            NumberAnimation {
+                to: 1
+                duration: 500
+                easing.type: Easing.InOutQuad
+            }
+        }
+    }
+    // the phone (KDE Connect), while it's in reach
+    BarModule {
+        visible: Phone.present && Phone.reachable
+        vertical: island.vertical
+        icon: String.fromCodePoint(0xf011c)  // cellphone
+        text: Phone.charge >= 0 ? `${Phone.charge}%` : ""
+        color: Phone.charging ? Theme.accent : Theme.fg
+        onClicked: BarState.toggleControlCenter(island.window.modelData)
+    }
     BarModule {
         vertical: island.vertical
         icon: Connectivity.bluetoothIcon

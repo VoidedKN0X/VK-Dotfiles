@@ -3,6 +3,10 @@
 
 -- Small utility windows: float, sized, centered
 hl.window_rule({ match = { class = "nwg-look" }, float = true, size = "50% 60%", center = true })
+-- KDE Connect's own small windows (replying to a phone message, pairing) and
+-- the control center's "Send files" picker
+hl.window_rule({ match = { class = "org\\.kde\\.kdeconnect\\.daemon" }, float = true, center = true })
+hl.window_rule({ match = { title = "Send to phone" }, float = true, size = "60% 70%", center = true })
 
 -- Steam / Moonlight
 hl.window_rule({ match = { class = "steam" }, rounding = 10 })
